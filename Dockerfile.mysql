@@ -111,26 +111,9 @@ EOF
 # Este debe estar presente en el directorio del proyecto
 COPY src/database/db_soporte.sql /docker-entrypoint-initdb.d/50-db_soporte.sql
 
-# Script de health check personalizado
-COPY <<EOF /usr/local/bin/healthcheck.sh
-#!/bin/bash
-set -e
-
-# Verificar que MySQL esté corriendo
-mysql --user="\${MYSQL_USER}" --password="\${MYSQL_PASSWORD}" --host=localhost --execute="SELECT 1;" > /dev/null 2>&1
-
-# Verificar que la base de datos de la aplicación exista
-mysql --user="\${MYSQL_USER}" --password="\${MYSQL_PASSWORD}" --host=localhost --execute="USE inventario_soporte; SELECT COUNT(*) FROM status;" > /dev/null 2>&1
-
-echo "MySQL health check passed!"
-EOF
-
-# Hacer ejecutable el script de health check
-RUN chmod +x /usr/local/bin/healthcheck.sh
-
-# Configurar health check
+# Health check simple
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD ["/usr/local/bin/healthcheck.sh"]
+    CMD mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD
 
 # Exponer puerto MySQL
 EXPOSE 3306

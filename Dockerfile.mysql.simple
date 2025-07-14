@@ -1,0 +1,21 @@
+# Dockerfile MySQL simplificado
+FROM mysql:8.0
+
+# Información del mantenedor
+LABEL maintainer="HerwingXTech"
+LABEL description="MySQL Database for Inventario Soporte Application"
+
+# Copia el script SQL principal de la aplicación
+COPY src/database/db_soporte.sql /docker-entrypoint-initdb.d/50-db_soporte.sql
+
+# Configuración básica de MySQL
+ENV MYSQL_ROOT_PASSWORD=default_root_password
+ENV MYSQL_DATABASE=inventario_soporte
+ENV MYSQL_USER=default_user
+ENV MYSQL_PASSWORD=default_password
+
+# Exponer puerto MySQL
+EXPOSE 3306
+
+# Crear volumen para datos persistentes
+VOLUME ["/var/lib/mysql"]
