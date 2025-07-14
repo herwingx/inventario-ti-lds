@@ -10,8 +10,8 @@
 -- -----------------------------------------------------
 -- Schema inventario_soporte
 
-DROP SCHEMA IF EXISTS `inventario_soporte_test`; -- Descomentar para eliminar la DB existente
-CREATE SCHEMA IF NOT EXISTS `inventario_soporte_test` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ;
+DROP SCHEMA IF EXISTS `inventario_soporte`; -- Descomentar para eliminar la DB existente
+CREATE SCHEMA IF NOT EXISTS `inventario_soporte` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ;
 USE `inventario_soporte` ;
 -- -----------------------------------------------------
 

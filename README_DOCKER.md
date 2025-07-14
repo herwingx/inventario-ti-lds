@@ -1,5 +1,35 @@
 # Inventario Soporte - Guía de Instalación con Docker
 
+## 🚀 Inicio Rápido (TL;DR)
+
+¿Quieres levantar el proyecto rápidamente? Sigue estos pasos:
+
+```bash
+# 1. Verificar que tienes Docker instalado
+docker --version
+
+# 2. Clonar/navegar al directorio del proyecto
+cd inventario_soporte
+
+# 3. (Opcional) Crear archivo .env personalizado
+cp .env.example .env
+
+# 4. Levantar todos los servicios
+docker compose up -d
+
+# 5. Verificar que esté funcionando
+docker compose ps
+
+# 6. Acceder a la aplicación
+# http://localhost/soporte
+```
+
+✅ **¿Todo funciona?** ¡Perfecto! Tu aplicación estará disponible en `http://localhost/soporte`
+
+❌ **¿Algo salió mal?** Revisa la [sección de solución de problemas](#solución-de-problemas) más abajo.
+
+---
+
 ## 📁 Estructura de Archivos Requerida
 
 Antes de comenzar, asegúrate de que tu proyecto tenga la siguiente estructura de archivos en el directorio raíz:
@@ -9,11 +39,13 @@ inventario_soporte/
 ├── docker-compose.yml          # ← Archivo principal de orquestación
 ├── Dockerfile.nodejs           # ← Dockerfile para la aplicación Node.js
 ├── Dockerfile.apache           # ← Dockerfile para el proxy Apache
-├── Dockerfile.mysql            # ← Dockerfile para MySQL (opcional)
-├── inventario.conf             # ← Configuración de Apache
+├── Dockerfile.mysql            # ← Dockerfile para MySQL
+├── soporte.conf                # ← Configuración de Apache
 ├── package.json                # ← Dependencias de Node.js
 ├── package-lock.json           # ← Lock file de dependencias
 ├── server.js                   # ← Archivo principal de la aplicación
+├── .env                        # ← Variables de entorno (se crea automáticamente)
+├── .env.example                # ← Ejemplo de configuración
 ├── public/                     # ← Archivos estáticos (CSS, JS, imágenes)
 │   ├── css/
 │   ├── js/
@@ -29,7 +61,7 @@ inventario_soporte/
 ### ⚠️ **Ubicación Crítica:**
 - **Todos los Dockerfiles** deben estar en la **raíz del proyecto**
 - **docker-compose.yml** debe estar en la **raíz del proyecto**
-- **inventario.conf** debe estar en la **raíz del proyecto**
+- **soporte.conf** debe estar en la **raíz del proyecto**
 - **src/database/db_soporte.sql** debe existir para la inicialización de MySQL
 
 ### 🔍 **Verificar estructura:**
@@ -42,68 +74,175 @@ ls -la
 # Dockerfile.nodejs
 # Dockerfile.apache
 # Dockerfile.mysql
-# inventario.conf
+# soporte.conf
+# .env.example
 # package.json
 # server.js
 # public/ (directorio)
 # src/ (directorio)
 ```
 
-## 🚀 Usar MySQL Dockerizado (opcional)
+## 🚀 Configuración de Variables de Entorno (.env)
 
-Para usuarios que no cuentan con una base de datos remota, se puede levantar MySQL en un contenedor. Asegúrate de tener el archivo `db_soporte.sql` para inicializar la base de datos.
+### ❓ **¿Es necesario el archivo .env?**
 
-### Paso 1: Ajustar docker-compose.yml
+**RESPUESTA**: **NO es estrictamente necesario**, pero es **MUY RECOMENDADO** para personalizar la configuración.
 
-Añadir el servicio MySQL:
+### 🔄 **¿Cómo funciona?**
 
-```yaml
-version: '3.8'
+1. **Sin .env**: El proyecto usará valores por defecto definidos en `docker-compose.yml`
+2. **Con .env**: Puedes personalizar cualquier variable según tus necesidades
+3. **El archivo .env se construye manualmente o copiando el ejemplo**
 
-services:
-  inventario-db:
-    image: mysql:5.7
-    container_name: inventario-mysql-db
-    environment:
-      MYSQL_ROOT_PASSWORD: tu_contraseña_root
-      MYSQL_DATABASE: inventario_soporte_test
-    ports:
-      - "3306:3306"
-    volumes:
-      - ./src/database/db_soporte.sql:/docker-entrypoint-initdb.d/db_soporte.sql
-    networks:
-      - inventario-network
-  
-  # Resto de servicios
-```
-
-### Paso 2: Inicializar Base de Datos
-
-El archivo `db_soporte.sql` se ejecutará automáticamente al levantar el contenedor de MySQL, creando la estructura de tablas necesaria.
-
-### ⚠️ Consideraciones:
-
-- **Persistencia de datos**: Ajusta los volúmenes para mantener datos entre reinicios
-- **Seguridad**: No expongas MySQL en producción sin una configuración adecuada 
-- **Entorno de pruebas**: Ideal para desarrollo o pruebas locales
-
-### Paso 3: Levantar servicios
+### 📝 **Crear archivo .env**
 
 ```bash
-docker compose up -d inventario-db  # Levantar MySQL
+# Opción 1: Copiar desde el ejemplo
+cp .env.example .env
 
-# Luego levantar el resto (Apache y Node.js)
+# Opción 2: Crear desde cero
+touch .env
+```
+
+### 📝 **Ejemplo de archivo .env**
+
+```env
+# ================================================
+# CONFIGURACIÓN DE LA BASE DE DATOS
+# ================================================
+
+# Para usar MySQL en contenedor Docker (por defecto)
+DB_HOST=inventario-db
+DB_USER=herwingxtech
+DB_PASSWORD=herwingx-dev
+DB_NAME=inventario_soporte
+DB_PORT=3306
+
+# Para usar MySQL remoto (descomenta y cambia arriba)
+# DB_HOST=192.168.0.140
+# DB_USER=herwingx
+# DB_PASSWORD=tu_contraseña_remota
+# DB_NAME=inventario_soporte
+# DB_PORT=3306
+
+# ================================================
+# CONFIGURACIÓN DE LA APLICACIÓN
+# ================================================
+APP_URL=http://localhost/soporte
+API_URL=http://localhost/soporte/api
+PORT=3000
+NODE_ENV=development
+
+# ================================================
+# CONFIGURACIÓN JWT
+# ================================================
+JWT_SECRET=KnLEgII2PGV1cxNy8aCFA1x4CP10mFwTt7GLSqjJ3X0lhWP4kf
+JWT_EXPIRE=24h
+
+# ================================================
+# CONFIGURACIÓN DE MYSQL DOCKER
+# ================================================
+MYSQL_ROOT_PASSWORD=herwingx-dev
+MYSQL_DATABASE=inventario_soporte
+MYSQL_USER=herwingxtech
+MYSQL_PASSWORD=herwingx-dev
+```
+
+## 🚀 MySQL con Docker (Recomendado)
+
+### 🌟 **Ventajas de usar MySQL Docker:**
+
+- ✅ **Fácil configuración**: No necesitas instalar MySQL en tu sistema
+- ✅ **Aislamiento**: La base de datos vive en su propio contenedor
+- ✅ **Persistencia**: Los datos se mantienen entre reinicios
+- ✅ **Portabilidad**: Funciona igual en cualquier sistema
+- ✅ **Desarrollo**: Ideal para equipos de desarrollo
+
+### 🔧 **Configuración automática**
+
+El proyecto **YA ESTÁ CONFIGURADO** para usar MySQL Docker por defecto:
+
+1. **Servicio MySQL**: Definido en `docker-compose.yml`
+2. **Inicialización automática**: Usa `src/database/db_soporte.sql`
+3. **Persistencia**: Datos guardados en volúmenes Docker
+4. **Health checks**: Verifica que MySQL esté listo
+
+### 🚀 **Levantar el sistema completo**
+
+```bash
+# Levantar todos los servicios (MySQL + App + Apache)
 docker compose up -d
+
+# Ver el estado de los contenedores
+docker compose ps
+
+# Ver logs de MySQL
+docker compose logs inventario-db
+
+# Ver logs de la aplicación
+docker compose logs inventario-app
 ```
 
-### Verificar
-Acceder a la base de datos usando:
+### 🔍 **Verificar MySQL Docker**
+
 ```bash
-# Conectar al contenedor y usar MySQL CLI
-docker compose exec inventario-db mysql -u root -p
+# Conectar al contenedor MySQL
+docker compose exec inventario-db mysql -u herwingxtech -p
+
+# Verificar base de datos
+mysql> SHOW DATABASES;
+mysql> USE inventario_soporte;
+mysql> SHOW TABLES;
+
+# Salir de MySQL
+mysql> exit
 ```
 
-Explore estar más configuraciones en la sección "Uso"
+### 🔄 **Cambiar a MySQL remoto**
+
+Si prefieres usar una base de datos remota:
+
+1. **Edita tu archivo .env**:
+```env
+DB_HOST=192.168.0.140
+DB_USER=tu_usuario_remoto
+DB_PASSWORD=tu_contraseña_remota
+DB_NAME=inventario_soporte
+DB_PORT=3306
+```
+
+2. **Comentar servicio MySQL** en `docker-compose.yml`:
+```yaml
+# inventario-db:
+#   build:
+#     context: .
+#     dockerfile: Dockerfile.mysql
+#   # ... resto del servicio
+```
+
+3. **Remover dependencia** en el servicio de app:
+```yaml
+# depends_on:
+#   - inventario-db
+```
+
+### 📊 **Persistencia de datos**
+
+Los datos de MySQL se guardan en volúmenes Docker:
+
+- `mysql_data`: Datos de la base de datos
+- `mysql_logs`: Logs de MySQL
+
+```bash
+# Ver volúmenes
+docker volume ls
+
+# Inspeccionar volumen de datos
+docker volume inspect inventario_soporte_mysql_data
+
+# Respaldar volúmenes
+docker run --rm -v inventario_soporte_mysql_data:/data -v $(pwd):/backup alpine tar czf /backup/mysql_backup.tar.gz /data
+```
 
 Este documento explica cómo configurar y ejecutar el sistema de inventario de soporte usando Docker y Docker Compose.
 
@@ -545,9 +684,10 @@ docker compose logs apache-proxy
 
 Una vez que los contenedores estén ejecutándose, puedes acceder a la aplicación en:
 
-- **URL principal**: `http://localhost/inventario`
-- **Con tu IP local**: `http://192.168.0.253/inventario` (reemplaza con tu IP)
-- **API**: `http://localhost/inventario/api`
+- **URL principal**: `http://localhost/soporte`
+- **Con tu IP local**: `http://192.168.0.253/soporte` (reemplaza con tu IP)
+- **API**: `http://localhost/soporte/api`
+- **Prueba de DB**: `http://localhost/soporte/db-test`
 
 ### Comandos útiles
 
@@ -610,6 +750,40 @@ sudo systemctl stop nginx
 **Solución**:
 - Verifica la sintaxis de `inventario.conf`
 - Revisa los logs: `docker compose logs apache-proxy`
+
+### Problema 5: Error "The 'variable' variable is not set" al iniciar Docker Compose
+
+**Síntoma**: Docker Compose muestra advertencias sobre variables no definidas, especialmente con variables que contienen símbolos como `$`.
+
+**Solución**:
+- Revisa tu archivo `.env` para variables que contengan el símbolo `$`
+- Escapa el símbolo `$` duplicándolo: `$$`
+- Ejemplo: `JWT_SECRET=password$123` → `JWT_SECRET=password$$123`
+
+### Problema 6: MySQL se reinicia continuamente con error de usuario root
+
+**Síntoma**: El contenedor MySQL se reinicia constantemente con error "MYSQL_USER cannot be 'root'".
+
+**Solución**:
+- No uses `root` como valor para `MYSQL_USER`
+- Usa un usuario regular como `herwingxtech` o `inventario_user`
+- Ejemplo en `.env`:
+  ```env
+  MYSQL_USER=herwingxtech
+  MYSQL_PASSWORD=tu_contraseña
+  DB_USER=herwingxtech
+  DB_PASSWORD=tu_contraseña
+  ```
+
+### Problema 7: MySQL tarda mucho en inicializar o falla el health check
+
+**Síntoma**: MySQL se reinicia o el health check falla constantemente.
+
+**Solución**:
+- Simplifica el Dockerfile de MySQL usando MySQL 8.0 en lugar de `latest`
+- Usa health checks más simples: `mysqladmin ping`
+- Elimina configuraciones complejas que pueden causar problemas
+- Espera más tiempo para la inicialización completa (puede tomar 2-3 minutos)
 
 ### Comandos de diagnóstico
 
