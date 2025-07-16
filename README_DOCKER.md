@@ -143,3 +143,28 @@ El sistema se compone de tres servicios principales orquestados por `docker-comp
         docker builder prune -a -f
         docker compose up -d --build
         ```
+## 🔧 Problemas Específicos de Docker vs Apache Local
+
+### RedirectMatch para /soporte y /soporte/
+
+**Problema**: En Docker, acceder a `localhost/soporte` (sin barra final) no funciona, pero `localhost/soporte/` (con barra final) sí funciona.
+
+**Solución**: Se añadió la directiva `RedirectMatch ^/soporte$ /soporte/` en el archivo `soporte.conf` para que Apache redirija automáticamente `/soporte` a `/soporte/`.
+
+**¿Por qué no era necesario en Apache local?**
+
+1. **Configuración automática**: Apache local (instalado directamente en el sistema) tiene configuraciones por defecto más flexibles que pueden manejar automáticamente las redirecciones de rutas sin barra final.
+
+2. **Módulos preinstalados**: Apache local viene con más módulos habilitados por defecto (como `mod_dir`) que manejan automáticamente este tipo de redirecciones.
+
+3. **Configuración del contenedor**: En Docker, empezamos con una imagen base de Ubuntu mínima y solo instalamos los módulos específicos que necesitamos, por lo que debemos ser más explícitos en las configuraciones.
+
+**Importante**: Después de modificar `soporte.conf`, es necesario reconstruir la imagen de Apache:
+
+```bash
+docker compose build apache-proxy
+docker compose up -d apache-proxy
+```
+
+Esto es necesario porque el archivo `soporte.conf` se copia durante la construcción de la imagen Docker, no se monta como un volumen.
+
