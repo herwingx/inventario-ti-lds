@@ -23,9 +23,14 @@ const { protect } = require('./src/middleware/auth.middleware'); // * Middleware
 const app = express();
 const port = process.env.PORT || 3000; // * Puerto del servidor (por defecto 3000 si no hay .env)
 
-// * Middleware para manejar el prefijo /soporte/ en producción
+// * Middleware para manejar el prefijo /soporte y /soporte/ en producción
 app.use((req, res, next) => {
-  // Si la URL comienza con /soporte/, la removemos para el procesamiento interno
+  // Si la URL comienza exactamente con /soporte (sin slash), redirigir a /soporte/
+  if (req.url === '/soporte') {
+    return res.redirect(301, '/soporte/');
+  }
+  
+  // Si la URL comienza con /soporte/, la procesamos removiendo el prefijo
   if (req.url.startsWith('/soporte/')) {
     req.url = req.url.replace('/soporte', '');
     // Si queda solo /, lo convertimos a /
@@ -134,9 +139,10 @@ app.use((err, req, res, next) => {
 });
 
 // ! Inicio del servidor
-app.listen(port, () => {
-  console.log(`Servidor escuchando en http://localhost:${port}`);
-  console.log(`Configurado para manejar prefijo /soporte/ en producción`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Servidor Node.js escuchando en el puerto ${port} dentro del contenedor.`);
+  console.log('El acceso externo debe ser a través del puerto 80 del host, manejado por Apache.');
+  console.log(`Configurado para manejar prefijo /soporte y /soporte/ en producción`);
   // * Pruebo la conexión al pool de la base de datos al arrancar
    pool.getConnection()
     .then(connection => {
