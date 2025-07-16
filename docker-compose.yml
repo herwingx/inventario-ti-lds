@@ -25,7 +25,11 @@ services:
       - mysql_logs:/var/log/mysql
     networks:
       - inventario-network
-    # Health check ya está configurado en el Dockerfile
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ===============================================
   # APLICACIÓN NODE.JS
@@ -75,6 +79,8 @@ services:
     
     networks:
       - inventario-network
+    ports:
+      - "3000:3000"
 
   apache-proxy:
     build:
