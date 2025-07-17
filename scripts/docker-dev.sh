@@ -228,7 +228,7 @@ case "$1" in
         check_docker
         if wait_for_db; then
             echo -e "${BLUE}👤 Creando usuario administrador...${NC}"
-            docker compose -p inventario-ti exec inventario-app node /scripts/seedAdmin.js
+            docker compose -p inventario-ti exec inventario-app node scripts/seedAdmin.js
         fi
         ;;
     
