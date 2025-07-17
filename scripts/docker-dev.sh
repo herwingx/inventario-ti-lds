@@ -44,6 +44,29 @@ check_docker() {
     fi
 }
 
+# Función para verificar si existe el archivo .env
+check_env() {
+    if [ ! -f ".env" ]; then
+        echo -e "${RED}❌ No se encontró el archivo .env${NC}"
+        echo ""
+        echo -e "${YELLOW}📋 Para configurar el proyecto por primera vez:${NC}"
+        echo -e "   ${GREEN}1.${NC} Copia el archivo de ejemplo:"
+        echo -e "      ${BLUE}cp .env.example .env${NC}"
+        echo ""
+        echo -e "   ${GREEN}2.${NC} Edita el archivo .env con tus configuraciones:"
+        echo -e "      ${BLUE}nano .env${NC} ${YELLOW}# o tu editor preferido${NC}"
+        echo ""
+        echo -e "   ${GREEN}3.${NC} Asegúrate de configurar:"
+        echo -e "      • ${YELLOW}APP_URL${NC} y ${YELLOW}API_URL${NC} con tu IP local"
+        echo -e "      • ${YELLOW}JWT_SECRET${NC} (genera uno nuevo)"
+        echo ""
+        echo -e "${BLUE}💡 Tip: Genera JWT_SECRET con:${NC}"
+        echo -e "   ${GREEN}node -e \"console.log(require('crypto').randomBytes(64).toString('hex'))\"${NC}"
+        echo ""
+        exit 1
+    fi
+}
+
 # Función para esperar a que la DB esté lista
 wait_for_db() {
     echo -e "${YELLOW}⏳ Esperando a que la base de datos esté lista...${NC}"
@@ -63,6 +86,7 @@ wait_for_db() {
 case "$1" in
     start)
         check_docker
+        check_env
         echo -e "${BLUE}🚀 Iniciando servicios...${NC}"
         docker compose -p inventario-ti up -d
         echo -e "${GREEN}✅ Servicios iniciados!${NC}"
@@ -76,6 +100,7 @@ case "$1" in
         ;;
     
     restart)
+        check_env
         echo -e "${BLUE}🔄 Reiniciando servicios...${NC}"
         docker compose -p inventario-ti down
         docker compose -p inventario-ti up -d
@@ -84,6 +109,7 @@ case "$1" in
     
     rebuild)
         check_docker
+        check_env
         echo -e "${BLUE}🔨 Reconstruyendo servicios...${NC}"
         docker compose -p inventario-ti down
         docker compose -p inventario-ti up -d --build
