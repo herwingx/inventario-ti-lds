@@ -1,0 +1,98 @@
+# Docker Compose para Inventario Soporte
+version: '3.8'
+
+services:
+  # ===============================================
+  # SERVICIO DE BASE DE DATOS MYSQL
+  # ===============================================
+  inventario-db:
+    image: mysql:8.0
+    container_name: inventario-mysql-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      # Persistencia de datos
+      - mysql_data:/var/lib/mysql
+      # Script de inicialización (ruta relativa desde docker/)
+      - ../src/database/db_soporte.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - inventario-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # ===============================================
+  # APLICACIÓN NODE.JS
+  # ===============================================
+  inventario-app:
+    build:
+      context: ..
+      dockerfile: docker/nodejs/Dockerfile
+    container_name: inventario-nodejs-app
+    restart: unless-stopped
+    environment:
+      # Configuración de base de datos
+      DB_HOST: ${DB_HOST}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_PORT: ${DB_PORT}
+      
+      # Configuración JWT
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRE: ${JWT_EXPIRE}
+      
+      # Configuración de la aplicación
+      APP_URL: ${APP_URL}
+      API_URL: ${API_URL}
+      PORT: ${PORT}
+      NODE_ENV: ${NODE_ENV}
+    depends_on:
+      inventario-db:
+        condition: service_healthy
+    networks:
+      - inventario-network
+    ports:
+      - "3000:3000"
+
+  # ===============================================
+  # SERVIDOR APACHE PROXY
+  # ===============================================
+  apache-proxy:
+    build:
+      context: ..
+      dockerfile: docker/apache/Dockerfile
+    container_name: inventario-apache-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - inventario-app
+    networks:
+      - inventario-network
+
+# ===============================================
+# REDES
+# ===============================================
+networks:
+  inventario-network:
+    driver: bridge
+    name: inventario-network
+
+# ===============================================
+# VOLÚMENES PARA PERSISTENCIA DE DATOS
+# ===============================================
+volumes:
+  mysql_data:
+    driver: local
+    name: inventario_mysql_data
