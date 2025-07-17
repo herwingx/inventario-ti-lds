@@ -1,99 +1,11 @@
-/* ! Archivo de estilos CSS personalizados
-   * Aquí agrego reglas que no cubre Tailwind o que necesito sobreescribir.
-   * Uso comentarios para recordar por qué agrego cada regla o ejemplo. */
-/* * public/css/style.css */
-/* * ... (tus estilos existentes) ... */
-
-/* * Clase para ocultar el header */
-.header-hidden {
-  display: none !important;
-  /* ! Usamos !important para asegurar que sobreescriba otras clases de display de Tailwind si es necesario */
-}
-
 #content-app {
   display: grid;
   min-height: 100dvh;
   grid-template-rows: auto 1fr auto;
 }
 
-/** Centrado global para todas las columnas de Grid.js */
-.gridjs-table td,
-.gridjs-table th {
-  text-align: center !important;
-}
-
 .js-hide {
   display: none !important;
-}
-
-/** Sidebar colapsado */
-.sidebar-collapsed {
-  width: 64px !important;
-}
-
-.sidebar-collapsed nav ul li a span.material-icons {
-  margin-right: 0 !important;
-  justify-content: center;
-}
-
-.sidebar-collapsed nav ul li a .sidebar-text {
-  display: none !important;
-}
-
-.sidebar-collapsed nav ul li a {
-  justify-content: center !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  width: 48px;
-  height: 48px;
-  margin: 0 auto;
-  border-radius: 9999px;
-  /** círculo */
-  display: flex !important;
-  align-items: center;
-}
-
-.sidebar-collapsed nav ul li a:hover {
-  background-color: #e0e7ff !important;
-  /** azul claro, igual que hover normal */
-}
-
-.sidebar-collapsed nav ul li {
-  display: flex;
-  justify-content: center;
-}
-
-.sidebar-collapsed .mt-auto {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-.sidebar-collapsed .flex.items-center.mb-2 {
-  justify-content: center !important;
-}
-
-.sidebar-collapsed #sidebar-avatar {
-  margin: 0 auto;
-}
-
-.sidebar-collapsed .sidebar-text {
-  display: none !important;
-}
-
-.sidebar-collapsed [data-action="logout"] {
-  justify-content: center !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  width: 48px;
-  height: 48px;
-  margin: 0 auto;
-  border-radius: 9999px;
-  display: flex !important;
-  align-items: center;
-}
-
-.sidebar-collapsed [data-action="logout"]:hover {
-  background-color: #e0e7ff !important;
 }
 
 @media (max-width: 767px) {
@@ -121,3 +33,120 @@
   padding: 0 !important;
   font-size: 1rem;
 }
+
+/**
+ * Estilos para campos de texto en mayúsculas
+ */
+
+ .uppercase-field {
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.uppercase-field::placeholder {
+  text-transform: none;
+  font-weight: normal;
+  letter-spacing: normal;
+}
+
+.uppercase-field:focus {
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Para campos que ya tienen datos cargados */
+.uppercase-field[value]:not([value=""]) {
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Estilos específicos para textareas */
+textarea.uppercase-field {
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+}
+
+textarea.uppercase-field::placeholder {
+  text-transform: none;
+  font-weight: normal;
+  letter-spacing: normal;
+  line-height: 1.4;
+}
+
+/* Estilo especial para campos de nombres y apellidos */
+#nombres.uppercase-field,
+#apellidos.uppercase-field {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* Estilo para campos de códigos/números de serie */
+#numero_serie.uppercase-field,
+#numero_empleado.uppercase-field {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* Estilo para campos de direcciones IP */
+#direccion_ip.uppercase-field {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Estilo para campo MAC Address */
+#mac_address.uppercase-field {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Estilos para textareas específicos */
+#otras_caracteristicas.uppercase-field,
+#comentario.uppercase-field,
+#descripcion.uppercase-field,
+#contenido.uppercase-field,
+#notas.uppercase-field {
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+} 
+
+	/* Personalización de botones SweetAlert2 para que coincidan con los formularios */
+  .swal2-confirm {
+    background-color: #13B497 !important;
+    /* btn-primary */
+    color: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-weight: 500;
+  }
+
+  .swal2-cancel {
+    background-color: #fff !important;
+    color: #B03636 !important;
+    /* btn-danger light */
+    border: 1px solid #B03636 !important;
+    box-shadow: none !important;
+    font-weight: 500;
+  }
+
+  .swal2-cancel:focus,
+  .swal2-confirm:focus {
+    box-shadow: 0 0 0 2px #13B49733 !important;
+  }
+
+  .swal2-confirm:hover {
+    background-color: #0e8670 !important;
+  }
+
+  .swal2-cancel:hover {
+    background-color: #B03636 !important;
+    color: #fff !important;
+  }
