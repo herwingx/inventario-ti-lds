@@ -40,6 +40,10 @@ if(direction == 'rtl')
 
 new dezSettings(dezSettingsOptions); 
 
+jQuery(window).on('resize',function(){
+	new dezSettings(dezSettingsOptions); 
+});
+
 var themeOptionArr = {
 			typography: '',
 			version: '',
