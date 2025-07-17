@@ -1,4 +1,4 @@
-# Docker Compose para Inventario Soporte
+# Docker Compose para Inventario Soporte - VERSION ROBUSTA
 
 services:
   # ===============================================
@@ -24,10 +24,10 @@ services:
       - soporte-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 120s
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
   # ===============================================
@@ -56,6 +56,11 @@ services:
       API_URL: ${API_URL}
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
+      
+      # Configuración de reconexión a DB
+      DB_RECONNECT: "true"
+      DB_MAX_RETRIES: "10"
+      DB_RETRY_DELAY: "5000"
     volumes:
       # Montar código fuente para desarrollo en vivo
       - ../:/app
@@ -68,6 +73,12 @@ services:
       - soporte-network
     ports:
       - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   # ===============================================
   # SERVIDOR APACHE PROXY
@@ -81,9 +92,16 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - inventario-app
+      inventario-app:
+        condition: service_healthy
     networks:
       - soporte-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 # ===============================================
 # REDES
