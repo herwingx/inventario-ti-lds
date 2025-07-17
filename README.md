@@ -25,6 +25,9 @@ chmod +x scripts/docker-dev.sh
 ./scripts/docker-dev.sh start
 ./scripts/docker-dev.sh seed
 
+# 🔥 MODO DESARROLLO (Recomendado para desarrollo activo)
+./scripts/docker-dev.sh dev  # Con recarga automática
+
 # 4. Acceder a la aplicación
 # http://TU_IP_LOCAL/soporte
 # Usuario: linea | Contraseña: digital
@@ -111,18 +114,56 @@ inventario_soporte/
 
 ## 🛠️ Desarrollo
 
+### **🔥 Desarrollo con Recarga Automática**
+
+El proyecto está optimizado para desarrollo rápido con **recarga automática**:
+
+```bash
+# Modo desarrollo (recomendado para desarrollo activo)
+./scripts/docker-dev.sh dev
+
+# ✅ Ventajas:
+# • Cambios instantáneos al editar código
+# • Nodemon detecta cambios y reinicia automáticamente
+# • Logs en vivo para debugging
+# • Sin necesidad de rebuild manual
+```
+
+### **📋 Cuándo usar cada comando:**
+
+| Comando | Uso | Recarga Automática |
+|---------|-----|-------------------|
+| `dev` | Desarrollo activo | ✅ Sí |
+| `start` | Desarrollo en background | ✅ Sí |
+| `restart` | Cambios de configuración | ✅ Sí |
+| `rebuild` | Cambios en package.json | ❌ No |
+
 ### **Comandos Principales**
 ```bash
 # Desarrollo con Docker (Recomendado)
-./scripts/docker-dev.sh start     # Iniciar servicios
-./scripts/docker-dev.sh logs      # Ver logs
-./scripts/docker-dev.sh rebuild   # Reconstruir después de cambios
+./scripts/docker-dev.sh dev       # 🔥 Modo desarrollo con recarga automática
+./scripts/docker-dev.sh start     # Iniciar servicios en background
+./scripts/docker-dev.sh logs      # Ver logs en tiempo real
+./scripts/docker-dev.sh restart   # Reiniciar servicios
+./scripts/docker-dev.sh rebuild   # Reconstruir después de cambios en dependencias
 ./scripts/docker-dev.sh stop      # Detener servicios
 
 # Desarrollo tradicional
 npm install                       # Instalar dependencias
 npm start                        # Iniciar servidor
 node seedAdmin.js                # Crear usuario admin
+```
+
+### **💡 Flujo de Desarrollo Típico**
+```bash
+# 1. Iniciar desarrollo
+./scripts/docker-dev.sh dev
+
+# 2. Editar código (server.js, src/*, public/*)
+# Los cambios se reflejan automáticamente
+
+# 3. Solo rebuild si cambias dependencias
+./scripts/docker-dev.sh rebuild
 ```
 
 ### **Variables de Entorno Principales**

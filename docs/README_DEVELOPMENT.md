@@ -42,6 +42,10 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 chmod +x scripts/docker-dev.sh
 ./scripts/docker-dev.sh start
 ./scripts/docker-dev.sh seed
+
+# 🔥 MODO DESARROLLO (Recomendado)
+# Para desarrollo activo con recarga automática:
+./scripts/docker-dev.sh dev
 ```
 
 ### **Extensiones VS Code Recomendadas**
@@ -226,17 +230,64 @@ const validarEmpresa = (req, res, next) => {
 
 ## 🔧 Flujo de Desarrollo
 
+### **🔥 Desarrollo con Recarga Automática (Recomendado)**
+
+El proyecto está configurado para desarrollo óptimo con **recarga automática**:
+
+```bash
+# 1. Crear rama para la funcionalidad
+git checkout -b feature/nueva-funcionalidad
+
+# 2. Iniciar en modo desarrollo
+./scripts/docker-dev.sh dev
+
+# 3. ¡Desarrollar! Los cambios se reflejan automáticamente
+# - Edita cualquier archivo .js
+# - Nodemon detecta cambios y reinicia automáticamente
+# - No necesitas rebuild ni restart manual
+```
+
+**✅ Ventajas del modo desarrollo:**
+- **Cambios instantáneos**: Edita código y ve resultados inmediatamente
+- **Sin rebuilds**: Los archivos se montan como volúmenes
+- **Logs en vivo**: Ve todos los logs en tiempo real
+- **Desarrollo rápido**: Ciclo de desarrollo ultra-rápido
+
+**🔧 Comandos de desarrollo:**
+```bash
+# Modo desarrollo (recomendado para desarrollo activo)
+./scripts/docker-dev.sh dev
+
+# Modo background (para desarrollo en segundo plano)
+./scripts/docker-dev.sh start
+
+# Ver logs en tiempo real
+./scripts/docker-dev.sh logs-app
+
+# Reiniciar solo si cambias dependencias
+./scripts/docker-dev.sh rebuild
+```
+
+### **📝 Cuándo usar cada comando:**
+
+| Comando | Cuándo usar | Recarga automática |
+|---------|-------------|-------------------|
+| `dev` | Desarrollo activo | ✅ Sí |
+| `start` | Desarrollo en background | ✅ Sí |
+| `restart` | Cambios de configuración | ✅ Sí |
+| `rebuild` | Cambios en package.json | ❌ No |
+
 ### **1. Crear Nueva Funcionalidad**
 ```bash
 # 1. Crear rama para la funcionalidad
 git checkout -b feature/nueva-funcionalidad
 
-# 2. Desarrollar usando Docker
-./scripts/docker-dev.sh start
-./scripts/docker-dev.sh logs-app  # Para ver logs
+# 2. Desarrollar usando modo dev
+./scripts/docker-dev.sh dev
 
 # 3. Hacer cambios y probar
-./scripts/docker-dev.sh rebuild   # Después de cambios
+# Los cambios se reflejan automáticamente
+# Solo usa rebuild si cambias dependencias
 ```
 
 ### **2. Agregar Nueva Entidad**

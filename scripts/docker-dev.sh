@@ -21,6 +21,7 @@ show_help() {
     echo ""
     echo "Comandos disponibles:"
     echo -e "  ${GREEN}start${NC}     - Iniciar todos los servicios"
+    echo -e "  ${GREEN}dev${NC}       - Modo desarrollo (con recarga automática)"
     echo -e "  ${GREEN}stop${NC}      - Detener todos los servicios"
     echo -e "  ${GREEN}restart${NC}   - Reiniciar todos los servicios"
     echo -e "  ${GREEN}rebuild${NC}   - Reconstruir e iniciar servicios"
@@ -91,6 +92,14 @@ case "$1" in
         docker compose -p inventario-ti up -d
         echo -e "${GREEN}✅ Servicios iniciados!${NC}"
         echo -e "${YELLOW}💡 Usa './scripts/docker-dev.sh seed' para crear el usuario admin${NC}"
+        ;;
+    
+    dev)
+        check_docker
+        check_env
+        echo -e "${BLUE}🚀 Iniciando servicios en modo desarrollo...${NC}"
+        echo -e "${YELLOW}📝 Los cambios en el código se reflejarán automáticamente${NC}"
+        docker compose -p inventario-ti up
         ;;
     
     stop)

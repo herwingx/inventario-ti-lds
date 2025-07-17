@@ -56,6 +56,11 @@ services:
       API_URL: ${API_URL}
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
+    volumes:
+      # Montar código fuente para desarrollo en vivo
+      - ../:/app
+      # Preservar node_modules del contenedor
+      - /app/node_modules
     depends_on:
       inventario-db:
         condition: service_healthy
