@@ -72,7 +72,7 @@ wait_for_db() {
     echo -e "${YELLOW}⏳ Esperando a que la base de datos esté lista...${NC}"
     timeout=60
     while [ $timeout -gt 0 ]; do
-        if docker compose -p inventario-ti exec soporte-mysql-db mysqladmin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD:-herwingx-dev}" --silent > /dev/null 2>&1; then
+        if docker compose -p inventario-ti exec inventario-db mysqladmin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD:-herwingx-dev}" --silent > /dev/null 2>&1; then
             echo -e "${GREEN}✅ Base de datos lista!${NC}"
             return 0
         fi
@@ -121,18 +121,18 @@ case "$1" in
         ;;
     
     logs-app)
-        docker compose -p inventario-ti logs -f soporte-nodejs-app
+        docker compose -p inventario-ti logs -f inventario-app
         ;;
     
     logs-db)
-        docker compose -p inventario-ti logs -f soporte-mysql-db
+        docker compose -p inventario-ti logs -f inventario-db
         ;;
     
     seed)
         check_docker
         if wait_for_db; then
             echo -e "${BLUE}👤 Creando usuario administrador...${NC}"
-            docker compose -p inventario-ti exec soporte-nodejs-app node seedAdmin.js
+            docker compose -p inventario-ti exec inventario-app node seedAdmin.js
         fi
         ;;
     
@@ -155,19 +155,19 @@ case "$1" in
         ;;
     
     shell-app)
-        docker compose -p inventario-ti exec soporte-nodejs-app sh
+        docker compose -p inventario-ti exec inventario-app sh
         ;;
     
     shell-db)
-        docker compose -p inventario-ti exec soporte-mysql-db bash
+        docker compose -p inventario-ti exec inventario-db bash
         ;;
     
     backup)
         echo -e "${BLUE}💾 Creando backup de la base de datos...${NC}"
         timestamp=$(date +%Y%m%d_%H%M%S)
         # Crear backup en el directorio raíz del proyecto
-        docker compose -p inventario-ti exec soporte-mysql-db mysqladmin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD:-herwingx-dev}" --silent
-        docker compose -p inventario-ti exec soporte-mysql-db mysqldump -u herwingxtech -p'herwingx-dev' inventario_soporte > "../backup_${timestamp}.sql"
+        docker compose -p inventario-ti exec inventario-db mysqladmin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD:-herwingx-dev}" --silent
+        docker compose -p inventario-ti exec inventario-db mysqldump -u herwingxtech -p'herwingx-dev' inventario_soporte > "../backup_${timestamp}.sql"
         echo -e "${GREEN}✅ Backup creado: backup_${timestamp}.sql${NC}"
         ;;
     
