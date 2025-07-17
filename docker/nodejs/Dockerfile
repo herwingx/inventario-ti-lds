@@ -15,8 +15,8 @@ WORKDIR /app
 # Copiar archivos de dependencias primero (para aprovechar cache de Docker)
 COPY package*.json ./
 
-# Instalar dependencias y curl para health check
-RUN npm ci --only=production && \
+# Instalar dependencias (incluyendo devDependencies para desarrollo) y curl para health check
+RUN npm ci && \
     npm cache clean --force && \
     apk add --no-cache curl
 
@@ -37,4 +37,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:3000/db-test || exit 1
 
 # Comando para iniciar la aplicación
-CMD ["node", "server.js"]
+# En desarrollo usa nodemon para reinicio automático
+CMD ["npm", "run", "dev"]
