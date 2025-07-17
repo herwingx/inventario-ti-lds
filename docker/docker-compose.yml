@@ -1,5 +1,4 @@
 # Docker Compose para Inventario Soporte
-version: '3.8'
 
 services:
   # ===============================================
@@ -7,7 +6,7 @@ services:
   # ===============================================
   inventario-db:
     image: mysql:8.0
-    container_name: inventario-mysql-db
+    container_name: soporte-mysql-db
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -22,7 +21,7 @@ services:
       # Script de inicialización (ruta relativa desde docker/)
       - ../src/database/db_soporte.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     networks:
-      - inventario-network
+      - soporte-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
@@ -38,7 +37,7 @@ services:
     build:
       context: ..
       dockerfile: docker/nodejs/Dockerfile
-    container_name: inventario-nodejs-app
+    container_name: soporte-nodejs-app
     restart: unless-stopped
     environment:
       # Configuración de base de datos
@@ -61,7 +60,7 @@ services:
       inventario-db:
         condition: service_healthy
     networks:
-      - inventario-network
+      - soporte-network
     ports:
       - "3000:3000"
 
@@ -72,22 +71,22 @@ services:
     build:
       context: ..
       dockerfile: docker/apache/Dockerfile
-    container_name: inventario-apache-proxy
+    container_name: soporte-apache-proxy
     restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
       - inventario-app
     networks:
-      - inventario-network
+      - soporte-network
 
 # ===============================================
 # REDES
 # ===============================================
 networks:
-  inventario-network:
+  soporte-network:
     driver: bridge
-    name: inventario-network
+    name: soporte-network
 
 # ===============================================
 # VOLÚMENES PARA PERSISTENCIA DE DATOS
@@ -95,4 +94,4 @@ networks:
 volumes:
   mysql_data:
     driver: local
-    name: inventario_mysql_data
+    name: soporte_mysql_data

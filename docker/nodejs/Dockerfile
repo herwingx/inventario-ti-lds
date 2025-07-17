@@ -15,9 +15,10 @@ WORKDIR /app
 # Copiar archivos de dependencias primero (para aprovechar cache de Docker)
 COPY package*.json ./
 
-# Instalar dependencias como root
+# Instalar dependencias y curl para health check
 RUN npm ci --only=production && \
-    npm cache clean --force
+    npm cache clean --force && \
+    apk add --no-cache curl
 
 # Copiar el código de la aplicación
 COPY . .
@@ -32,8 +33,8 @@ USER nodejs
 EXPOSE 3000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/db-test', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3000/db-test || exit 1
 
 # Comando para iniciar la aplicación
 CMD ["node", "server.js"]

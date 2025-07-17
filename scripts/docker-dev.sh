@@ -49,7 +49,7 @@ wait_for_db() {
     echo -e "${YELLOW}⏳ Esperando a que la base de datos esté lista...${NC}"
     timeout=60
     while [ $timeout -gt 0 ]; do
-        if docker compose exec inventario-db mysqladmin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD:-herwingx-dev}" --silent > /dev/null 2>&1; then
+        if docker compose -p inventario-ti exec soporte-mysql-db mysqladmin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD:-herwingx-dev}" --silent > /dev/null 2>&1; then
             echo -e "${GREEN}✅ Base de datos lista!${NC}"
             return 0
         fi
@@ -64,54 +64,54 @@ case "$1" in
     start)
         check_docker
         echo -e "${BLUE}🚀 Iniciando servicios...${NC}"
-        docker compose up -d
+        docker compose -p inventario-ti up -d
         echo -e "${GREEN}✅ Servicios iniciados!${NC}"
         echo -e "${YELLOW}💡 Usa './scripts/docker-dev.sh seed' para crear el usuario admin${NC}"
         ;;
     
     stop)
         echo -e "${BLUE}🛑 Deteniendo servicios...${NC}"
-        docker compose down
+        docker compose -p inventario-ti down
         echo -e "${GREEN}✅ Servicios detenidos!${NC}"
         ;;
     
     restart)
         echo -e "${BLUE}🔄 Reiniciando servicios...${NC}"
-        docker compose down
-        docker compose up -d
+        docker compose -p inventario-ti down
+        docker compose -p inventario-ti up -d
         echo -e "${GREEN}✅ Servicios reiniciados!${NC}"
         ;;
     
     rebuild)
         check_docker
         echo -e "${BLUE}🔨 Reconstruyendo servicios...${NC}"
-        docker compose down
-        docker compose up -d --build
+        docker compose -p inventario-ti down
+        docker compose -p inventario-ti up -d --build
         echo -e "${GREEN}✅ Servicios reconstruidos!${NC}"
         ;;
     
     logs)
-        docker compose logs -f
+        docker compose -p inventario-ti logs -f
         ;;
     
     logs-app)
-        docker compose logs -f inventario-app
+        docker compose -p inventario-ti logs -f soporte-nodejs-app
         ;;
     
     logs-db)
-        docker compose logs -f inventario-db
+        docker compose -p inventario-ti logs -f soporte-mysql-db
         ;;
     
     seed)
         check_docker
         if wait_for_db; then
             echo -e "${BLUE}👤 Creando usuario administrador...${NC}"
-            docker compose exec inventario-app node seedAdmin.js
+            docker compose -p inventario-ti exec soporte-nodejs-app node seedAdmin.js
         fi
         ;;
     
     status)
-        docker compose ps
+        docker compose -p inventario-ti ps
         ;;
     
     clean)
@@ -120,7 +120,7 @@ case "$1" in
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             echo -e "${BLUE}🧹 Limpiando todo...${NC}"
-            docker compose down -v
+            docker compose -p inventario-ti down -v
             docker system prune -f
             echo -e "${GREEN}✅ Limpieza completada!${NC}"
         else
@@ -129,19 +129,19 @@ case "$1" in
         ;;
     
     shell-app)
-        docker compose exec inventario-app sh
+        docker compose -p inventario-ti exec soporte-nodejs-app sh
         ;;
     
     shell-db)
-        docker compose exec inventario-db bash
+        docker compose -p inventario-ti exec soporte-mysql-db bash
         ;;
     
     backup)
         echo -e "${BLUE}💾 Creando backup de la base de datos...${NC}"
         timestamp=$(date +%Y%m%d_%H%M%S)
         # Crear backup en el directorio raíz del proyecto
-        docker compose exec inventario-db mysqladmin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD:-herwingx-dev}" --silent
-        docker compose exec inventario-db mysqldump -u herwingxtech -p'herwingx-dev' inventario_soporte > "../backup_${timestamp}.sql"
+        docker compose -p inventario-ti exec soporte-mysql-db mysqladmin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD:-herwingx-dev}" --silent
+        docker compose -p inventario-ti exec soporte-mysql-db mysqldump -u herwingxtech -p'herwingx-dev' inventario_soporte > "../backup_${timestamp}.sql"
         echo -e "${GREEN}✅ Backup creado: backup_${timestamp}.sql${NC}"
         ;;
     
