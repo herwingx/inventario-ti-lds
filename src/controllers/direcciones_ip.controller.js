@@ -34,12 +34,16 @@ const getAllDireccionesIp = async (req, res, next) => {
         di.fecha_registro,
         di.fecha_actualizacion,
         di.id_status,
-        st.nombre_status AS status_nombre
+        st.nombre_status AS status_nombre,
+        -- Verificar si tiene asignación activa
+        CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END AS asignacion_activa
       FROM direcciones_ip AS di
       LEFT JOIN sucursales AS s ON di.id_sucursal = s.id
       -- CAMBIO CLAVE: De JOIN a LEFT JOIN para incluir IPs sin sucursal/empresa
       LEFT JOIN empresas AS em ON s.id_empresa = em.id
       JOIN status AS st ON di.id_status = st.id
+      -- LEFT JOIN para verificar asignaciones activas
+      LEFT JOIN asignaciones AS a ON di.id = a.id_ip AND a.fecha_fin_asignacion IS NULL
     `;
     const direcciones = await query(sql);
     res.status(200).json(direcciones);
@@ -67,12 +71,16 @@ const getDireccionIpById = async (req, res, next) => {
         di.fecha_registro,
         di.fecha_actualizacion,
         di.id_status,
-        st.nombre_status AS status_nombre
+        st.nombre_status AS status_nombre,
+        -- Verificar si tiene asignación activa
+        CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END AS asignacion_activa
       FROM direcciones_ip AS di
       LEFT JOIN sucursales AS s ON di.id_sucursal = s.id
       -- Aseguramos que también aquí se use LEFT JOIN para empresas
       LEFT JOIN empresas AS em ON s.id_empresa = em.id
       JOIN status AS st ON di.id_status = st.id
+      -- LEFT JOIN para verificar asignaciones activas
+      LEFT JOIN asignaciones AS a ON di.id = a.id_ip AND a.fecha_fin_asignacion IS NULL
       WHERE di.id = ?
     `;
     const params = [id];
