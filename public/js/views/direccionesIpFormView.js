@@ -93,14 +93,14 @@ async function renderDireccionIpForm(ipToEdit = null) {
                           <div class="mb-3">
                               <label for="id_sucursal" class="form-label">Sucursal Asociada</label>
                               <select id="id_sucursal" name="id_sucursal" class="form-control select2">
-                                  <option value="">Ninguna (IP General/Corporativa)</option>
+                                  <option value="">NINGUNA (IP GENERAL/CORPORATIVA)</option>
                                   ${sucursalesCache.map(sucursal => `<option value="${sucursal.id}" ${isEditing && currentIpData.id_sucursal === sucursal.id ? 'selected' : ''}>${sucursal.nombre}</option>`).join('')}
                               </select>
                           </div>
                           <div class="mb-3">
                               <label for="id_status" class="form-label">Estado de la IP <span class="text-danger">*</span></label>
                               <select id="id_status" name="id_status" required class="form-control select2 ${isStatusDisabled ? 'bg-gray-200 cursor-not-allowed' : ''}" ${isStatusDisabled ? 'disabled' : ''}>
-                                  <option value="">Seleccione un estado...</option>
+                                  <option value="">SELECCIONE UN ESTADO...</option>
                                   ${statusesCache
                                     .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
                                     .map(status => `<option value="${status.id}" ${isEditing && currentIpData.id_status === status.id ? 'selected' : (!isEditing && status.id === 5 ? 'selected' : '')}>${status.nombre_status}</option>`)

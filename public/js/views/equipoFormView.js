@@ -87,7 +87,7 @@ async function renderEquipoForm(equipoToEdit = null) {
                             <div class="mb-3">
                                 <label for="id_sucursal_actual" class="form-label">Sucursal Actual <span class="text-danger">*</span></label>
                                 <select id="id_sucursal_actual" name="id_sucursal_actual" required class="form-control select2">
-                        <option value="">Seleccione una sucursal...</option>
+                        <option value="">SELECCIONE UNA SUCURSAL...</option>
                         ${sucursalesCache.map(sucursal => `<option value="${sucursal.id}" ${isEditing && currentEquipoData.id_sucursal_actual === sucursal.id ? 'selected' : ''}>${sucursal.nombre}</option>`).join('')}
                     </select>
                 </div>
@@ -124,7 +124,7 @@ async function renderEquipoForm(equipoToEdit = null) {
                             <div class="mb-3">
                                 <label for="id_tipo_equipo" class="form-label">Tipo de Equipo <span class="text-danger">*</span></label>
                                 <select id="id_tipo_equipo" name="id_tipo_equipo" required class="form-control select2">
-                                    <option value="">Seleccione un tipo...</option>
+                                    <option value="">SELECCIONE UN TIPO...</option>
                                     ${tiposEquipoCache.map(tipo => `<option value="${tipo.id}" ${isEditing && currentEquipoData.id_tipo_equipo === tipo.id ? 'selected' : ''}>${tipo.nombre_tipo}</option>`).join('')}
                                 </select>
                             </div>
@@ -135,7 +135,7 @@ async function renderEquipoForm(equipoToEdit = null) {
                             <div class="mb-3">
                                 <label for="id_status" class="form-label">Estado del Equipo <span class="text-danger">*</span></label>
                                 <select id="id_status" name="id_status" required class="form-control select2 ${isStatusDisabled ? 'bg-gray-200 cursor-not-allowed' : ''}" ${isStatusDisabled ? 'disabled' : ''}>
-                        <option value="">Seleccione un estado...</option>
+                        <option value="">SELECCIONE UN ESTADO...</option>
                         ${statusesCache
                           .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
                           .map(status => {

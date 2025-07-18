@@ -22,7 +22,7 @@ function renderLoginForm() {
                             <div class="row no-gutters">
                                 <div class="col-xl-12">
                                     <div class="auth-form">
-                                        <div class="d-flex justify-center text-center mb-3">
+                                        <div class="text-center mb-3">
                                             <a href="/soporte/">
                                                 <img src="http://erp.linea-digital.com/erp/images/icono2.png" alt="Logo principal">
                                             </a>

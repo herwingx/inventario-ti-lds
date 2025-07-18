@@ -35,6 +35,7 @@ import { showCuentaEmailDetails } from './views/cuentasEmailDetailsView.js';
 import { showMantenimientoDetails } from './views/mantenimientosDetailsView.js';
 import { showNotaDetails } from './views/notaDetailsView.js';
 import { loadDashboard } from './views/dashboardView.js';
+import { initSelectThemeHandlers } from './utils/selectTheme.js';
 //TODO: Crear e importar showCuentaEmailDetails
 //TODO: Crear e importar showMantenimientoDetails
 //TODO: Crear e importar showNotaDetails
@@ -192,6 +193,9 @@ window.loadAsignacionesListGlobal = loadAsignacionesList;
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente cargado. Inicia configuración de eventos.');
+    
+    // Inicializar manejadores de tema para selects
+    initSelectThemeHandlers();
 
     //* === Configurar Event Listeners para Navegación usando DELEGACIÓN DE EVENTOS ===
     appContainer.addEventListener('click', (event) => {

@@ -8,28 +8,8 @@
   display: none !important;
 }
 
-@media (max-width: 767px) {
-  #main-header .md\:hidden#sidebar-toggle {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    min-height: 48px;
-    border-radius: 12px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: none;
-    margin-right: 8px;
-  }
-
-  #main-header .md\:hidden#sidebar-toggle .material-icons {
-    font-size: 2rem;
-    line-height: 1;
-  }
-}
-
-.picker__select--month,.picker__select--year {
+.picker__select--month,
+.picker__select--year {
   padding: 0 !important;
   font-size: 1rem;
 }
@@ -38,27 +18,163 @@
  * Estilos para campos de texto en mayúsculas
  */
 
- .uppercase-field {
-  text-transform: uppercase;
+/* Estilos globales para todos los inputs, textareas y selects */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+textarea,
+select {
+  text-transform: uppercase !important;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem !important;
+  /* Tamaño consistente para todos */
+}
+
+/* Excepción para el formulario de login - sin mayúsculas */
+.authincation input[type="text"],
+.authincation input[type="password"] {
+  text-transform: none !important;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+/* Placeholders en mayúsculas con peso menor */
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="number"]::placeholder,
+input[type="tel"]::placeholder,
+input[type="url"]::placeholder,
+input[type="search"]::placeholder,
+textarea::placeholder {
+  text-transform: uppercase !important;
+  font-weight: 300;
+  letter-spacing: 0.3px;
+  font-size: 0.875rem !important;
+  /* Mismo tamaño para placeholders */
+}
+
+
+/* Estilos para selects - opciones y texto seleccionado */
+select option {
+  text-transform: uppercase !important;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
+/* Texto por defecto de selects (como "Seleccione un tipo...") */
+select:invalid {
+  font-weight: 300;
+  color: #6c757d;
+}
+
+/* Select con opción válida seleccionada - mismo estilo que inputs */
+select:valid {
+  font-weight: 500;
+  color: #495057;
+  /* Color del texto igual que inputs */
+}
+
+/* Asegurar que el texto seleccionado en selects tenga el mismo color que inputs */
+select:not(:invalid):not([value=""]) {
+  color: #495057 !important;
+  font-weight: 500 !important;
+}
+
+/* Para select2 - mantener consistencia visual */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  color: #495057 !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem !important;
+  /* Mismo tamaño que inputs */
+}
+
+/* Placeholder de select2 */
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+  color: #6c757d !important;
+  font-weight: 300 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.3px;
+  font-size: 0.875rem !important;
+  /* Mismo tamaño que inputs */
+}
+
+/* Asegurar que el contenedor select2 tenga la altura correcta */
+.select2-container--default .select2-selection--single {
+  height: calc(1.5em + 0.75rem + 2px) !important;
+  /* Altura igual a form-control */
+}
+
+/* Centrar verticalmente el texto en select2 */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: calc(1.5em + 0.75rem) !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
+/* Estilos para tema oscuro - enfoque más directo */
+
+/* Por defecto, todos los selects en tema oscuro tienen texto gris (placeholder) */
+[data-theme-version="dark"] select {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Cuando el select tiene una opción válida seleccionada, texto blanco */
+[data-theme-version="dark"] select.has-value {
+  color: #fff !important;
+}
+
+/* Select2 - por defecto gris */
+[data-theme-version="dark"] .select2-container--default .select2-selection--single .select2-selection__rendered {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Select2 - cuando tiene valor seleccionado, texto blanco */
+[data-theme-version="dark"] .select2-container.has-value .select2-selection--single .select2-selection__rendered {
+  color: #fff !important;
+}
+
+/* Placeholder específico de select2 siempre gris */
+[data-theme-version="dark"] .select2-container--default .select2-selection--single .select2-selection__placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.nav-header .brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+
+/* Clase específica para campos con mayúsculas (mantener compatibilidad) */
+.uppercase-field {
+  text-transform: uppercase !important;
   font-weight: 500;
   letter-spacing: 0.5px;
 }
 
 .uppercase-field::placeholder {
-  text-transform: none;
-  font-weight: normal;
-  letter-spacing: normal;
+  text-transform: uppercase !important;
+  font-weight: 300;
+  letter-spacing: 0.3px;
 }
 
 .uppercase-field:focus {
-  text-transform: uppercase;
+  text-transform: uppercase !important;
   font-weight: 500;
   letter-spacing: 0.5px;
 }
 
 /* Para campos que ya tienen datos cargados */
 .uppercase-field[value]:not([value=""]) {
-  text-transform: uppercase;
+  text-transform: uppercase !important;
   font-weight: 500;
   letter-spacing: 0.5px;
 }
@@ -78,75 +194,35 @@ textarea.uppercase-field::placeholder {
   line-height: 1.4;
 }
 
-/* Estilo especial para campos de nombres y apellidos */
-#nombres.uppercase-field,
-#apellidos.uppercase-field {
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
-/* Estilo para campos de códigos/números de serie */
-#numero_serie.uppercase-field,
-#numero_empleado.uppercase-field {
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-
-/* Estilo para campos de direcciones IP */
-#direccion_ip.uppercase-field {
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-/* Estilo para campo MAC Address */
-#mac_address.uppercase-field {
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-/* Estilos para textareas específicos */
-#otras_caracteristicas.uppercase-field,
-#comentario.uppercase-field,
-#descripcion.uppercase-field,
-#contenido.uppercase-field,
-#notas.uppercase-field {
+/* Personalización de botones SweetAlert2 para que coincidan con los formularios */
+.swal2-confirm {
+  background-color: #13B497 !important;
+  /* btn-primary */
+  color: #fff !important;
+  border: none !important;
+  box-shadow: none !important;
   font-weight: 500;
-  letter-spacing: 0.3px;
-  line-height: 1.5;
-} 
+}
 
-	/* Personalización de botones SweetAlert2 para que coincidan con los formularios */
-  .swal2-confirm {
-    background-color: #13B497 !important;
-    /* btn-primary */
-    color: #fff !important;
-    border: none !important;
-    box-shadow: none !important;
-    font-weight: 500;
-  }
+.swal2-cancel {
+  background-color: #fff !important;
+  color: #B03636 !important;
+  /* btn-danger light */
+  border: 1px solid #B03636 !important;
+  box-shadow: none !important;
+  font-weight: 500;
+}
 
-  .swal2-cancel {
-    background-color: #fff !important;
-    color: #B03636 !important;
-    /* btn-danger light */
-    border: 1px solid #B03636 !important;
-    box-shadow: none !important;
-    font-weight: 500;
-  }
+.swal2-cancel:focus,
+.swal2-confirm:focus {
+  box-shadow: 0 0 0 2px #13B49733 !important;
+}
 
-  .swal2-cancel:focus,
-  .swal2-confirm:focus {
-    box-shadow: 0 0 0 2px #13B49733 !important;
-  }
+.swal2-confirm:hover {
+  background-color: #0e8670 !important;
+}
 
-  .swal2-confirm:hover {
-    background-color: #0e8670 !important;
-  }
-
-  .swal2-cancel:hover {
-    background-color: #B03636 !important;
-    color: #fff !important;
-  }
+.swal2-cancel:hover {
+  background-color: #B03636 !important;
+  color: #fff !important;
+}
