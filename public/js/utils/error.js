@@ -1,61 +1,55 @@
 // public/js/utils/error.js
-//// * Módulo utilitario para manejar errores de manera consistente en toda la aplicación
+// * Módulo utilitario para manejar errores de manera consistente en toda la aplicación
 
 /**
-// * Muestra un error con diseño atractivo y opciones de acción
-// * @param {HTMLElement} container - Contenedor donde mostrar el error
-// * @param {string} title - Título del error
-// * @param {string} message - Mensaje detallado del error
-// * @param {Object} options - Opciones adicionales
-// * @param {string} options.action - Acción que falló (ej: 'cargar', 'guardar', 'eliminar')
-// * @param {string} options.resource - Recurso afectado (ej: 'asignaciones', 'empleados')
-// * @param {string} options.backRoute - Ruta para el botón "Volver"
-// * @param {Function} options.onRetry - Función para reintentar la acción
-// */
+ * Muestra un error con diseño atractivo y opciones de acción
+ * @param {HTMLElement} container - Contenedor donde mostrar el error
+ * @param {string} title - Título del error
+ * @param {string} message - Mensaje detallado del error
+ * @param {Object} options - Opciones adicionales
+ * @param {string} options.action - Acción que falló (ej: 'cargar', 'guardar', 'eliminar')
+ * @param {string} options.resource - Recurso afectado (ej: 'asignaciones', 'empleados')
+ * @param {string} options.backRoute - Ruta para el botón "Volver"
+ * @param {Function} options.onRetry - Función para reintentar la acción
+ */
 export function showError(container, title, message, options = {}) {
     const target = container || document.getElementById('content-area');
     const { action = 'procesar', resource = 'datos', backRoute, onRetry } = options;
-    
+
     target.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-12">
+        <div class="d-flex flex-column align-items-center justify-content-center py-5">
             <!-- Icono de error -->
-            <div class="mb-6">
-                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100">
-                    <svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                    </svg>
+            <div class="mb-4">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-danger bg-opacity-10" style="width: 64px; height: 64px;">
+                    <i class="fa fa-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
                 </div>
             </div>
             
             <!-- Título del error -->
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">${title}</h3>
+            <h3 class="h5 fw-semibold text-dark mb-2 text-center">${title}</h3>
             
             <!-- Mensaje del error -->
-            <p class="text-gray-600 text-center max-w-md mb-6">${message}</p>
+            <p class="text-muted text-center mb-4" style="max-width: 400px;">${message}</p>
             
             <!-- Botones de acción -->
-            <div class="flex flex-col sm:flex-row gap-3">
+            <div class="d-flex flex-column flex-sm-row gap-2">
                 ${onRetry ? `
-                    <button onclick="window.retryAction()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
-                        <svg class="inline w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        Reintentar
+                    <button onclick="window.retryAction()" class="btn btn-primary btn-sm">
+                        <i class="fa fa-refresh me-2"></i>
+                        REINTENTAR
                     </button>
                 ` : ''}
                 
-                ${backRoute ? `
-                    <button onclick="window.navigateTo('${backRoute}')" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
-                        <svg class="inline w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                        </svg>
-                        Volver
+                <!-- ${backRoute ? `
+                    <button onclick="window.navigateTo('${backRoute}')" class="btn btn-outline-danger btn-sm">
+                        <i class="fa fa-arrow-left me-2"></i>
+                        VOLVER
                     </button>
-                ` : ''}
+                ` : ''} -->
             </div>
         </div>
     `;
-    
+
     // Hacer la función de retry disponible globalmente si existe
     if (onRetry) {
         window.retryAction = onRetry;
@@ -112,26 +106,55 @@ export function showDetailsError(resource, id, message, backRoute = null, onRetr
 }
 
 /**
-// * Muestra un error simple sin botones de acción
-// * @param {HTMLElement} container - Contenedor donde mostrar el error
-// * @param {string} message - Mensaje del error
-// */
+ * Muestra un error simple sin botones de acción
+ * @param {HTMLElement} container - Contenedor donde mostrar el error
+ * @param {string} message - Mensaje del error
+ */
 export function showSimpleError(container, message) {
     const target = container || document.getElementById('content-area');
     target.innerHTML = `
-        <div class="flex items-center justify-center py-8">
-            <div class="bg-red-50 border border-red-200 rounded-md p-4 max-w-md">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-red-700">${message}</p>
-                    </div>
+        <div class="d-flex align-items-center justify-content-center py-4">
+            <div class="alert alert-danger d-flex align-items-center" role="alert" style="max-width: 500px;">
+                <i class="fa fa-exclamation-triangle me-3"></i>
+                <div>${message}</div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Muestra un mensaje cuando no hay datos en una tabla
+ * @param {HTMLElement} container - Contenedor donde mostrar el mensaje
+ * @param {string} resource - Recurso que está vacío (ej: 'equipos', 'empleados')
+ * @param {string} createRoute - Ruta para crear nuevo elemento (opcional)
+ */
+export function showEmptyState(container, resource, createRoute = null) {
+    const target = container || document.getElementById('content-area');
+    target.innerHTML = `
+        <div class="d-flex flex-column align-items-center justify-content-center py-5">
+            <!-- Icono de estado vacío -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-light" style="width: 80px; height: 80px;">
+                    <i class="fa fa-inbox text-muted" style="font-size: 2.5rem;"></i>
                 </div>
             </div>
+            
+            <!-- Título -->
+            <h4 class="h5 fw-semibold text-dark mb-2 text-center">NO HAY ${resource.toUpperCase()} REGISTRADOS</h4>
+            
+            <!-- Mensaje -->
+            <p class="text-muted text-center mb-4" style="max-width: 400px;">
+                AÚN NO SE HAN REGISTRADO ${resource.toUpperCase()} EN EL SISTEMA. 
+                ${createRoute ? `PUEDES COMENZAR CREANDO EL PRIMER ${resource.slice(0, -1).toUpperCase()}.` : ''}
+            </p>
+            
+            <!-- Botón de acción -->
+            ${createRoute ? `
+                <button onclick="window.navigateTo('${createRoute}')" class="btn btn-primary btn-sm">
+                    <i class="fa fa-plus me-2"></i>
+                    CREAR ${resource.slice(0, -1).toUpperCase()}
+                </button>
+            ` : ''}
         </div>
     `;
 } 

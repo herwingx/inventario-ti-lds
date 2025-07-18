@@ -55,7 +55,7 @@ async function renderNotaForm(notaToEdit = null) {
                             <div class="mb-3">
                                 <label for="id_empleado" class="form-label">Empleado Relacionado</label>
                                 <select id="id_empleado" name="id_empleado" class="form-control select2">
-                                    <option value="">Sin asignar</option>
+                                    <option value="">SIN ASIGNAR</option>
                                     ${empleadosCache.map(emp => `<option value="${emp.id}" ${isEditing && currentNotaData.id_empleado === emp.id ? 'selected' : ''}>${emp.nombres} ${emp.apellidos} (ID: ${emp.id})</option>`).join('')}
                                 </select>
                             </div>
@@ -66,7 +66,7 @@ async function renderNotaForm(notaToEdit = null) {
                             <div class="mb-3">
                                 <label for="id_status" class="form-label">Estado <span class="text-danger">*</span></label>
                                 <select id="id_status" name="id_status" required class="form-control select2">
-                                    <option value="">Seleccione un estado...</option>
+                                    <option value="">SELECCIONE UN ESTADO...</option>
                                     ${statusesCache
                                       .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
                                       .map(status => `<option value="${status.id}" ${isEditing && currentNotaData.id_status === status.id ? 'selected' : (!isEditing && status.id === 1 ? 'selected' : '')}>${status.nombre_status}</option>`)

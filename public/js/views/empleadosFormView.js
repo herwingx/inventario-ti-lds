@@ -132,21 +132,21 @@ async function renderEmpleadoForm(empleadoToEdit = null) {
                                 <div class="col-md-4 mb-3">
                                     <label for="id_sucursal" class="form-label">Sucursal Asignada</label>
                                     <select id="id_sucursal" name="id_sucursal" class="form-control select2">
-                            <option value="">Seleccione sucursal (Opcional)</option>
+                            <option value="">SELECCIONE SUCURSAL (OPCIONAL)</option>
                             ${sucursalesCache.map(sucursal => `<option value="${sucursal.id}" ${isEditing && currentEmpleadoData.id_sucursal === sucursal.id ? 'selected' : ''}>${sucursal.nombre}</option>`).join('')}
                         </select>
                     </div>
                                 <div class="col-md-4 mb-3">
                                     <label for="id_area" class="form-label">Área Asignada</label>
                                     <select id="id_area" name="id_area" class="form-control select2">
-                            <option value="">Seleccione área (Opcional)</option>
+                            <option value="">SELECCIONE ÁREA (OPCIONAL)</option>
                             ${areasCache.map(area => `<option value="${area.id}" ${isEditing && currentEmpleadoData.id_area === area.id ? 'selected' : ''}>${area.nombre} (Suc: ${area.nombre_empresa})</option>`).join('')}
                         </select>
                     </div>
                                 <div class="col-md-4 mb-3">
                                     <label for="id_status" class="form-label">Estado <span class="text-danger">*</span></label>
                                     <select id="id_status" name="id_status" required class="form-control select2">
-                            <option value="">Seleccione un estado...</option>
+                            <option value="">SELECCIONE UN ESTADO...</option>
                             ${statusesCache
                               .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
                               .map(status => `<option value="${status.id}" ${isEditing && currentEmpleadoData.id_status === status.id ? 'selected' : (!isEditing && status.id === 1 ? 'selected' : '')}>${status.nombre_status}</option>`)
