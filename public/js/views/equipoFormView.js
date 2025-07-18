@@ -77,7 +77,20 @@ async function renderEquipoForm(equipoToEdit = null) {
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="marca" class="form-label">Marca</label>
-                                    <input type="text" id="marca" name="marca" class="form-control input-default uppercase-field" placeholder="Ej: DELL" value="${isEditing && currentEquipoData.marca ? currentEquipoData.marca : ''}">
+                                    <select id="marca" name="marca" class="form-control select2">
+                                        <option value="">SELECCIONE UNA MARCA...</option>
+                                        <option value="DELL" ${isEditing && currentEquipoData.marca === 'DELL' ? 'selected' : ''}>DELL</option>
+                                        <option value="HP" ${isEditing && currentEquipoData.marca === 'HP' ? 'selected' : ''}>HP</option>
+                                        <option value="LENOVO" ${isEditing && currentEquipoData.marca === 'LENOVO' ? 'selected' : ''}>LENOVO</option>
+                                        <option value="ASUS" ${isEditing && currentEquipoData.marca === 'ASUS' ? 'selected' : ''}>ASUS</option>
+                                        <option value="ACER" ${isEditing && currentEquipoData.marca === 'ACER' ? 'selected' : ''}>ACER</option>
+                                        <option value="APPLE" ${isEditing && currentEquipoData.marca === 'APPLE' ? 'selected' : ''}>APPLE</option>
+                                        <option value="MSI" ${isEditing && currentEquipoData.marca === 'MSI' ? 'selected' : ''}>MSI</option>
+                                        <option value="SAMSUNG" ${isEditing && currentEquipoData.marca === 'SAMSUNG' ? 'selected' : ''}>SAMSUNG</option>
+                                        <option value="LG" ${isEditing && currentEquipoData.marca === 'LG' ? 'selected' : ''}>LG</option>
+                                        <option value="OTRO" ${isEditing && currentEquipoData.marca && !['DELL', 'HP', 'LENOVO', 'ASUS', 'ACER', 'APPLE', 'MSI', 'SAMSUNG', 'LG'].includes(currentEquipoData.marca) ? 'selected' : ''}>OTRO</option>
+                                    </select>
+                                    <input type="text" id="marca_otro" name="marca_otro" class="form-control input-default uppercase-field mt-2" placeholder="ESPECIFIQUE LA MARCA" style="display: none;" value="${isEditing && currentEquipoData.marca && !['DELL', 'HP', 'LENOVO', 'ASUS', 'ACER', 'APPLE', 'MSI', 'SAMSUNG', 'LG'].includes(currentEquipoData.marca) ? currentEquipoData.marca : ''}">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="modelo" class="form-label">Modelo</label>
@@ -98,17 +111,64 @@ async function renderEquipoForm(equipoToEdit = null) {
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="ram" class="form-label">RAM</label>
-                                    <input type="text" id="ram" name="ram" class="form-control input-default uppercase-field" placeholder="Ej: 16GB DDR4" value="${isEditing && currentEquipoData.ram ? currentEquipoData.ram : ''}">
+                                    <select id="ram" name="ram" class="form-control select2">
+                                        <option value="">SELECCIONE CANTIDAD DE RAM...</option>
+                                        <option value="4GB DDR3" ${isEditing && currentEquipoData.ram === '4GB DDR3' ? 'selected' : ''}>4GB DDR3</option>
+                                        <option value="4GB DDR4" ${isEditing && currentEquipoData.ram === '4GB DDR4' ? 'selected' : ''}>4GB DDR4</option>
+                                        <option value="8GB DDR3" ${isEditing && currentEquipoData.ram === '8GB DDR3' ? 'selected' : ''}>8GB DDR3</option>
+                                        <option value="8GB DDR4" ${isEditing && currentEquipoData.ram === '8GB DDR4' ? 'selected' : ''}>8GB DDR4</option>
+                                        <option value="16GB DDR3" ${isEditing && currentEquipoData.ram === '16GB DDR3' ? 'selected' : ''}>16GB DDR3</option>
+                                        <option value="16GB DDR4" ${isEditing && currentEquipoData.ram === '16GB DDR4' ? 'selected' : ''}>16GB DDR4</option>
+                                        <option value="32GB DDR4" ${isEditing && currentEquipoData.ram === '32GB DDR4' ? 'selected' : ''}>32GB DDR4</option>
+                                        <option value="64GB DDR4" ${isEditing && currentEquipoData.ram === '64GB DDR4' ? 'selected' : ''}>64GB DDR4</option>
+                                        <option value="8GB DDR5" ${isEditing && currentEquipoData.ram === '8GB DDR5' ? 'selected' : ''}>8GB DDR5</option>
+                                        <option value="16GB DDR5" ${isEditing && currentEquipoData.ram === '16GB DDR5' ? 'selected' : ''}>16GB DDR5</option>
+                                        <option value="32GB DDR5" ${isEditing && currentEquipoData.ram === '32GB DDR5' ? 'selected' : ''}>32GB DDR5</option>
+                                        <option value="OTRO" ${isEditing && currentEquipoData.ram && !['4GB DDR3', '4GB DDR4', '8GB DDR3', '8GB DDR4', '16GB DDR3', '16GB DDR4', '32GB DDR4', '64GB DDR4', '8GB DDR5', '16GB DDR5', '32GB DDR5'].includes(currentEquipoData.ram) ? 'selected' : ''}>OTRO</option>
+                                    </select>
+                                    <input type="text" id="ram_otro" name="ram_otro" class="form-control input-default uppercase-field mt-2" placeholder="ESPECIFIQUE LA RAM" style="display: none;" value="${isEditing && currentEquipoData.ram && !['4GB DDR3', '4GB DDR4', '8GB DDR3', '8GB DDR4', '16GB DDR3', '16GB DDR4', '32GB DDR4', '64GB DDR4', '8GB DDR5', '16GB DDR5', '32GB DDR5'].includes(currentEquipoData.ram) ? currentEquipoData.ram : ''}">
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="disco_duro" class="form-label">Disco Duro</label>
-                                    <input type="text" id="disco_duro" name="disco_duro" class="form-control input-default uppercase-field" placeholder="Ej: 512GB SSD" value="${isEditing && currentEquipoData.disco_duro ? currentEquipoData.disco_duro : ''}">
+                                    <select id="disco_duro" name="disco_duro" class="form-control select2">
+                                        <option value="">SELECCIONE TIPO DE DISCO...</option>
+                                        <option value="120GB SSD" ${isEditing && currentEquipoData.disco_duro === '120GB SSD' ? 'selected' : ''}>120GB SSD</option>
+                                        <option value="240GB SSD" ${isEditing && currentEquipoData.disco_duro === '240GB SSD' ? 'selected' : ''}>240GB SSD</option>
+                                        <option value="256GB SSD" ${isEditing && currentEquipoData.disco_duro === '256GB SSD' ? 'selected' : ''}>256GB SSD</option>
+                                        <option value="480GB SSD" ${isEditing && currentEquipoData.disco_duro === '480GB SSD' ? 'selected' : ''}>480GB SSD</option>
+                                        <option value="512GB SSD" ${isEditing && currentEquipoData.disco_duro === '512GB SSD' ? 'selected' : ''}>512GB SSD</option>
+                                        <option value="1TB SSD" ${isEditing && currentEquipoData.disco_duro === '1TB SSD' ? 'selected' : ''}>1TB SSD</option>
+                                        <option value="2TB SSD" ${isEditing && currentEquipoData.disco_duro === '2TB SSD' ? 'selected' : ''}>2TB SSD</option>
+                                        <option value="500GB HDD" ${isEditing && currentEquipoData.disco_duro === '500GB HDD' ? 'selected' : ''}>500GB HDD</option>
+                                        <option value="1TB HDD" ${isEditing && currentEquipoData.disco_duro === '1TB HDD' ? 'selected' : ''}>1TB HDD</option>
+                                        <option value="2TB HDD" ${isEditing && currentEquipoData.disco_duro === '2TB HDD' ? 'selected' : ''}>2TB HDD</option>
+                                        <option value="4TB HDD" ${isEditing && currentEquipoData.disco_duro === '4TB HDD' ? 'selected' : ''}>4TB HDD</option>
+                                        <option value="OTRO" ${isEditing && currentEquipoData.disco_duro && !['120GB SSD', '240GB SSD', '256GB SSD', '480GB SSD', '512GB SSD', '1TB SSD', '2TB SSD', '500GB HDD', '1TB HDD', '2TB HDD', '4TB HDD'].includes(currentEquipoData.disco_duro) ? 'selected' : ''}>OTRO</option>
+                                    </select>
+                                    <input type="text" id="disco_duro_otro" name="disco_duro_otro" class="form-control input-default uppercase-field mt-2" placeholder="ESPECIFIQUE EL DISCO DURO" style="display: none;" value="${isEditing && currentEquipoData.disco_duro && !['120GB SSD', '240GB SSD', '256GB SSD', '480GB SSD', '512GB SSD', '1TB SSD', '2TB SSD', '500GB HDD', '1TB HDD', '2TB HDD', '4TB HDD'].includes(currentEquipoData.disco_duro) ? currentEquipoData.disco_duro : ''}">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="sistema_operativo" class="form-label">Sistema Operativo</label>
-                                    <input type="text" id="sistema_operativo" name="sistema_operativo" class="form-control input-default uppercase-field" placeholder="Ej: WINDOWS 10 PRO" value="${isEditing && currentEquipoData.sistema_operativo ? currentEquipoData.sistema_operativo : ''}">
+                                    <select id="sistema_operativo" name="sistema_operativo" class="form-control select2">
+                                        <option value="">SELECCIONE SISTEMA OPERATIVO...</option>
+                                        <option value="WINDOWS 10 HOME" ${isEditing && currentEquipoData.sistema_operativo === 'WINDOWS 10 HOME' ? 'selected' : ''}>WINDOWS 10 HOME</option>
+                                        <option value="WINDOWS 10 PRO" ${isEditing && currentEquipoData.sistema_operativo === 'WINDOWS 10 PRO' ? 'selected' : ''}>WINDOWS 10 PRO</option>
+                                        <option value="WINDOWS 11 HOME" ${isEditing && currentEquipoData.sistema_operativo === 'WINDOWS 11 HOME' ? 'selected' : ''}>WINDOWS 11 HOME</option>
+                                        <option value="WINDOWS 11 PRO" ${isEditing && currentEquipoData.sistema_operativo === 'WINDOWS 11 PRO' ? 'selected' : ''}>WINDOWS 11 PRO</option>
+                                        <option value="WINDOWS SERVER 2019" ${isEditing && currentEquipoData.sistema_operativo === 'WINDOWS SERVER 2019' ? 'selected' : ''}>WINDOWS SERVER 2019</option>
+                                        <option value="WINDOWS SERVER 2022" ${isEditing && currentEquipoData.sistema_operativo === 'WINDOWS SERVER 2022' ? 'selected' : ''}>WINDOWS SERVER 2022</option>
+                                        <option value="UBUNTU 20.04 LTS" ${isEditing && currentEquipoData.sistema_operativo === 'UBUNTU 20.04 LTS' ? 'selected' : ''}>UBUNTU 20.04 LTS</option>
+                                        <option value="UBUNTU 22.04 LTS" ${isEditing && currentEquipoData.sistema_operativo === 'UBUNTU 22.04 LTS' ? 'selected' : ''}>UBUNTU 22.04 LTS</option>
+                                        <option value="CENTOS 7" ${isEditing && currentEquipoData.sistema_operativo === 'CENTOS 7' ? 'selected' : ''}>CENTOS 7</option>
+                                        <option value="CENTOS 8" ${isEditing && currentEquipoData.sistema_operativo === 'CENTOS 8' ? 'selected' : ''}>CENTOS 8</option>
+                                        <option value="MACOS MONTEREY" ${isEditing && currentEquipoData.sistema_operativo === 'MACOS MONTEREY' ? 'selected' : ''}>MACOS MONTEREY</option>
+                                        <option value="MACOS VENTURA" ${isEditing && currentEquipoData.sistema_operativo === 'MACOS VENTURA' ? 'selected' : ''}>MACOS VENTURA</option>
+                                        <option value="SIN SO" ${isEditing && currentEquipoData.sistema_operativo === 'SIN SO' ? 'selected' : ''}>SIN SO</option>
+                                        <option value="OTRO" ${isEditing && currentEquipoData.sistema_operativo && !['WINDOWS 10 HOME', 'WINDOWS 10 PRO', 'WINDOWS 11 HOME', 'WINDOWS 11 PRO', 'WINDOWS SERVER 2019', 'WINDOWS SERVER 2022', 'UBUNTU 20.04 LTS', 'UBUNTU 22.04 LTS', 'CENTOS 7', 'CENTOS 8', 'MACOS MONTEREY', 'MACOS VENTURA', 'SIN SO'].includes(currentEquipoData.sistema_operativo) ? 'selected' : ''}>OTRO</option>
+                                    </select>
+                                    <input type="text" id="sistema_operativo_otro" name="sistema_operativo_otro" class="form-control input-default uppercase-field mt-2" placeholder="ESPECIFIQUE EL SISTEMA OPERATIVO" style="display: none;" value="${isEditing && currentEquipoData.sistema_operativo && !['WINDOWS 10 HOME', 'WINDOWS 10 PRO', 'WINDOWS 11 HOME', 'WINDOWS 11 PRO', 'WINDOWS SERVER 2019', 'WINDOWS SERVER 2022', 'UBUNTU 20.04 LTS', 'UBUNTU 22.04 LTS', 'CENTOS 7', 'CENTOS 8', 'MACOS MONTEREY', 'MACOS VENTURA', 'SIN SO'].includes(currentEquipoData.sistema_operativo) ? currentEquipoData.sistema_operativo : ''}">
                                 </div>
                             </div>
                             <div class="row">
@@ -137,20 +197,20 @@ async function renderEquipoForm(equipoToEdit = null) {
                                 <select id="id_status" name="id_status" required class="form-control select2 ${isStatusDisabled ? 'bg-gray-200 cursor-not-allowed' : ''}" ${isStatusDisabled ? 'disabled' : ''}>
                         <option value="">SELECCIONE UN ESTADO...</option>
                         ${statusesCache
-                          .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
-                          .map(status => {
-                            const isAutomaticStatus = [STATUS_ASIGNADO_ID, STATUS_EN_MANTENIMIENTO_ID].includes(status.id);
-                            const isCurrentStatus = isEditing && currentEquipoData.id_status === status.id;
-                            if (isStatusDisabled) {
-                              return isCurrentStatus ? `<option value="${status.id}" selected>${status.nombre_status}</option>` : '';
-                            } else {
-                              if (!isAutomaticStatus || isCurrentStatus) {
-                                return `<option value="${status.id}" ${isCurrentStatus ? 'selected' : (!isEditing && status.nombre_status === 'DISPONIBLE' ? 'selected' : '')}>${status.nombre_status}</option>`;
-                              }
-                              return '';
-                            }
-                          })
-                          .join('')}
+                .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
+                .map(status => {
+                    const isAutomaticStatus = [STATUS_ASIGNADO_ID, STATUS_EN_MANTENIMIENTO_ID].includes(status.id);
+                    const isCurrentStatus = isEditing && currentEquipoData.id_status === status.id;
+                    if (isStatusDisabled) {
+                        return isCurrentStatus ? `<option value="${status.id}" selected>${status.nombre_status}</option>` : '';
+                    } else {
+                        if (!isAutomaticStatus || isCurrentStatus) {
+                            return `<option value="${status.id}" ${isCurrentStatus ? 'selected' : (!isEditing && status.nombre_status === 'DISPONIBLE' ? 'selected' : '')}>${status.nombre_status}</option>`;
+                        }
+                        return '';
+                    }
+                })
+                .join('')}
                     </select>
                     ${isStatusDisabled ? `<p class="mt-2 text-xs text-gray-500">${statusHelpText}</p>` : ''}
                 </div>
@@ -174,12 +234,47 @@ async function renderEquipoForm(equipoToEdit = null) {
             $('#id_tipo_equipo').select2({ width: '100%' });
             $('#id_sucursal_actual').select2({ width: '100%' });
             $('#id_status').select2({ width: '100%' });
+            $('#marca').select2({ width: '100%' });
+            $('#ram').select2({ width: '100%' });
+            $('#disco_duro').select2({ width: '100%' });
+            $('#sistema_operativo').select2({ width: '100%' });
         }
+
+        // Lógica para mostrar/ocultar campos "OTRO"
+        function setupOtherFieldLogic(selectId, otherFieldId) {
+            const selectElement = document.getElementById(selectId);
+            const otherField = document.getElementById(otherFieldId);
+
+            function toggleOtherField() {
+                if (selectElement.value === 'OTRO') {
+                    otherField.style.display = 'block';
+                    otherField.required = true;
+                } else {
+                    otherField.style.display = 'none';
+                    otherField.required = false;
+                    otherField.value = '';
+                }
+            }
+
+            // Configurar el estado inicial
+            toggleOtherField();
+
+            // Escuchar cambios
+            selectElement.addEventListener('change', toggleOtherField);
+        }
+
+        // Configurar la lógica para todos los campos con "OTRO"
+        setupOtherFieldLogic('marca', 'marca_otro');
+        setupOtherFieldLogic('ram', 'ram_otro');
+        setupOtherFieldLogic('disco_duro', 'disco_duro_otro');
+        setupOtherFieldLogic('sistema_operativo', 'sistema_operativo_otro');
+
+
 
         // Inicializar Pickadate para el campo de fecha de compra
         if (window.$ && $.fn.pickadate) {
             if ($('#fecha_compra').data('pickadate')) $('#fecha_compra').pickadate('destroy');
-            setTimeout(function() {
+            setTimeout(function () {
                 var currentYear = new Date().getFullYear();
                 var minYear = 1990;
                 var years = currentYear - minYear + 1;
@@ -207,7 +302,7 @@ async function renderEquipoForm(equipoToEdit = null) {
         }
 
         // Inicializar transformación a mayúsculas en campos de texto
-        applyUppercaseToFields(['numero_serie', 'marca', 'modelo', 'procesador', 'ram', 'disco_duro', 'sistema_operativo', 'mac_address', 'nombre_equipo', 'otras_caracteristicas']);
+        applyUppercaseToFields(['numero_serie', 'marca_otro', 'modelo', 'procesador', 'ram_otro', 'disco_duro_otro', 'sistema_operativo_otro', 'mac_address', 'nombre_equipo', 'otras_caracteristicas']);
 
         document.getElementById('equipoForm').addEventListener('submit', (event) => handleEquipoFormSubmit(event, equipoId));
         document.getElementById('cancelEquipoForm').addEventListener('click', async () => {
@@ -244,6 +339,21 @@ async function handleEquipoFormSubmit(event, editingId = null) {
             equipoData[key] = value.trim() === '' ? null : value;
         }
     }
+
+    // Manejar campos "OTRO" - usar el valor del campo de texto si se seleccionó "OTRO"
+    const fieldsWithOther = ['marca', 'ram', 'disco_duro', 'sistema_operativo'];
+    fieldsWithOther.forEach(field => {
+        if (equipoData[field] === 'OTRO') {
+            const otherValue = equipoData[`${field}_otro`];
+            if (otherValue && otherValue.trim() !== '') {
+                equipoData[field] = otherValue.trim();
+            } else {
+                equipoData[field] = null;
+            }
+        }
+        // Eliminar el campo "_otro" del objeto final
+        delete equipoData[`${field}_otro`];
+    });
     // Si el campo de estado estaba deshabilitado, FormData no lo incluye.
     // Necesitamos añadirlo manualmente para que el backend no lo vea como un cambio a 'null'.
     if (editingId && form.querySelector('#id_status').disabled) {
@@ -256,8 +366,8 @@ async function handleEquipoFormSubmit(event, editingId = null) {
     const errorMessageDiv = document.getElementById('form-error-message');
     errorMessageDiv.textContent = '';
     if (!equipoData.numero_serie || !equipoData.id_tipo_equipo || !equipoData.id_sucursal_actual || !equipoData.id_status) {
-         errorMessageDiv.textContent = 'Número de Serie, Tipo, Sucursal y Estado son obligatorios.';
-         return;
+        errorMessageDiv.textContent = 'Número de Serie, Tipo, Sucursal y Estado son obligatorios.';
+        return;
     }
 
     try {
