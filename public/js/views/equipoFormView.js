@@ -145,7 +145,7 @@ async function renderEquipoForm(equipoToEdit = null) {
                               return isCurrentStatus ? `<option value="${status.id}" selected>${status.nombre_status}</option>` : '';
                             } else {
                               if (!isAutomaticStatus || isCurrentStatus) {
-                                return `<option value="${status.id}" ${isCurrentStatus ? 'selected' : (!isEditing && status.nombre_status === 'Disponible' ? 'selected' : '')}>${status.nombre_status}</option>`;
+                                return `<option value="${status.id}" ${isCurrentStatus ? 'selected' : (!isEditing && status.nombre_status === 'DISPONIBLE' ? 'selected' : '')}>${status.nombre_status}</option>`;
                               }
                               return '';
                             }
