@@ -57,6 +57,7 @@ function renderDireccionIpDetails(ip) {
     }
     addDetail('ID', ip.id);
     addDetail('Dirección IP', ip.direccion_ip);
+    addDetail('Empresa', ip.nombre_empresa);
     addDetail('Sucursal Asociada', ip.nombre_sucursal);
     addDetail('Comentario / Notas', ip.comentario);
     addDetail('Estado', ip.status_nombre, true);
@@ -89,7 +90,7 @@ function renderDireccionIpDetails(ip) {
 //* `params` debe ser el ID de la Dirección IP (como string o número).
 async function showDireccionIpDetails(params) {
     const ipId = typeof params === 'string' ? params : (params && params.id);
-    console.log('Herwing va a mostrar los detalles de una Dirección IP. ID:', ipId);
+    console.log('Herwing va a mostrar los detalles de una Dirección IP con datos frescos. ID:', ipId);
 
     if (!ipId) {
         showDireccionIpDetailsError('No se proporcionó un ID de Dirección IP para mostrar los detalles.');
@@ -108,4 +109,14 @@ async function showDireccionIpDetails(params) {
     }
 }
 
-export { showDireccionIpDetails };
+// Función para refrescar los detalles de una IP específica
+async function refreshDireccionIpDetails(ipId) {
+    if (ipId) {
+        console.log(`Herwing - Refrescando detalles de IP ${ipId}...`);
+        await showDireccionIpDetails(ipId);
+    }
+}
+
+// Los detalles se actualizan automáticamente al cargar datos frescos de la API
+
+export { showDireccionIpDetails, refreshDireccionIpDetails };

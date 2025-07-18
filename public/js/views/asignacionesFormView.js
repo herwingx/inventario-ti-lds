@@ -75,11 +75,19 @@ async function renderAsignacionForm(asignacionToEdit = null) {
 
     try {
         //* Obtengo los datos para todos los selects si aún no los tengo en caché.
-        if (!equiposCache) equiposCache = await getEquipos();
+        if (!equiposCache) {
+            equiposCache = await getEquipos();
+            console.log('Herwing - Equipos cargados:', equiposCache.length, 'equipos');
+            console.log('Herwing - Ejemplo de equipos:', equiposCache.slice(0, 5).map(eq => `${eq.numero_serie || 'Sin serie'} - Status: ${eq.status_nombre}`));
+        }
         if (!empleadosCache) empleadosCache = await getEmpleados();
         if (!sucursalesCache) sucursalesCache = await getSucursales();
         if (!areasCache) areasCache = await getAreas(); //* Podría filtrar por sucursal corporativa.
-        if (!ipsCache) ipsCache = await getDireccionesIp(); //* Debería filtrar por IPs con status 'Disponible'.
+        if (!ipsCache) {
+            ipsCache = await getDireccionesIp();
+            console.log('Herwing - IPs cargadas:', ipsCache.length, 'IPs');
+            console.log('Herwing - Ejemplo de IPs:', ipsCache.slice(0, 3).map(ip => `${ip.direccion_ip} - Status: ${ip.status_nombre}, Activa: ${ip.asignacion_activa}`));
+        }
         if (!statusesCache) statusesCache = await getStatuses(); //* Para el status de la asignación.
 
         //* Lógica para filtrar los equipos para el select principal 'id_equipo':
@@ -97,10 +105,11 @@ async function renderAsignacionForm(asignacionToEdit = null) {
         }
 
         //* Ahora, añade los equipos disponibles (asegúrate de no duplicar si el equipo asignado ya era disponible).
-        //* Se asume que el objeto Equipo de la API tiene una propiedad 'status_nombre' o 'nombre_status'.
+        //* Filtrar equipos disponibles para asignación (solo DISPONIBLE)
         const availableEquipos = equiposCache.filter(eq =>
-            (eq.status_nombre === 'Disponible' || eq.nombre_status === 'Disponible')
+            eq.status_nombre === 'DISPONIBLE'
         );
+        console.log('Herwing - Equipos disponibles para asignación:', availableEquipos.length);
 
         //* Combina y quita duplicados (en caso de que el equipo asignado también fuera "Disponible")
         availableEquipos.forEach(eq => {
@@ -111,6 +120,7 @@ async function renderAsignacionForm(asignacionToEdit = null) {
 
         //* Opcional: Ordenar los equipos para una mejor presentación (por número de serie o nombre)
         equiposParaSelect.sort((a, b) => (a.numero_serie || '').localeCompare(b.numero_serie || ''));
+        console.log('Herwing - Equipos finales para select:', equiposParaSelect.length, equiposParaSelect.map(eq => `${eq.numero_serie} (${eq.status_nombre})`));
 
 
         //* Preparo la lista de equipos para el select de "Equipo Padre".
@@ -138,11 +148,11 @@ async function renderAsignacionForm(asignacionToEdit = null) {
         }
 
         // Filtrar IPs disponibles y sin asignación activa
-        // Suponemos que la API de IPs trae un campo 'asignacion_activa' o similar, si no, solo filtramos por status
         const availableIps = ipsCache.filter(ip =>
-            (ip.status_nombre === 'Disponible' || ip.nombre_status === 'Disponible') &&
+            ip.status_nombre === 'DISPONIBLE' &&
             (!ip.asignacion_activa || ip.id === currentAsignacionIpId)
         );
+        console.log('Herwing - IPs disponibles para asignación:', availableIps.length);
 
         availableIps.forEach(ip => {
             if (!ipsParaSelect.some(existingIp => existingIp.id === ip.id)) {
@@ -165,6 +175,7 @@ async function renderAsignacionForm(asignacionToEdit = null) {
 
         //* Ordenar las IPs para una mejor presentación
         ipsParaSelect.sort(compareIps);
+        console.log('Herwing - IPs finales para select:', ipsParaSelect.length, ipsParaSelect.map(ip => `${ip.direccion_ip} (${ip.status_nombre}, activa: ${ip.asignacion_activa})`));
 
 
         //* Limpio el área de contenido y construyo el HTML del formulario.
@@ -398,6 +409,11 @@ async function handleAsignacionFormSubmit(event, editingId = null) {
             }
         }
         // --- FIN NUEVO BLOQUE ---
+
+        // Los datos se actualizarán automáticamente la próxima vez que se carguen las vistas de IPs
+        if (asignacionData.id_ip) {
+            console.log(`Herwing - IP ${asignacionData.id_ip} actualizada. Los cambios se verán al recargar las vistas de IPs.`);
+        }
 
         await Swal.fire({
             title: 'Operación Exitosa',
