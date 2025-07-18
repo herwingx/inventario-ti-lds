@@ -4,6 +4,7 @@
 import { getAsignaciones, deleteAsignacion } from '../api.js';
 import { showListLoading } from '../utils/loading.js';
 import { showListError } from '../utils/error.js';
+import { getStatusBadge } from '../utils/statusBadge.js';
 
 const contentArea = document.getElementById('content-area');
 let asignacionesGridInstance = null;
@@ -45,26 +46,63 @@ function formatAsignacionesActionsCell(data, type, row) {
         const equipoSerie = row[1];
         const fechaFin = row[5];
         const isActiva = !fechaFin;
+        
+        // Estilos para botones deshabilitados
+        const disabledStyle = 'opacity: 0.4; cursor: not-allowed; pointer-events: none;';
+        const disabledClass = 'disabled';
+        
         return `
-            <div class="d-flex">
-                <a href="javascript:void(0);" class="btn btn-primary shadow btn-xs sharp me-1"
-                   title="Ver Detalles" data-action="view" data-id="${asignacionId}">
-                    <i class="fas fa-eye"></i>
-                </a>
-                <a href="javascript:void(0);" class="btn btn-warning shadow btn-xs sharp me-1 ${isActiva ? '' : 'disabled'}"
-                   title="${isActiva ? 'Editar o Finalizar Asignación' : 'Esta asignación histórica no se puede editar.'}"
-                   data-action="edit" data-id="${asignacionId}" ${isActiva ? '' : 'tabindex="-1" aria-disabled="true"'}>
-                    <i class="fas fa-pencil-alt"></i>
-                </a>
+            <div class="d-flex gap-1 justify-content-center">
+                <button type="button" class="action-btn view-btn" 
+                        title="Ver Detalles" data-action="view" data-id="${asignacionId}"
+                        style="background: #17a2b8; border: none; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-eye" style="color: white; font-size: 12px;"></i>
+                </button>
+                
+                <button type="button" class="action-btn edit-btn ${!isActiva ? disabledClass : ''}" 
+                        title="${isActiva ? 'Editar o Finalizar Asignación' : 'Esta asignación histórica no se puede editar'}" 
+                        data-action="edit" data-id="${asignacionId}"
+                        style="background: ${!isActiva ? '#e9ecef' : '#28a745'}; border: none; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); ${!isActiva ? disabledStyle : ''}">
+                    <i class="fas fa-edit" style="color: ${!isActiva ? '#6c757d' : 'white'}; font-size: 12px;"></i>
+                </button>
             </div>
+            
+            <style>
+                .action-btn:not(.disabled):hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+                    filter: brightness(1.1);
+                }
+                
+                .view-btn:not(.disabled):hover {
+                    background: #138496 !important;
+                }
+                
+                .edit-btn:not(.disabled):hover {
+                    background: #218838 !important;
+                }
+                
+                .action-btn:active:not(.disabled) {
+                    transform: translateY(0);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+                    filter: brightness(0.95);
+                }
+            </style>
         `;
     }
     return data;
 }
 
 function handleAsignacionesTableActions(event) {
-    const button = event.target.closest('a[data-action]');
+    const button = event.target.closest('button[data-action]');
     if (!button) return;
+
+    // Verificar si el botón está deshabilitado
+    if (button.classList.contains('disabled')) {
+        event.preventDefault();
+        return;
+    }
+
     const action = button.dataset.action;
     const asignacionId = button.dataset.id;
     const equipoSerie = button.dataset.equipoSerie;
@@ -118,7 +156,9 @@ async function loadAsignacionesList() {
                 { title: 'IP', data: 3 },
                 { title: 'Fecha Asignación', data: 4 },
                 { title: 'Fecha Fin', data: 5 },
-                { title: 'Estado Asign.', data: 6 },
+                { title: 'Estado Asign.', data: 6, render: function(data, type, row) {
+                    return getStatusBadge(data);
+                }},
                 { title: 'Acciones', data: 7, width: '120px', render: formatAsignacionesActionsCell }
             ],
             columnDefs: [
@@ -129,7 +169,7 @@ async function loadAsignacionesList() {
                 }
             ],
             initComplete: function() {
-                $('#asignaciones-datatable').on('click', 'a[data-action]', handleAsignacionesTableActions);
+                $('#asignaciones-datatable').on('click', 'button[data-action]', handleAsignacionesTableActions);
             }
         });
     } catch (error) {

@@ -47,29 +47,62 @@ function renderNotasListViewLayout() {
 function formatNotasActionsCell(data, type, row) {
     if (type === 'display') {
         const notaId = row[0];
+        
         return `
-            <div class="d-flex">
-                <a href="javascript:void(0);" class="btn btn-primary shadow btn-xs sharp me-1"
-                   title="Ver Detalles" data-action="view" data-id="${notaId}">
-                    <i class="fas fa-eye"></i>
-                </a>
-                <a href="javascript:void(0);" class="btn btn-warning shadow btn-xs sharp me-1"
-                   title="Editar Nota" data-action="edit" data-id="${notaId}">
-                    <i class="fas fa-pencil-alt"></i>
-                </a>
-                <a href="javascript:void(0);" class="btn btn-danger shadow btn-xs sharp"
-                   title="Eliminar Nota" data-action="delete" data-id="${notaId}">
-                    <i class="fa fa-trash"></i>
-                </a>
+            <div class="d-flex gap-1 justify-content-center">
+                <button type="button" class="action-btn view-btn" 
+                        title="Ver Detalles" data-action="view" data-id="${notaId}"
+                        style="background: #17a2b8; border: none; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-eye" style="color: white; font-size: 12px;"></i>
+                </button>
+                
+                <button type="button" class="action-btn edit-btn" 
+                        title="Editar Nota" data-action="edit" data-id="${notaId}"
+                        style="background: #28a745; border: none; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-edit" style="color: white; font-size: 12px;"></i>
+                </button>
+                
+                <button type="button" class="action-btn delete-btn" 
+                        title="Eliminar Nota" data-action="delete" data-id="${notaId}"
+                        style="background: #dc3545; border: none; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <i class="fas fa-trash-alt" style="color: white; font-size: 12px;"></i>
+                </button>
             </div>
+            
+            <style>
+                .action-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+                    filter: brightness(1.1);
+                }
+                
+                .view-btn:hover {
+                    background: #138496 !important;
+                }
+                
+                .edit-btn:hover {
+                    background: #218838 !important;
+                }
+                
+                .delete-btn:hover {
+                    background: #c82333 !important;
+                }
+                
+                .action-btn:active {
+                    transform: translateY(0);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+                    filter: brightness(0.95);
+                }
+            </style>
         `;
     }
     return data;
 }
 
 function handleNotasTableActions(event) {
-    const button = event.target.closest('a[data-action]');
+    const button = event.target.closest('button[data-action]');
     if (!button) return;
+    
     const action = button.dataset.action;
     const notaId = button.dataset.id;
     if (action === 'view') {
@@ -172,7 +205,7 @@ async function loadNotasList() {
                 }
             ],
             initComplete: function() {
-                $('#notas-datatable').on('click', 'a[data-action]', handleNotasTableActions);
+                $('#notas-datatable').on('click', 'button[data-action]', handleNotasTableActions);
             }
         });
     } catch (error) {
