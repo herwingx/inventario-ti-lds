@@ -53,14 +53,14 @@ async function renderMantenimientoForm(mantToEdit = null) {
                             <div class="mb-3">
                                 <label for="id_equipo" class="form-label">Equipo <span class="text-danger">*</span></label>
                                 <select id="id_equipo" name="id_equipo" required class="form-control select2">
-                                    <option value="">Seleccione un equipo...</option>
+                                    <option value="">SELECCIONE UN EQUIPO...</option>
                                     ${equiposCache.map(eq => `<option value="${eq.id}" ${isEditing && currentMantData.id_equipo === eq.id ? 'selected' : ''}>${eq.numero_serie} - ${eq.nombre_equipo || 'Sin Nombre'}</option>`).join('')}
                                 </select>
                             </div>
                             <div class="mb-3">
                                 <label for="id_empleado" class="form-label">Responsable</label>
                                 <select id="id_empleado" name="id_empleado" class="form-control select2">
-                                    <option value="">Sin asignar</option>
+                                    <option value="">SIN ASIGNAR</option>
                                     ${empleadosCache.map(emp => `<option value="${emp.id}" ${isEditing && currentMantData.id_empleado === emp.id ? 'selected' : ''}>${emp.nombres} ${emp.apellidos} (ID: ${emp.id})</option>`).join('')}
                                 </select>
                             </div>
@@ -75,7 +75,7 @@ async function renderMantenimientoForm(mantToEdit = null) {
                             <div class="mb-3">
                                 <label for="id_status" class="form-label">Estado <span class="text-danger">*</span></label>
                                 <select id="id_status" name="id_status" required class="form-control select2">
-                                    <option value="">Seleccione un estado...</option>
+                                    <option value="">SELECCIONE UN ESTADO...</option>
                                     ${statusesCache
                                       .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
                                       .map(status => `<option value="${status.id}" ${isEditing && currentMantData.id_status === status.id ? 'selected' : (!isEditing && status.id === 1 ? 'selected' : '')}>${status.nombre_status}</option>`)

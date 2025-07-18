@@ -212,7 +212,7 @@ async function renderDashboard() {
                                                                         </div>
                                                                     </div>
                                                                     <div class="col-xl-4 col-lg-6 col-sm-6">
-                                                                        <div class="card bg-dark text-white quick-access-card" data-view="notas-list" style="cursor: pointer;">
+                                                                        <div class="card bg-red text-white quick-access-card" data-view="notas-list" style="cursor: pointer;">
                                                                             <div class="card-body">
                                                                                 <div class="d-flex align-items-center">
                                                                                     <div class="me-3">

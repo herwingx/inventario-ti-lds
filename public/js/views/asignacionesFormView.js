@@ -98,7 +98,7 @@ async function renderAsignacionForm(asignacionToEdit = null) {
 
         //* Ahora, añade los equipos disponibles (asegúrate de no duplicar si el equipo asignado ya era disponible).
         //* Se asume que el objeto Equipo de la API tiene una propiedad 'status_nombre' o 'nombre_status'.
-        const availableEquipos = equiposCache.filter(eq => 
+        const availableEquipos = equiposCache.filter(eq =>
             (eq.status_nombre === 'Disponible' || eq.nombre_status === 'Disponible')
         );
 
@@ -163,7 +163,7 @@ async function renderAsignacionForm(asignacionToEdit = null) {
             return 0; //* IPs son iguales
         }
 
-       //* Ordenar las IPs para una mejor presentación
+        //* Ordenar las IPs para una mejor presentación
         ipsParaSelect.sort(compareIps);
 
 
@@ -179,7 +179,7 @@ async function renderAsignacionForm(asignacionToEdit = null) {
                             <div class="mb-3">
                                 <label for="id_equipo" class="form-label">Equipo (Número de Serie) <span class="text-danger">*</span></label>
                                 <select id="id_equipo" name="id_equipo" required class="form-control select2">
-                      <option value="">Seleccione un equipo...</option>
+                      <option value="">SELECCIONE UN EQUIPO...</option>
                       ${equiposParaSelect.map(eq => `<option value="${eq.id}" ${isEditing && currentAsignacionData && currentAsignacionData.id_equipo === eq.id ? 'selected' : ''}>${eq.numero_serie} - ${eq.nombre_equipo || 'Sin Nombre'}</option>`).join('')}
                   </select>
               </div>
@@ -192,21 +192,21 @@ async function renderAsignacionForm(asignacionToEdit = null) {
                             <div class="mb-3">
                                 <label for="id_empleado" class="form-label">Empleado Asignado</label>
                                 <select id="id_empleado" name="id_empleado" class="form-control select2">
-                      <option value="">Ninguno</option>
+                      <option value="">NINGUNO</option>
                       ${empleadosCache.map(emp => `<option value="${emp.id}" ${isEditing && currentAsignacionData && currentAsignacionData.id_empleado === emp.id ? 'selected' : ''}>${emp.nombres} ${emp.apellidos} (ID: ${emp.id})</option>`).join('')}
                   </select>
               </div>
                             <div class="mb-3">
                                 <label for="id_sucursal_asignado" class="form-label">Sucursal (para stock o ubicación general)</label>
                                 <select id="id_sucursal_asignado" name="id_sucursal_asignado" class="form-control select2">
-                      <option value="">Ninguna</option>
+                      <option value="">NINGUNA</option>
                       ${sucursalesCache.map(suc => `<option value="${suc.id}" ${isEditing && currentAsignacionData && currentAsignacionData.id_sucursal_asignado === suc.id ? 'selected' : ''}>${suc.nombre}</option>`).join('')}
                   </select>
               </div>
                             <div class="mb-3">
                                 <label for="id_area_asignado" class="form-label">Área (en sucursal corporativa)</label>
                                 <select id="id_area_asignado" name="id_area_asignado" class="form-control select2">
-                      <option value="">Ninguna</option>
+                      <option value="">NINGUNA</option>
                       ${areasCache.map(area => `<option value="${area.id}" ${isEditing && currentAsignacionData && currentAsignacionData.id_area_asignado === area.id ? 'selected' : ''}>${area.nombre} (Suc ID: ${area.nombre_empresa})</option>`).join('')}
                   </select>
               </div>
@@ -215,25 +215,25 @@ async function renderAsignacionForm(asignacionToEdit = null) {
                             <div class="mb-3">
                                 <label for="id_equipo_padre" class="form-label">Componente de (Equipo Padre)</label>
                                 <select id="id_equipo_padre" name="id_equipo_padre" class="form-control select2">
-                      <option value="">Ninguno</option>
+                      <option value="">NINGUNO</option>
                                     ${equiposParaPadre.map(eq => `<option value="${eq.id}" ${isEditing && currentAsignacionData && currentAsignacionData.id_equipo_padre === eq.id ? 'selected' : ''}>${eq.numero_serie} - ${eq.nombre_equipo || 'Sin Nombre'}</option>`).join('')}
                   </select>
               </div>
                             <div class="mb-3">
                                 <label for="id_ip" class="form-label">Dirección IP Asignada</label>
                                 <select id="id_ip" name="id_ip" class="form-control select2">
-                      <option value="">Ninguna (o DHCP)</option>
+                      <option value="">NINGUNA (O DHCP)</option>
                                     ${ipsParaSelect.map(ip => `<option value="${ip.id}" ${isEditing && currentAsignacionData && currentAsignacionData.id_ip === ip.id ? 'selected' : ''}>${ip.direccion_ip} (${ip.status_nombre || ip.nombre_status || 'N/A'})</option>`).join('')}
                   </select>
               </div>
                             <div class="mb-3">
                                 <label for="id_status" class="form-label">Estado de la Asignación <span class="text-danger">*</span></label>
                                 <select id="id_status" name="id_status" required class="form-control select2">
-    <option value="">Seleccione un estado...</option>
+    <option value="">SELECCIONE UN ESTADO...</option>
                                     ${statusesCache
-                                      .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
-                                      .map(status => `<option value="${status.id}" ${isEditing && currentAsignacionData && currentAsignacionData.id_status_asignacion === status.id ? 'selected' : (!isEditing && status.id === 1 ? 'selected' : '')}>${status.nombre_status}</option>`)
-                                      .join('')}
+                .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
+                .map(status => `<option value="${status.id}" ${isEditing && currentAsignacionData && currentAsignacionData.id_status_asignacion === status.id ? 'selected' : (!isEditing && status.id === 1 ? 'selected' : '')}>${status.nombre_status}</option>`)
+                .join('')}
 </select>
               </div>
                             <div class="mb-3">
@@ -264,7 +264,7 @@ async function renderAsignacionForm(asignacionToEdit = null) {
         // Inicializar Pickadate en español en el campo de fecha SIEMPRE después de renderizar
         if (window.$ && $.fn.pickadate) {
             if ($('#fecha_asignacion').data('pickadate')) $('#fecha_asignacion').pickadate('destroy');
-            setTimeout(function() {
+            setTimeout(function () {
                 var currentYear = new Date().getFullYear();
                 var minYearAsignacion = 2000;
                 var yearsAsignacion = currentYear - minYearAsignacion + 1;
@@ -470,7 +470,7 @@ async function showAsignacionForm(params = null) {
     //* Especialmente importante para Equipos e IPs cuyos estados pueden cambiar.
     //* Generalmente los empleados no cambian de estado tan a menudo, pero para ser seguros.
     equiposCache = null;
-    empleadosCache = null; 
+    empleadosCache = null;
     sucursalesCache = null;
     areasCache = null;
     ipsCache = null;
@@ -478,7 +478,7 @@ async function showAsignacionForm(params = null) {
 
     //* Renderizo el formulario (vacío o con datos para editar).
     //* Paso el objeto completo o null.
-    await renderAsignacionForm(asignacionToEdit); 
+    await renderAsignacionForm(asignacionToEdit);
 }
 
 export { showAsignacionForm };
