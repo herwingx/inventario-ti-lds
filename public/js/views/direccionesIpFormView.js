@@ -69,12 +69,17 @@ async function renderDireccionIpForm(ipToEdit = null) {
           statusesCache = await getStatuses();
       }
 
-      // * Lógica para deshabilitar el campo de estado si la IP tiene asignación activa.
+      // * Lógica para deshabilitar campos si la IP tiene asignación activa.
       let isStatusDisabled = false;
+      let isSucursalDisabled = false;
       let statusHelpText = '';
+      let sucursalHelpText = '';
+      
       if (isEditing && currentIpData && currentIpData.asignacion_activa) {
           isStatusDisabled = true;
-          statusHelpText = 'Estado gestionado por Asignaciones. Finalice la asignación activa para liberar.';
+          isSucursalDisabled = true;
+          statusHelpText = 'Estado gestionado automáticamente por Asignaciones. Finalice la asignación activa para liberar.';
+          sucursalHelpText = 'Sucursal gestionada automáticamente por Asignaciones según la ubicación del equipo/empleado asignado.';
       }
 
       //* Limpio el área de contenido y construyo el HTML del formulario.
@@ -92,10 +97,11 @@ async function renderDireccionIpForm(ipToEdit = null) {
                           </div>
                           <div class="mb-3">
                               <label for="id_sucursal" class="form-label">Sucursal Asociada</label>
-                              <select id="id_sucursal" name="id_sucursal" class="form-control select2">
+                              <select id="id_sucursal" name="id_sucursal" class="form-control select2 ${isSucursalDisabled ? 'bg-gray-200 cursor-not-allowed' : ''}" ${isSucursalDisabled ? 'disabled' : ''}>
                                   <option value="">NINGUNA (IP GENERAL/CORPORATIVA)</option>
                                   ${sucursalesCache.map(sucursal => `<option value="${sucursal.id}" ${isEditing && currentIpData.id_sucursal === sucursal.id ? 'selected' : ''}>${sucursal.nombre}</option>`).join('')}
                               </select>
+                              ${isSucursalDisabled ? `<p class="mt-2 text-xs text-gray-500">${sucursalHelpText}</p>` : ''}
                           </div>
                           <div class="mb-3">
                               <label for="id_status" class="form-label">Estado de la IP <span class="text-danger">*</span></label>
@@ -256,12 +262,17 @@ async function showDireccionIpForm(params = null) {
       showDireccionIpFormLoading('Crear');
   }
 
-  // * Lógica para deshabilitar el campo de estado si la IP tiene asignación activa.
+  // * Lógica para deshabilitar campos si la IP tiene asignación activa.
   let isStatusDisabled = false;
+  let isSucursalDisabled = false;
   let statusHelpText = '';
+  let sucursalHelpText = '';
+  
   if (ipToEdit && ipToEdit.asignacion_activa) {
       isStatusDisabled = true;
-      statusHelpText = 'Estado gestionado por Asignaciones. Finalice la asignación activa para liberar.';
+      isSucursalDisabled = true;
+      statusHelpText = 'Estado gestionado automáticamente por Asignaciones. Finalice la asignación activa para liberar.';
+      sucursalHelpText = 'Sucursal gestionada automáticamente por Asignaciones según la ubicación del equipo/empleado asignado.';
   }
 
   await renderDireccionIpForm(ipToEdit);
