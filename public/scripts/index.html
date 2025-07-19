@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scripts de Inventario Automatizado</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { background: #007bff; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .script-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .script-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: #f8f9fa; }
+        .script-card h3 { margin-top: 0; color: #007bff; }
+        .download-btn { background: #28a745; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 10px; }
+        .download-btn:hover { background: #218838; }
+        .platform { background: #6c757d; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .recommended { background: #ffc107; color: #212529; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    </style>
+    <script>
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showNotification('Comando copiado al portapapeles!');
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(text);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text);
+            }
+        }
+        
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showNotification('Comando copiado al portapapeles!');
+            } catch (err) {
+                showNotification('Error al copiar. Selecciona y copia manualmente.');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        function openCMD() {
+            const command = 'PowerShell.exe -ExecutionPolicy Bypass -File .\\inventario_windows.ps1 -SendToServer';
+            
+            // Crear un archivo .bat temporal para abrir CMD con el comando
+            const batContent = `@echo off
+chcp 65001 >nul 2>&1
+echo =========================================
+echo   INVENTARIO AUTOMATIZADO - WINDOWS
+echo =========================================
+echo.
+echo Comando listo para ejecutar:
+echo ${command}
+echo.
+echo INSTRUCCIONES:
+echo 1. Asegurate de tener el archivo inventario_windows.ps1 en esta carpeta
+echo 2. Configura tu TOKEN en el archivo .ps1
+echo 3. Ejecuta el comando de arriba
+echo.
+echo =========================================
+echo.
+cmd /k "echo Listo para ejecutar inventario..."`;
+            
+            const blob = new Blob([batContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'abrir_cmd_inventario.bat';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showNotification('Archivo .bat descargado! Ejecutalo para abrir CMD con el comando listo.');
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #28a745;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                font-weight: bold;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.5s';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        document.body.removeChild(notification);
+                    }
+                }, 500);
+            }, 3000);
+        }
+    </script>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Inventario Automatizado</h1>
+        <p>Scripts para inventario automático de equipos - Red Local</p>
+    </div>
+
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h3>Descarga Rapida</h3>
+        <p><strong>1. Obtener Token (30 dias):</strong></p>
+        <p><a href="obtener_token_mac.sh" class="download-btn">Mac/Linux</a> <a href="obtener_token.ps1" class="download-btn">Windows</a></p>
+        
+        <p><strong>2. Scripts de Inventario:</strong></p>
+        <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin: 10px 0;">
+            <strong>Windows (MEJORADO):</strong><br>
+            <a href="inventario_windows.ps1" class="download-btn">Script Principal (.ps1)</a><br>
+            <strong>Ejecutores (RECOMENDADO - Sin problemas de politicas):</strong><br>
+            <a href="ejecutar_inventario_windows.bat" class="download-btn">ENVIAR AL SERVIDOR (.bat)</a>
+            <a href="generar_json_windows.bat" class="download-btn">SOLO JSON LOCAL (.bat)</a>
+            <a href="mostrar_info_windows.bat" class="download-btn">MOSTRAR INFO (.bat)</a><br>
+            <strong>Políticas de Ejecución PowerShell:</strong><br>
+            <div style="background: #f8f9fa; padding: 8px; border-radius: 3px; margin: 5px 0; font-family: monospace; font-size: 12px;">
+                <strong>Comando para habilitar scripts:</strong><br>
+                <span id="policy-cmd" style="user-select: all;">Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</span>
+                <button onclick="copyToClipboard('policy-cmd')" style="margin-left: 10px; padding: 2px 8px; font-size: 11px;">📋 Copiar</button>
+            </div>
+            <div style="background: #f8f9fa; padding: 8px; border-radius: 3px; margin: 5px 0; font-family: monospace; font-size: 12px;">
+                <strong>Ejecutar script directamente:</strong><br>
+                <span id="run-cmd" style="user-select: all;">PowerShell.exe -ExecutionPolicy Bypass -File .\inventario_windows.ps1 -SendToServer</span>
+                <button onclick="copyToClipboard('run-cmd')" style="margin-left: 10px; padding: 2px 8px; font-size: 11px;">📋 Copiar</button>
+            </div>
+            <button onclick="openCMD()" style="background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin: 5px 0;">
+                🖥️ Abrir CMD con Comando Listo
+            </button><br>
+            <small>1. Descargar y configurar el .ps1 con tu token<br>2. Usar archivos .bat (recomendado) o comandos PowerShell<br>3. Si hay problemas de políticas, usar el comando de arriba</small>
+        </div>
+        <p><strong>Otros sistemas:</strong></p>
+        <p><a href="inventario_linux.sh" class="download-btn">Linux</a> <a href="inventario_mac.sh" class="download-btn">macOS</a></p>
+        
+        <p><strong>3. Enviar Archivos a Mac:</strong></p>
+        <p><a href="enviar_a_mac.bat" class="download-btn">SCP a Mac</a> <a href="enviar_a_mac_curl.bat" class="download-btn">HTTP a Mac</a></p>
+        <p><a href="recibir_archivos_mac.sh" class="download-btn">Receptor Mac</a></p>
+        
+        <p><strong>4. Documentacion:</strong></p>
+        <p><a href="README.md" class="download-btn">README</a> <a href="GUIA_RAPIDA.md" class="download-btn">Guia Rapida</a> <a href="MEJORAS_INVENTARIO.md" class="download-btn">Mejoras</a></p>
+    </div>
+
+    <div style="margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 8px;">
+        <h4>📋 Uso:</h4>
+        <p>1. Obtener token → 2. Configurar scripts → 3. Ejecutar inventario</p>
+        <p><strong>Características:</strong> Token 30 días • Marcas automáticas • Datos en MAYÚSCULAS • Windows/Linux/macOS</p>
+    </div>
+
+    <div style="margin-top: 15px; padding: 15px; background: #d1ecf1; border-radius: 8px; border-left: 4px solid #17a2b8;">
+        <h4>Instrucciones de Uso</h4>
+        <p><strong>Windows:</strong></p>
+        <ol>
+            <troObtener token con <code>obtener_token.ps1</code></li>
+            <li>Editar <code>inventario_windows.ps1</code> y pegar el token</li>
+            <li>Ejecutar <code>ejecutar_inventario_windows.bat</code> (doble clic)</li>
+        </ol>
+        <p><strong>Linux/macOS:</strong></p>
+        <ol>
+            <li>Obtener token: <code>./obtener_token_mac.sh</code></li>
+            <li>Editar script y pegar token</li>
+            <li>Ejecutar: <code>sudo ./inventario_linux.sh --server</code></li>
+        </ol>
+    </div>
+
+    <div style="margin-top: 15px; padding: 15px; background: #d4edda; border-radius: 8px; border-left: 4px solid #28a745;">
+        <h4>✅ Mejoras Implementadas</h4>
+        <p><strong>🔧 Detección Mejorada del Disco:</strong></p>
+        <p>• Se enfoca específicamente en el disco C: (no todos los discos)</p>
+        <p>• Normaliza a tamaños estándar: 120GB, 240GB, 256GB, 480GB, 512GB, 640GB, 1TB, 2TB</p>
+        <p>• Mejor detección de SSD vs HDD</p>
+        
+        <p><strong>💾 RAM Estandarizada:</strong></p>
+        <p>• Ya no muestra valores como "7.75 GB"</p>
+        <p>• Redondea a valores estándar: 2GB, 4GB, 8GB, 16GB, 32GB, etc.</p>
+        
+        <p><strong>🏷️ Número de Serie Mejorado:</strong></p>
+        <p>• Verifica múltiples fuentes: BIOS, placa base, UUID, MAC</p>
+        <p>• Filtra valores genéricos como "00000000" y "To Be Filled By O.E.M."</p>
+        <p>• Genera número único si no encuentra uno válido</p>
+    </div>
+    
+    <div style="margin-top: 15px; padding: 15px; background: #f8d7da; border-radius: 8px; border-left: 4px solid #dc3545;">
+        <h4>❗ Problemas Comunes</h4>
+        <p><strong>Windows - Error "No se puede cargar el archivo":</strong></p>
+        <p>SOLUCION 1: Usar archivos .bat (ejecutar_inventario_windows.bat) - NO requieren configuracion</p>
+        <p>SOLUCION 2: Copiar y ejecutar el comando de políticas de arriba</p>
+        <p><strong>PowerShell no reconoce el comando:</strong></p>
+        <p>SOLUCION: Usar el botón "Abrir CMD con Comando Listo" de arriba</p>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px; color: #6c757d;">
+        <p>Sistema de Inventario Automatizado - Línea Digital</p>
+    </div>
+</body>
+</html>
