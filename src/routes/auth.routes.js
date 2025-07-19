@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/auth.controller');
 
-// [POST] /api/auth/login
+// [POST] /api/auth/login - Token de 30 días para facilitar inventario
 router.post('/login', authController.login);
 
 //TODO: Añadir otras rutas de autenticación aquí en el futuro,
