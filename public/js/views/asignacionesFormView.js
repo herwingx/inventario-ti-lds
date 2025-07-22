@@ -263,15 +263,85 @@ async function renderAsignacionForm(asignacionToEdit = null) {
         `;
 
         // Inicializar select2 en los selects buscables
-        if (window.$ && $.fn.select2) {
-            $('#id_equipo').select2({ width: '100%' });
-            $('#id_empleado').select2({ width: '100%' });
-            $('#id_sucursal_asignado').select2({ width: '100%' });
-            $('#id_area_asignado').select2({ width: '100%' });
-            $('#id_equipo_padre').select2({ width: '100%' });
-            $('#id_ip').select2({ width: '100%' });
-            $('#id_status').select2({ width: '100%' });
+        setTimeout(() => {
+            if (window.$ && $.fn.select2) {
+                $('#id_equipo').select2({ width: '100%' });
+                $('#id_empleado').select2({ width: '100%' });
+                $('#id_sucursal_asignado').select2({ width: '100%' });
+                $('#id_area_asignado').select2({ width: '100%' });
+                $('#id_equipo_padre').select2({ width: '100%' });
+                $('#id_ip').select2({ width: '100%' });
+                $('#id_status').select2({ width: '100%' });
+            }
+        }, 50);
+
+        // Configurar filtro dinámico de áreas según sucursal seleccionada
+        function setupAreaFilter() {
+            const sucursalSelect = document.getElementById('id_sucursal_asignado');
+            const areaSelect = document.getElementById('id_area_asignado');
+
+            if (!sucursalSelect || !areaSelect) {
+                console.error('No se encontraron los elementos de sucursal o área en asignaciones');
+                return;
+            }
+
+            async function updateAreasForSucursal(sucursalId) {
+                try {
+                    // Limpiar el select de áreas
+                    areaSelect.innerHTML = '<option value="">NINGUNA</option>';
+                    
+                    if (sucursalId) {
+                        // Obtener áreas filtradas por sucursal
+                        const areasFiltered = await getAreas(sucursalId);
+                        
+                        // Poblar el select de áreas
+                        areasFiltered.forEach(area => {
+                            const option = document.createElement('option');
+                            option.value = area.id;
+                            option.textContent = `${area.nombre} (${area.nombre_empresa})`;
+                            
+                            // Mantener selección si estamos editando
+                            if (isEditing && currentAsignacionData && currentAsignacionData.id_area_asignado === area.id) {
+                                option.selected = true;
+                            }
+                            
+                            areaSelect.appendChild(option);
+                        });
+                    }
+                    
+                    // Reinicializar Select2 para el área
+                    if (window.$ && $.fn.select2) {
+                        $('#id_area_asignado').select2('destroy').select2({ width: '100%' });
+                    }
+                } catch (error) {
+                    console.error('Error al cargar áreas filtradas en asignaciones:', error);
+                }
+            }
+
+            // Escuchar cambios en el select de sucursal
+            sucursalSelect.addEventListener('change', function() {
+                updateAreasForSucursal(this.value);
+            });
+
+            // También escuchar cambios en select2
+            if (window.$ && $.fn.select2) {
+                $('#id_sucursal_asignado').on('select2:select', function(e) {
+                    setTimeout(() => updateAreasForSucursal(e.params.data.id), 10);
+                });
+                
+                $('#id_sucursal_asignado').on('select2:clear', function() {
+                    setTimeout(() => updateAreasForSucursal(''), 10);
+                });
+            }
+
+            // Si estamos editando y ya hay una sucursal seleccionada, cargar sus áreas
+            if (isEditing && currentAsignacionData && currentAsignacionData.id_sucursal_asignado) {
+                setTimeout(() => updateAreasForSucursal(currentAsignacionData.id_sucursal_asignado), 100);
+            }
         }
+
+        // Configurar el filtro después de que todo esté inicializado
+        setTimeout(setupAreaFilter, 150);
         // Inicializar Pickadate en español en el campo de fecha SIEMPRE después de renderizar
         if (window.$ && $.fn.pickadate) {
             if ($('#fecha_asignacion').data('pickadate')) $('#fecha_asignacion').pickadate('destroy');
@@ -321,9 +391,7 @@ async function renderAsignacionForm(asignacionToEdit = null) {
         });
 
 
-        //TODO: Implementar listeners para actualizar dinámicamente el select de "Área Asignada"
-        //TODO: Cuando cambie la "Sucursal Asignada", para mostrar solo áreas de esa sucursal.
-        //TODO: Similarmente, el select de IPs podría filtrarse por sucursal si se selecciona una.
+        // Filtro dinámico de áreas implementado arriba
 
     } catch (error) {
         console.error('Error al renderizar el formulario de Asignación:', error);
