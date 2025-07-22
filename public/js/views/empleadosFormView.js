@@ -166,11 +166,81 @@ async function renderEmpleadoForm(empleadoToEdit = null) {
         `;
 
         // Inicializar select2 en los selects buscables
-        if (window.$ && $.fn.select2) {
-            $('#id_sucursal').select2({ width: '100%' });
-            $('#id_area').select2({ width: '100%' });
-            $('#id_status').select2({ width: '100%' });
+        setTimeout(() => {
+            if (window.$ && $.fn.select2) {
+                $('#id_sucursal').select2({ width: '100%' });
+                $('#id_area').select2({ width: '100%' });
+                $('#id_status').select2({ width: '100%' });
+            }
+        }, 50);
+
+        // Configurar filtro dinámico de áreas según sucursal seleccionada
+        function setupAreaFilter() {
+            const sucursalSelect = document.getElementById('id_sucursal');
+            const areaSelect = document.getElementById('id_area');
+
+            if (!sucursalSelect || !areaSelect) {
+                console.error('No se encontraron los elementos de sucursal o área');
+                return;
+            }
+
+            async function updateAreasForSucursal(sucursalId) {
+                try {
+                    // Limpiar el select de áreas
+                    areaSelect.innerHTML = '<option value="">SELECCIONE ÁREA (OPCIONAL)</option>';
+                    
+                    if (sucursalId) {
+                        // Obtener áreas filtradas por sucursal
+                        const areasFiltered = await getAreas(sucursalId);
+                        
+                        // Poblar el select de áreas
+                        areasFiltered.forEach(area => {
+                            const option = document.createElement('option');
+                            option.value = area.id;
+                            option.textContent = `${area.nombre} (${area.nombre_empresa})`;
+                            
+                            // Mantener selección si estamos editando
+                            if (isEditing && currentEmpleadoData && currentEmpleadoData.id_area === area.id) {
+                                option.selected = true;
+                            }
+                            
+                            areaSelect.appendChild(option);
+                        });
+                    }
+                    
+                    // Reinicializar Select2 para el área
+                    if (window.$ && $.fn.select2) {
+                        $('#id_area').select2('destroy').select2({ width: '100%' });
+                    }
+                } catch (error) {
+                    console.error('Error al cargar áreas filtradas:', error);
+                }
+            }
+
+            // Escuchar cambios en el select de sucursal
+            sucursalSelect.addEventListener('change', function() {
+                updateAreasForSucursal(this.value);
+            });
+
+            // También escuchar cambios en select2
+            if (window.$ && $.fn.select2) {
+                $('#id_sucursal').on('select2:select', function(e) {
+                    setTimeout(() => updateAreasForSucursal(e.params.data.id), 10);
+                });
+                
+                $('#id_sucursal').on('select2:clear', function() {
+                    setTimeout(() => updateAreasForSucursal(''), 10);
+                });
+            }
+
+            // Si estamos editando y ya hay una sucursal seleccionada, cargar sus áreas
+            if (isEditing && currentEmpleadoData && currentEmpleadoData.id_sucursal) {
+                setTimeout(() => updateAreasForSucursal(currentEmpleadoData.id_sucursal), 100);
+            }
         }
+
+        // Configurar el filtro después de que todo esté inicializado
+        setTimeout(setupAreaFilter, 150);
         // Inicializar Pickadate en español en los campos de fecha SIEMPRE después de renderizar
         if (window.$ && $.fn.pickadate) {
             // Destruir pickers anteriores si existen
