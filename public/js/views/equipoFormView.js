@@ -230,20 +230,27 @@ async function renderEquipoForm(equipoToEdit = null) {
         `;
 
         // Inicializar select2 en los selects buscables
-        if (window.$ && $.fn.select2) {
-            $('#id_tipo_equipo').select2({ width: '100%' });
-            $('#id_sucursal_actual').select2({ width: '100%' });
-            $('#id_status').select2({ width: '100%' });
-            $('#marca').select2({ width: '100%' });
-            $('#ram').select2({ width: '100%' });
-            $('#disco_duro').select2({ width: '100%' });
-            $('#sistema_operativo').select2({ width: '100%' });
-        }
+        setTimeout(() => {
+            if (window.$ && $.fn.select2) {
+                $('#id_tipo_equipo').select2({ width: '100%' });
+                $('#id_sucursal_actual').select2({ width: '100%' });
+                $('#id_status').select2({ width: '100%' });
+                $('#marca').select2({ width: '100%' });
+                $('#ram').select2({ width: '100%' });
+                $('#disco_duro').select2({ width: '100%' });
+                $('#sistema_operativo').select2({ width: '100%' });
+            }
+        }, 50);
 
         // Lógica para mostrar/ocultar campos "OTRO"
         function setupOtherFieldLogic(selectId, otherFieldId) {
             const selectElement = document.getElementById(selectId);
             const otherField = document.getElementById(otherFieldId);
+
+            if (!selectElement || !otherField) {
+                console.error(`No se encontraron los elementos: ${selectId} o ${otherFieldId}`);
+                return;
+            }
 
             function toggleOtherField() {
                 if (selectElement.value === 'OTRO') {
@@ -259,15 +266,25 @@ async function renderEquipoForm(equipoToEdit = null) {
             // Configurar el estado inicial
             toggleOtherField();
 
-            // Escuchar cambios
+            // Escuchar cambios en el select normal
             selectElement.addEventListener('change', toggleOtherField);
+
+            // También escuchar cambios en select2 si está inicializado
+            if (window.$ && $.fn.select2) {
+                $(`#${selectId}`).on('select2:select', function (e) {
+                    setTimeout(toggleOtherField, 10);
+                });
+            }
         }
 
-        // Configurar la lógica para todos los campos con "OTRO"
-        setupOtherFieldLogic('marca', 'marca_otro');
-        setupOtherFieldLogic('ram', 'ram_otro');
-        setupOtherFieldLogic('disco_duro', 'disco_duro_otro');
-        setupOtherFieldLogic('sistema_operativo', 'sistema_operativo_otro');
+        // Esperar a que los elementos estén completamente renderizados
+        setTimeout(() => {
+            // Configurar la lógica para todos los campos con "OTRO"
+            setupOtherFieldLogic('marca', 'marca_otro');
+            setupOtherFieldLogic('ram', 'ram_otro');
+            setupOtherFieldLogic('disco_duro', 'disco_duro_otro');
+            setupOtherFieldLogic('sistema_operativo', 'sistema_operativo_otro');
+        }, 100);
 
 
 
