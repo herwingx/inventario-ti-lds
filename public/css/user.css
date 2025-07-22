@@ -106,15 +106,13 @@ select:not(:invalid):not([value=""]) {
   /* Mismo tamaño que inputs */
 }
 
-/* Asegurar que el contenedor select2 tenga la altura correcta */
 .select2-container--default .select2-selection--single {
-  height: calc(1.5em + 0.75rem + 2px) !important;
-  /* Altura igual a form-control */
+  height: 3rem !important;
 }
 
 /* Centrar verticalmente el texto en select2 */
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-  line-height: calc(1.5em + 0.75rem) !important;
+  line-height: 2.8rem !important;
   padding-left: 0.75rem !important;
   padding-right: 0.75rem !important;
 }
