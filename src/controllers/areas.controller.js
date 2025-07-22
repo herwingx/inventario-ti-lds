@@ -2,14 +2,18 @@
 // * Importo la función query para ejecutar consultas a la base de datos personalizada.
 const { query } = require('../config/db');
 
-// * [GET] /api/areas - Trae todas las áreas con información de sucursal, empresa y status
+// * [GET] /api/areas - Trae todas las áreas con información de empresa y status
+// * Opcionalmente filtra por sucursal usando query parameter ?id_sucursal=X
 const getAllAreas = async (req, res, next) => {
   try {
-    const sql = `
+    const { id_sucursal } = req.query;
+
+    let sql = `
       SELECT
         a.id,
         a.nombre,
         e.nombre AS nombre_empresa,
+        a.id_empresa,
         a.fecha_registro,
         a.fecha_actualizacion,
         a.id_status,
@@ -18,7 +22,18 @@ const getAllAreas = async (req, res, next) => {
       JOIN empresas AS e ON a.id_empresa = e.id
       JOIN status AS st ON a.id_status = st.id
     `;
-    const areas = await query(sql);
+
+    let params = [];
+
+    // Si se proporciona id_sucursal, filtrar áreas por la empresa de esa sucursal
+    if (id_sucursal) {
+      sql += ` WHERE a.id_empresa = (SELECT id_empresa FROM sucursales WHERE id = ?)`;
+      params.push(id_sucursal);
+    }
+
+    sql += ` ORDER BY a.nombre`;
+
+    const areas = await query(sql, params);
     res.status(200).json(areas);
   } catch (error) {
     // * Si ocurre un error, lo paso al middleware global para manejo centralizado
