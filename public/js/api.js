@@ -166,7 +166,10 @@ const deleteAsignacion = (id) => request(`/asignaciones/${id}`, 'DELETE');
 const getSucursales = () => request('/sucursales'); 
 
 //* --- Areas ---
-const getAreas = () => request('/areas'); 
+const getAreas = (id_sucursal = null) => {
+  const endpoint = id_sucursal ? `/areas?id_sucursal=${id_sucursal}` : '/areas';
+  return request(endpoint);
+}; 
 const getAreaById = (id) => request(`/areas/${id}`); 
 const createArea = (areaData) => request('/areas', 'POST', areaData); 
 const updateArea = (id, areaData) => request(`/areas/${id}`, 'PUT', areaData); 
