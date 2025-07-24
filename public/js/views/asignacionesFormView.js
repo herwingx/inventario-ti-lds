@@ -6,8 +6,9 @@
 //? Para CRUD: 'createAsignacion', 'updateAsignacion', 'getAsignacionById'.
 //? Para poblar selects: 'getEquipos', 'getEmpleados', 'getSucursales', 'getAreas', 'getDireccionesIp', 'getStatuses'.
 import {
-    createAsignacion, updateAsignacion, getAsignacionById,
-    getEquipos, getEmpleados, getSucursales, getAreas, getStatuses, getDireccionesIp,
+    createAsignacion, createAsignacionConComponentes, updateAsignacion, getAsignacionById,
+    getEquipos, getEquiposDisponiblesParaComponentes, getComponentesAsignacion, updateComponentesAsignacion,
+    getEmpleados, getSucursales, getAreas, getStatuses, getDireccionesIp,
     updateEquipo, updateDireccionIp
 } from '../api.js';
 //* Importo mis funciones de modales para una mejor UX.
@@ -20,11 +21,24 @@ const contentArea = document.getElementById('content-area');
 
 //* Cache para los datos de los selects. Esto es para evitar pedir los mismos datos a la API repetidamente.
 let equiposCache = null;
+let componentesDisponiblesCache = null;
 let empleadosCache = null;
 let sucursalesCache = null;
 let areasCache = null;
 let ipsCache = null;
 let statusesCache = null;  //* Para el estado de la asignación.
+
+//* Función para limpiar cachés cuando sea necesario
+function clearFormCaches() {
+    equiposCache = null;
+    componentesDisponiblesCache = null;
+    empleadosCache = null;
+    sucursalesCache = null;
+    areasCache = null;
+    ipsCache = null;
+    statusesCache = null;
+    console.log('Herwing - Cachés del formulario limpiados');
+}
 
 //* FUNCIONES DE RENDERIZADO DEL FORMULARIO
 
@@ -75,10 +89,30 @@ async function renderAsignacionForm(asignacionToEdit = null) {
 
     try {
         //* Obtengo los datos para todos los selects si aún no los tengo en caché.
+        // Recargar equipos solo si no están en caché o si se limpiaron
         if (!equiposCache) {
             equiposCache = await getEquipos();
             console.log('Herwing - Equipos cargados:', equiposCache.length, 'equipos');
             console.log('Herwing - Ejemplo de equipos:', equiposCache.slice(0, 5).map(eq => `${eq.numero_serie || 'Sin serie'} - Status: ${eq.status_nombre}`));
+        }
+        // Recargar componentes disponibles solo si no están en caché o si se limpiaron
+        if (!componentesDisponiblesCache) {
+            try {
+                console.log('Herwing - Llamando a getEquiposDisponiblesParaComponentes()...');
+                componentesDisponiblesCache = await getEquiposDisponiblesParaComponentes();
+                console.log('Herwing - Componentes disponibles cargados:', componentesDisponiblesCache.length, 'componentes');
+                console.log('Herwing - Respuesta completa de componentes:', componentesDisponiblesCache);
+                if (componentesDisponiblesCache.length > 0) {
+                    console.log('Herwing - Tipos de componentes:', componentesDisponiblesCache.map(c => c.nombre_tipo_equipo).filter((v, i, a) => a.indexOf(v) === i));
+                    console.log('Herwing - Ejemplos de componentes:', componentesDisponiblesCache.slice(0, 5).map(c => `${c.numero_serie} (${c.nombre_tipo_equipo})`));
+                } else {
+                    console.warn('Herwing - ⚠️ API devolvió array vacío - probablemente no hay equipos con estado DISPONIBLE (5)');
+                    console.warn('Herwing - 💡 Ejecuta fix_component_status.sql para corregir estados inconsistentes');
+                }
+            } catch (error) {
+                console.error('Herwing - ❌ Error al cargar componentes disponibles:', error);
+                componentesDisponiblesCache = [];
+            }
         }
         if (!empleadosCache) empleadosCache = await getEmpleados();
         if (!sucursalesCache) sucursalesCache = await getSucursales();
@@ -105,11 +139,13 @@ async function renderAsignacionForm(asignacionToEdit = null) {
         }
 
         //* Ahora, añade los equipos disponibles (asegúrate de no duplicar si el equipo asignado ya era disponible).
-        //* Filtrar equipos disponibles para asignación (solo DISPONIBLE)
+        //* Filtrar equipos disponibles para asignación (solo DISPONIBLE y que sean COMPUTADORA o LAPTOP)
         const availableEquipos = equiposCache.filter(eq =>
-            eq.status_nombre === 'DISPONIBLE'
+            eq.status_nombre === 'DISPONIBLE' && 
+            [1, 2].includes(eq.id_tipo_equipo) // Solo COMPUTADORA y LAPTOP
         );
-        console.log('Herwing - Equipos disponibles para asignación:', availableEquipos.length);
+        console.log('Herwing - Equipos disponibles para asignación (solo COMPUTADORA/LAPTOP):', availableEquipos.length);
+        console.log('Herwing - Tipos de equipos disponibles:', availableEquipos.map(eq => `${eq.numero_serie} (Tipo: ${eq.id_tipo_equipo})`));
 
         //* Combina y quita duplicados (en caso de que el equipo asignado también fuera "Disponible")
         availableEquipos.forEach(eq => {
@@ -120,14 +156,17 @@ async function renderAsignacionForm(asignacionToEdit = null) {
 
         //* Opcional: Ordenar los equipos para una mejor presentación (por número de serie o nombre)
         equiposParaSelect.sort((a, b) => (a.numero_serie || '').localeCompare(b.numero_serie || ''));
-        console.log('Herwing - Equipos finales para select:', equiposParaSelect.length, equiposParaSelect.map(eq => `${eq.numero_serie} (${eq.status_nombre})`));
+        console.log('Herwing - Equipos finales para select:', equiposParaSelect.length, equiposParaSelect.map(eq => `${eq.numero_serie} (Tipo: ${eq.id_tipo_equipo}, ${eq.status_nombre})`));
 
 
         //* Preparo la lista de equipos para el select de "Equipo Padre".
-        let equiposParaPadre = equiposCache;
+        //* Filtrar para que solo aparezcan equipos principales (COMPUTADORA y LAPTOP)
+        let equiposParaPadre = equiposCache.filter(eq => 
+            [1, 2].includes(eq.id_tipo_equipo) // Solo COMPUTADORA y LAPTOP
+        );
         if (isEditing && currentAsignacionData && currentAsignacionData.id_equipo) {
             //* Si estoy editando, filtro para que el equipo padre no sea el mismo que el 'id_equipo' de esta asignación.
-            equiposParaPadre = equiposCache.filter(eq => eq.id !== currentAsignacionData.id_equipo);
+            equiposParaPadre = equiposParaPadre.filter(eq => eq.id !== currentAsignacionData.id_equipo);
         }
         //* Para el modo CREACIÓN, no puedo saber qué 'id_equipo' se seleccionará hasta que el usuario lo haga.
         //* Por ahora, en modo creación, el select de "Equipo Padre" mostrará todos los equipos.
@@ -247,6 +286,24 @@ async function renderAsignacionForm(asignacionToEdit = null) {
                 .join('')}
 </select>
               </div>
+                            <hr class="my-4">
+                            <p class="text-lg font-semibold text-body">Componentes (Opcional):</p>
+                            <div class="mb-3">
+                                <label class="form-label">Seleccionar Componentes ${isEditing ? 'Actuales y ' : ''}Disponibles</label>
+                                <div id="componentes-container" class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                    <div id="componentes-loading" class="text-center">
+                                        <div class="spinner-border spinner-border-sm" role="status">
+                                            <span class="sr-only">Cargando componentes...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">
+                                    ${isEditing ? 
+                                        'Modifica los componentes de esta asignación. Los cambios se aplicarán al guardar.' :
+                                        'Los componentes seleccionados se asignarán automáticamente junto con el equipo principal.'
+                                    }
+                                </small>
+                            </div>
                             <div class="mb-3">
                                 <label for="comentario" class="form-label">Comentario</label>
                                 <textarea id="comentario" name="comentario" rows="3" class="form-control" placeholder="DESCRIBA DETALLES DE LA ASIGNACIÓN, UBICACIÓN ESPECÍFICA, PROPÓSITO, OBSERVACIONES, ETC.">${isEditing && currentAsignacionData && currentAsignacionData.comentario ? currentAsignacionData.comentario : ''}</textarea>
@@ -342,6 +399,123 @@ async function renderAsignacionForm(asignacionToEdit = null) {
 
         // Configurar el filtro después de que todo esté inicializado
         setTimeout(setupAreaFilter, 150);
+
+        // Cargar componentes después de renderizar
+        setTimeout(() => loadComponentesForForm(isEditing, asignacionId), 200);
+
+        // Función para cargar componentes en el formulario
+        async function loadComponentesForForm(isEditing, asignacionId) {
+            console.log('Herwing - Iniciando carga de componentes para formulario');
+            const container = document.getElementById('componentes-container');
+            if (!container) {
+                console.error('Herwing - No se encontró el contenedor de componentes');
+                return;
+            }
+
+            try {
+                let componentesAsignados = [];
+                
+                // Si estamos editando, obtener componentes actuales
+                if (isEditing && asignacionId) {
+                    try {
+                        componentesAsignados = await getComponentesAsignacion(asignacionId);
+                        console.log('Herwing - Componentes asignados cargados:', componentesAsignados);
+                        if (componentesAsignados.length > 0) {
+                            console.log('Herwing - Ejemplo de componente asignado:', componentesAsignados[0]);
+                        }
+                    } catch (error) {
+                        console.warn('No se pudieron cargar componentes asignados:', error);
+                        componentesAsignados = [];
+                    }
+                }
+
+                // Combinar componentes disponibles y asignados
+                const componentesAsignadosIds = componentesAsignados.map(c => c.id_equipo);
+                const todosComponentes = [...componentesAsignados];
+
+                // Marcar componentes asignados y normalizar su estructura
+                componentesAsignados.forEach(comp => {
+                    comp.asignado = true;
+                    // Normalizar nombres de campos del backend
+                    comp.numero_serie = comp.equipo_numero_serie || comp.numero_serie;
+                    comp.nombre_equipo = comp.equipo_nombre || comp.nombre_equipo;
+                    comp.nombre_tipo_equipo = comp.tipo_equipo_nombre || comp.nombre_tipo_equipo;
+                    comp.id_equipo = comp.id_equipo || comp.id;
+                });
+                
+                console.log('Herwing - Componentes después de normalización:', componentesAsignados.map(c => ({
+                    id: c.id_equipo,
+                    serie: c.numero_serie,
+                    nombre: c.nombre_equipo,
+                    tipo: c.nombre_tipo_equipo
+                })));
+
+                // Añadir SOLO componentes disponibles (no asignados a ninguna asignación)
+                console.log('Herwing - Componentes disponibles del cache:', componentesDisponiblesCache.length);
+                console.log('Herwing - Cache de componentes:', componentesDisponiblesCache);
+                console.log('Herwing - Componentes asignados a esta asignación:', componentesAsignadosIds);
+                
+                const componentesDisponiblesParaMostrar = componentesDisponiblesCache.filter(comp => 
+                    !componentesAsignadosIds.includes(comp.id)
+                );
+                
+                console.log('Herwing - Componentes disponibles para mostrar:', componentesDisponiblesParaMostrar.length);
+                console.log('Herwing - Componentes filtrados:', componentesDisponiblesParaMostrar);
+                
+                componentesDisponiblesParaMostrar.forEach(comp => {
+                    todosComponentes.push({
+                        id: comp.id,
+                        id_equipo: comp.id,
+                        numero_serie: comp.numero_serie,
+                        nombre_equipo: comp.nombre_equipo,
+                        nombre_tipo_equipo: comp.nombre_tipo_equipo,
+                        marca: comp.marca,
+                        modelo: comp.modelo,
+                        asignado: false
+                    });
+                });
+
+                // Ordenar por tipo y serie
+                todosComponentes.sort((a, b) => {
+                    const tipoA = a.nombre_tipo_equipo || a.tipo_equipo_nombre || '';
+                    const tipoB = b.nombre_tipo_equipo || b.tipo_equipo_nombre || '';
+                    if (tipoA !== tipoB) return tipoA.localeCompare(tipoB);
+                    return (a.numero_serie || '').localeCompare(b.numero_serie || '');
+                });
+
+                // Renderizar componentes
+                if (todosComponentes.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No hay componentes disponibles</p>';
+                } else {
+                    container.innerHTML = todosComponentes.map(comp => {
+                        const equipoId = comp.id_equipo || comp.id;
+                        const isChecked = comp.asignado || componentesAsignadosIds.includes(equipoId);
+                        
+                        const numeroSerie = comp.numero_serie || comp.equipo_numero_serie || 'Sin serie';
+                        const nombreEquipo = comp.nombre_equipo || comp.equipo_nombre || 'Sin nombre';
+                        const tipoEquipo = comp.nombre_tipo_equipo || comp.tipo_equipo_nombre || 'Sin tipo';
+                        const marca = comp.marca || 'N/A';
+                        const modelo = comp.modelo || 'N/A';
+                        
+                        return `
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" value="${equipoId}" 
+                                       id="componente_${equipoId}" name="componentes" ${isChecked ? 'checked' : ''}>
+                                <label class="form-check-label" for="componente_${equipoId}">
+                                    <strong>${numeroSerie}</strong> - ${nombreEquipo} 
+                                    <small class="text-muted">(${tipoEquipo} - ${marca} ${modelo})</small>
+                                    ${comp.asignado ? '<span class="badge badge-success ml-2">Asignado Actualmente</span>' : ''}
+                                </label>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+            } catch (error) {
+                console.error('Error al cargar componentes para el formulario:', error);
+                container.innerHTML = '<p class="text-danger">Error al cargar componentes</p>';
+            }
+        }
         // Inicializar Pickadate en español en el campo de fecha SIEMPRE después de renderizar
         if (window.$ && $.fn.pickadate) {
             if ($('#fecha_asignacion').data('pickadate')) $('#fecha_asignacion').pickadate('destroy');
@@ -406,6 +580,13 @@ async function handleAsignacionFormSubmit(event, editingId = null) {
     const formData = new FormData(form);
     const asignacionData = {};
 
+    //* Recolectar componentes seleccionados
+    const componentesSeleccionados = [];
+    const checkboxes = form.querySelectorAll('input[name="componentes"]:checked');
+    checkboxes.forEach(checkbox => {
+        componentesSeleccionados.push(parseInt(checkbox.value, 10));
+    });
+
     //* Convierto FormData a un objeto, manejando valores vacíos y numéricos.
     for (let [key, value] of formData.entries()) {
         if ([
@@ -425,10 +606,15 @@ async function handleAsignacionFormSubmit(event, editingId = null) {
             } else {
                 asignacionData[key] = null;
             }
-        } else {
+        } else if (key !== 'componentes') { // Ignorar checkboxes de componentes en el loop principal
             //* Para campos de texto como 'comentario', si está vacío, enviar null.
             asignacionData[key] = value.trim() === '' ? null : value;
         }
+    }
+
+    //* Añadir componentes al objeto de datos
+    if (componentesSeleccionados.length > 0) {
+        asignacionData.componentes = componentesSeleccionados;
     }
 
     //* Validaciones básicas en frontend (el backend también validará).
@@ -451,11 +637,25 @@ async function handleAsignacionFormSubmit(event, editingId = null) {
         let updatedAsignacion = null;
         if (editingId) {
             await updateAsignacion(editingId, asignacionData);
+            
+            // Si hay componentes seleccionados, actualizar componentes
+            if (componentesSeleccionados.length >= 0) { // >= 0 para permitir eliminar todos los componentes
+                await updateComponentesAsignacion(editingId, { componentes: componentesSeleccionados });
+            }
+            
             responseMessage = `Asignación con ID ${editingId} actualizada exitosamente.`;
             updatedAsignacion = { ...asignacionData, id: editingId };
         } else {
-            const nuevaAsignacion = await createAsignacion(asignacionData); //* La API devuelve el objeto creado.
-            responseMessage = `Asignación (ID: ${nuevaAsignacion.id}) para el equipo ID ${nuevaAsignacion.id_equipo} registrada exitosamente.`;
+            let nuevaAsignacion;
+            if (asignacionData.componentes && asignacionData.componentes.length > 0) {
+                // Usar la nueva API para crear asignación con componentes
+                nuevaAsignacion = await createAsignacionConComponentes(asignacionData);
+                responseMessage = `Asignación (ID: ${nuevaAsignacion.id}) para el equipo ID ${nuevaAsignacion.id_equipo} registrada exitosamente con ${nuevaAsignacion.componentes_asignados} componentes.`;
+            } else {
+                // Usar la API tradicional
+                nuevaAsignacion = await createAsignacion(asignacionData);
+                responseMessage = `Asignación (ID: ${nuevaAsignacion.id}) para el equipo ID ${nuevaAsignacion.id_equipo} registrada exitosamente.`;
+            }
             updatedAsignacion = nuevaAsignacion;
         }
 
@@ -482,6 +682,9 @@ async function handleAsignacionFormSubmit(event, editingId = null) {
         if (asignacionData.id_ip) {
             console.log(`Herwing - IP ${asignacionData.id_ip} actualizada. Los cambios se verán al recargar las vistas de IPs.`);
         }
+
+        // Limpiar cachés después de operación exitosa para mantener datos actualizados
+        clearFormCaches();
 
         await Swal.fire({
             title: 'Operación Exitosa',
@@ -523,6 +726,11 @@ async function handleAsignacionFormSubmit(event, editingId = null) {
 //* FUNCIÓN PRINCIPAL DE CARGA DE LA VISTA DEL FORMULARIO
 //* Esta será llamada desde main.js. `params` puede ser el ID si se edita.
 async function showAsignacionForm(params = null) {
+    // Limpiar cachés críticos para asegurar datos actualizados en SPA
+    equiposCache = null;
+    componentesDisponiblesCache = null;
+    console.log('Herwing - Cachés críticos limpiados para SPA');
+    
     //* El ID de la asignación puede venir como string (de la URL) o como parte de un objeto.
     const asignacionId = typeof params === 'string' ? params : (params && params.id);
     console.log('Mostrando el formulario de Asignación. ID para editar:', asignacionId);
@@ -565,4 +773,4 @@ async function showAsignacionForm(params = null) {
     await renderAsignacionForm(asignacionToEdit);
 }
 
-export { showAsignacionForm };
+export { showAsignacionForm, clearFormCaches };
