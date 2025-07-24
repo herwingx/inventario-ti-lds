@@ -89,6 +89,7 @@ async function request(endpoint, method = 'GET', body = null) {
 //* --- Equipos ---
 const getEquipos = () => request('/equipos'); 
 const getEquipoById = (id) => request(`/equipos/${id}`); 
+const getEquiposDisponiblesParaComponentes = () => request('/equipos/disponibles-componentes');
 const createEquipo = (equipoData) => request('/equipos', 'POST', equipoData); 
 const updateEquipo = (id, equipoData) => request(`/equipos/${id}`, 'PUT', equipoData); 
 const deleteEquipo = (id) => request(`/equipos/${id}`, 'DELETE'); 
@@ -159,8 +160,13 @@ const getAsignaciones = (filters = {}) => {
 };
 const getAsignacionById = (id) => request(`/asignaciones/${id}`); 
 const createAsignacion = (asignacionData) => request('/asignaciones', 'POST', asignacionData); 
+const createAsignacionConComponentes = (asignacionData) => request('/asignaciones/con-componentes', 'POST', asignacionData);
 const updateAsignacion = (id, asignacionData) => request(`/asignaciones/${id}`, 'PUT', asignacionData); 
-const deleteAsignacion = (id) => request(`/asignaciones/${id}`, 'DELETE'); 
+const deleteAsignacion = (id) => request(`/asignaciones/${id}`, 'DELETE');
+
+//* Funciones para manejar componentes de asignaciones
+const getComponentesAsignacion = (asignacionId) => request(`/asignaciones/${asignacionId}/componentes`);
+const updateComponentesAsignacion = (asignacionId, componentesData) => request(`/asignaciones/${asignacionId}/componentes`, 'PUT', componentesData); 
 
 //* --- Sucursales ---
 const getSucursales = () => request('/sucursales'); 
@@ -185,7 +191,7 @@ export {
   //* Auth
   login, 
   //* Equipos
-  getEquipos, getEquipoById, createEquipo, updateEquipo, deleteEquipo,
+  getEquipos, getEquipoById, getEquiposDisponiblesParaComponentes, createEquipo, updateEquipo, deleteEquipo,
   //* Empleados
   getEmpleados, getEmpleadoById, createEmpleado, updateEmpleado, deleteEmpleado,
   //* Direcciones IP
@@ -209,7 +215,8 @@ export {
   //* Notas
   getNotas, getNotaById, createNota, updateNota, deleteNota,
   //* Asignaciones
-  getAsignaciones, getAsignacionById, createAsignacion, updateAsignacion, deleteAsignacion,
+  getAsignaciones, getAsignacionById, createAsignacion, createAsignacionConComponentes, updateAsignacion, deleteAsignacion,
+  getComponentesAsignacion, updateComponentesAsignacion,
   //* Sucursales
   getSucursales,
   //* Areas

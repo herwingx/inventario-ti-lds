@@ -262,8 +262,7 @@ const getEquiposDisponiblesParaComponentes = async (req, res, next) => {
         const allAvailable = await query(allAvailableQuery);
         console.log('Herwing - TODOS los componentes con estado DISPONIBLE:', allAvailable);
 
-        // TEMPORAL: Mostrar componentes DISPONIBLES incluso si tienen asignaciones activas
-        // Esto es para solucionar el problema de datos inconsistentes
+        // Consulta principal: componentes disponibles (no COMPUTADORA ni LAPTOP)
         const sql = `
           SELECT
             e.id, e.numero_serie, e.nombre_equipo, e.marca, e.modelo,
@@ -279,13 +278,12 @@ const getEquiposDisponiblesParaComponentes = async (req, res, next) => {
           JOIN empresas AS em ON s.id_empresa = em.id
           JOIN status AS st ON e.id_status = st.id
           WHERE e.id_status = 5 -- STATUS_DISPONIBLE
-          AND te.id NOT IN (1, 2) -- Excluir solo COMPUTADORA y LAPTOP (incluir todo lo demás)
-          -- TEMPORAL: Comentamos el filtro de asignaciones activas para mostrar todos los disponibles
-          -- AND NOT EXISTS (
-          --     SELECT 1 FROM asignaciones a 
-          --     WHERE a.id_equipo = e.id 
-          --     AND a.fecha_fin_asignacion IS NULL
-          -- )
+          AND te.id NOT IN (1, 2) -- Excluir COMPUTADORA y LAPTOP (incluir todos los demás tipos)
+          AND NOT EXISTS (
+              SELECT 1 FROM asignaciones a 
+              WHERE a.id_equipo = e.id 
+              AND a.fecha_fin_asignacion IS NULL
+          ) -- Excluir equipos que tengan asignaciones activas
           ORDER BY te.nombre_tipo, e.numero_serie
         `;
         const equipos = await query(sql);
