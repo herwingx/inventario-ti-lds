@@ -1,7 +1,7 @@
 //public/js/views/asignacionDetailsView.js
 //* Este módulo maneja la lógica para mostrar los detalles de una Asignación específica.
 
-import { getAsignacionById } from '../api.js';
+import { getAsignacionById, getComponentesAsignacion } from '../api.js';
 import { showDetailsLoading } from '../utils/loading.js';
 import { showDetailsError } from '../utils/error.js';
 import { getStatusBadge } from '../utils/statusBadge.js';
@@ -19,7 +19,100 @@ function showAsignacionDetailsError(message) {
     showDetailsError('Asignación', null, message, 'asignacionesList', () => showAsignacionDetails());
 }
 
-function renderAsignacionDetails(asignacion) {
+async function renderComponentesSection(card, asignacionId) {
+    try {
+        console.log('Herwing - Cargando componentes para asignación:', asignacionId);
+        const componentes = await getComponentesAsignacion(asignacionId);
+        
+        if (!componentes || componentes.length === 0) {
+            console.log('Herwing - No hay componentes para esta asignación');
+            return;
+        }
+
+        // Crear sección de componentes
+        const componentesSection = document.createElement('div');
+        componentesSection.className = 'card-body border-top';
+        
+        const componentesTitle = document.createElement('h5');
+        componentesTitle.className = 'mb-3';
+        componentesTitle.innerHTML = '<i class="fas fa-puzzle-piece me-2"></i>Componentes Asignados';
+        componentesSection.appendChild(componentesTitle);
+
+        // Agrupar componentes por tipo
+        const componentesPorTipo = {};
+        componentes.forEach(comp => {
+            const tipo = comp.tipo_equipo_nombre || comp.nombre_tipo_equipo || 'Sin Tipo';
+            if (!componentesPorTipo[tipo]) {
+                componentesPorTipo[tipo] = [];
+            }
+            componentesPorTipo[tipo].push(comp);
+        });
+
+        // Renderizar cada categoría
+        Object.keys(componentesPorTipo).sort().forEach(tipo => {
+            const tipoSection = document.createElement('div');
+            tipoSection.className = 'mb-3';
+            
+            const tipoHeader = document.createElement('h6');
+            tipoHeader.className = 'text-primary mb-2';
+            tipoHeader.innerHTML = `<i class="fas fa-tag me-1"></i>${tipo} (${componentesPorTipo[tipo].length})`;
+            tipoSection.appendChild(tipoHeader);
+            
+            const componentesList = document.createElement('div');
+            componentesList.className = 'row';
+            
+            componentesPorTipo[tipo].forEach(comp => {
+                const compCard = document.createElement('div');
+                compCard.className = 'col-md-6 col-lg-4 mb-2';
+                
+                const numeroSerie = comp.equipo_numero_serie || comp.numero_serie || 'Sin serie';
+                const nombreEquipo = comp.equipo_nombre || comp.nombre_equipo || 'Sin nombre';
+                const marca = comp.marca || 'N/A';
+                const modelo = comp.modelo || 'N/A';
+                
+                compCard.innerHTML = `
+                    <div class="card border-left-primary h-100">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 font-weight-bold">${numeroSerie}</h6>
+                                    <p class="mb-1 text-muted small">${nombreEquipo}</p>
+                                    <p class="mb-0 text-muted small">${marca} ${modelo}</p>
+                                </div>
+                                <div class="text-primary">
+                                    <i class="fas fa-microchip fa-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                componentesList.appendChild(compCard);
+            });
+            
+            tipoSection.appendChild(componentesList);
+            componentesSection.appendChild(tipoSection);
+        });
+
+        card.appendChild(componentesSection);
+        
+    } catch (error) {
+        console.error('Error al cargar componentes:', error);
+        // Agregar mensaje de error si no se pueden cargar los componentes
+        const errorSection = document.createElement('div');
+        errorSection.className = 'card-body border-top';
+        errorSection.innerHTML = `
+            <h5 class="mb-3"><i class="fas fa-puzzle-piece me-2"></i>Componentes Asignados</h5>
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                No se pudieron cargar los componentes de esta asignación.
+            </div>
+        `;
+        card.appendChild(errorSection);
+    }
+}
+
+async function renderAsignacionDetails(asignacion) {
     contentArea.innerHTML = '';
     if (!asignacion) {
         showAsignacionDetailsError('No se encontraron datos para esta asignación.');
@@ -76,6 +169,9 @@ function renderAsignacionDetails(asignacion) {
     addDetail('Última Actualización', fechaActualizacionF);
     cardBody.appendChild(detailsGrid);
     card.appendChild(cardBody);
+    
+    // Agregar sección de componentes
+    await renderComponentesSection(card, asignacion.id);
     // Botones de acción
     const actionsDiv = document.createElement('div');
     actionsDiv.className = 'card-footer d-flex justify-content-end gap-2';
@@ -86,7 +182,11 @@ function renderAsignacionDetails(asignacion) {
     const editBtn = document.createElement('button');
     editBtn.className = 'btn btn-primary btn-sl-sm';
     editBtn.innerHTML = '<i class="fa fa-edit me-2"></i>Editar Asignación';
-    if (asignacion.status_nombre && asignacion.status_nombre.toLowerCase() === 'finalizado') {
+    
+    // Verificar si la asignación está finalizada (tiene fecha_fin_asignacion)
+    const isActiva = !asignacion.fecha_fin_asignacion;
+    
+    if (!isActiva) {
         editBtn.disabled = true;
         editBtn.classList.add('opacity-50', 'cursor-not-allowed');
         editBtn.title = 'No se puede editar una asignación finalizada';

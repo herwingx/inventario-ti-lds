@@ -1,17 +1,15 @@
-//public/js/views/asignacionesView.js
-//* Este módulo se encarga de la vista de listado de Asignaciones, usando Grid.js.
+//public/js/views/asignacionesHistoricasView.js
+//* Este módulo se encarga de la vista de listado de Asignaciones Históricas (finalizadas).
 
-import { getAsignaciones, deleteAsignacion } from '../api.js';
+import { getAsignaciones } from '../api.js';
 import { showListLoading } from '../utils/loading.js';
 import { showListError } from '../utils/error.js';
 import { getStatusBadge } from '../utils/statusBadge.js';
 
 const contentArea = document.getElementById('content-area');
-let asignacionesGridInstance = null;
-let gridContainerGlobal = null;
-let asignacionesDataTable = null;
+let asignacionesHistoricasDataTable = null;
 
-function renderAsignacionesListViewLayout() {
+function renderAsignacionesHistoricasListViewLayout() {
     contentArea.innerHTML = '';
     const cardContainer = document.createElement('div');
     cardContainer.classList.add('card');
@@ -19,37 +17,30 @@ function renderAsignacionesListViewLayout() {
     cardHeader.classList.add('card-header');
     const cardTitle = document.createElement('h4');
     cardTitle.classList.add('card-title', 'fs-20', 'font-w700');
-    cardTitle.innerHTML = '<i class="fas fa-laptop me-2"></i>Asignaciones Activas (Computadoras y Laptops)';
+    cardTitle.innerHTML = '<i class="fas fa-history me-2"></i>Asignaciones Históricas (Finalizadas)';
     cardHeader.appendChild(cardTitle);
     cardContainer.appendChild(cardHeader);
     const cardBody = document.createElement('div');
     cardBody.classList.add('card-body');
-    cardBody.innerHTML = `<div id="asignaciones-list-loading"></div>`;
+    cardBody.innerHTML = `<div id="asignaciones-historicas-loading"></div>`;
     cardContainer.appendChild(cardBody);
     contentArea.appendChild(cardContainer);
     return cardBody;
 }
 
-function showAsignacionesLoading(container) {
-    const target = container || gridContainerGlobal || contentArea;
-    showListLoading(target, 'Asignaciones');
-}
-
-function showAsignacionesError(message, container) {
+function showAsignacionesHistoricasLoading(container) {
     const target = container || contentArea;
-    showListError(target, 'Asignaciones', message, 'asignaciones-list', () => loadAsignacionesList());
+    showListLoading(target, 'Asignaciones Históricas');
 }
 
-function formatAsignacionesActionsCell(data, type, row) {
+function showAsignacionesHistoricasError(message, container) {
+    const target = container || contentArea;
+    showListError(target, 'Asignaciones Históricas', message, 'asignaciones-historicas', () => loadAsignacionesHistoricasList());
+}
+
+function formatAsignacionesHistoricasActionsCell(data, type, row) {
     if (type === 'display') {
         const asignacionId = row[0];
-        const equipoSerie = row[1];
-        const fechaFin = row[6]; // Índice correcto para fecha_fin_asignacion
-        const isActiva = !fechaFin || fechaFin === '';
-        
-        // Estilos para botones deshabilitados
-        const disabledStyle = 'opacity: 0.4; cursor: not-allowed; pointer-events: none;';
-        const disabledClass = 'disabled';
         
         return `
             <div class="d-flex gap-1 justify-content-center">
@@ -59,11 +50,10 @@ function formatAsignacionesActionsCell(data, type, row) {
                     <i class="fas fa-eye" style="color: white; font-size: 12px;"></i>
                 </button>
                 
-                <button type="button" class="action-btn edit-btn ${!isActiva ? disabledClass : ''}" 
-                        title="${isActiva ? 'Editar o Finalizar Asignación' : 'Esta asignación histórica no se puede editar'}" 
-                        data-action="edit" data-id="${asignacionId}"
-                        style="background: ${!isActiva ? '#e9ecef' : '#28a745'}; border: none; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); ${!isActiva ? disabledStyle : ''}">
-                    <i class="fas fa-edit" style="color: ${!isActiva ? '#6c757d' : 'white'}; font-size: 12px;"></i>
+                <button type="button" class="action-btn disabled" 
+                        title="Las asignaciones históricas no se pueden editar" 
+                        style="background: #e9ecef; border: none; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; opacity: 0.4; cursor: not-allowed;">
+                    <i class="fas fa-edit" style="color: #6c757d; font-size: 12px;"></i>
                 </button>
             </div>
             
@@ -78,10 +68,6 @@ function formatAsignacionesActionsCell(data, type, row) {
                     background: #138496 !important;
                 }
                 
-                .edit-btn:not(.disabled):hover {
-                    background: #218838 !important;
-                }
-                
                 .action-btn:active:not(.disabled) {
                     transform: translateY(0);
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
@@ -93,7 +79,7 @@ function formatAsignacionesActionsCell(data, type, row) {
     return data;
 }
 
-function handleAsignacionesTableActions(event) {
+function handleAsignacionesHistoricasTableActions(event) {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
 
@@ -105,51 +91,45 @@ function handleAsignacionesTableActions(event) {
 
     const action = button.dataset.action;
     const asignacionId = button.dataset.id;
-    const equipoSerie = button.dataset.equipoSerie;
+    
     if (action === 'view') {
         if (typeof window.navigateTo === 'function') {
             window.navigateTo('asignacion-details', String(asignacionId));
         }
-    } else if (action === 'edit' && !button.classList.contains('disabled')) {
-        if (typeof window.navigateTo === 'function') {
-            window.navigateTo('asignacion-form', String(asignacionId));
-        }
     }
+    // No hay acción de editar para asignaciones históricas
 }
 
-async function loadAsignacionesList() {
-    const cardBody = renderAsignacionesListViewLayout();
+async function loadAsignacionesHistoricasList() {
+    const cardBody = renderAsignacionesHistoricasListViewLayout();
     import('../utils/loading.js').then(({ showListLoading }) => {
-        showListLoading(document.getElementById('asignaciones-list-loading'), 'asignaciones');
+        showListLoading(document.getElementById('asignaciones-historicas-loading'), 'asignaciones históricas');
     });
+    
     try {
-        const asignaciones = await getAsignaciones();
-        if (!asignaciones || asignaciones.length === 0) {
-            showAsignacionesError('No hay asignaciones registradas.', cardBody);
+        const todasAsignaciones = await getAsignaciones();
+        if (!todasAsignaciones || todasAsignaciones.length === 0) {
+            showAsignacionesHistoricasError('No hay asignaciones registradas.', cardBody);
             return;
         }
 
-        // Filtrar solo asignaciones ACTIVAS de COMPUTADORA (1) y LAPTOP (2)
-        const asignacionesPrincipales = asignaciones.filter(asig => 
-            (asig.equipo_tipo_id === 1 || asig.equipo_tipo_id === 2) && // Solo COMPUTADORA y LAPTOP
-            !asig.fecha_fin_asignacion // Solo asignaciones activas (sin fecha de fin)
+        // Filtrar solo asignaciones finalizadas de COMPUTADORA (1) y LAPTOP (2)
+        const asignacionesHistoricas = todasAsignaciones.filter(asig => 
+            asig.fecha_fin_asignacion && // Debe tener fecha de finalización
+            (asig.equipo_tipo_id === 1 || asig.equipo_tipo_id === 2) // Solo COMPUTADORA y LAPTOP
         );
 
-        console.log('Herwing - Total asignaciones:', asignaciones.length);
-        console.log('Herwing - Asignaciones activas (COMPUTADORA/LAPTOP):', asignacionesPrincipales.length);
+        console.log('Herwing - Total asignaciones:', todasAsignaciones.length);
+        console.log('Herwing - Asignaciones históricas (COMPUTADORA/LAPTOP finalizadas):', asignacionesHistoricas.length);
 
-        if (asignacionesPrincipales.length === 0) {
+        if (asignacionesHistoricas.length === 0) {
             cardBody.innerHTML = `
                 <div class="text-center py-5">
-                    <i class="fas fa-laptop fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted">No hay asignaciones activas</h5>
-                    <p class="text-muted">Las asignaciones activas de equipos principales aparecerán aquí.</p>
-                    <a href="#" data-view="asignacion-form" class="btn btn-primary mt-2">
-                        <i class="fas fa-plus me-2"></i>Crear Nueva Asignación
-                    </a>
+                    <i class="fas fa-history fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay asignaciones históricas</h5>
+                    <p class="text-muted">Las asignaciones finalizadas aparecerán aquí una vez que se completen.</p>
                 </div>
             `;
-            return;
             return;
         }
 
@@ -157,13 +137,13 @@ async function loadAsignacionesList() {
         const responsiveDiv = document.createElement('div');
         responsiveDiv.className = 'table-responsive';
         const tableContainer = document.createElement('table');
-        tableContainer.id = 'asignaciones-datatable';
+        tableContainer.id = 'asignaciones-historicas-datatable';
         tableContainer.className = 'display';
         tableContainer.style.minWidth = '845px';
         responsiveDiv.appendChild(tableContainer);
         cardBody.appendChild(responsiveDiv);
 
-        const tableData = asignacionesPrincipales.map(asig => [
+        const tableData = asignacionesHistoricas.map(asig => [
             asig.id,
             asig.equipo_numero_serie || 'N/A',
             asig.equipo_tipo_nombre || 'N/A',
@@ -175,7 +155,7 @@ async function loadAsignacionesList() {
             null
         ]);
 
-        asignacionesDataTable = $('#asignaciones-datatable').DataTable({
+        asignacionesHistoricasDataTable = $('#asignaciones-historicas-datatable').DataTable({
             data: tableData,
             columns: [
                 { title: 'ID', data: 0, width: '70px' },
@@ -184,11 +164,11 @@ async function loadAsignacionesList() {
                 { title: 'Asignado A', data: 3 },
                 { title: 'IP', data: 4 },
                 { title: 'Fecha Asignación', data: 5 },
-                { title: 'Fecha Fin', data: 6 },
+                { title: 'Fecha Finalización', data: 6 },
                 { title: 'Estado', data: 7, render: function(data, type, row) {
                     return getStatusBadge(data);
                 }},
-                { title: 'Acciones', data: 8, width: '120px', render: formatAsignacionesActionsCell }
+                { title: 'Acciones', data: 8, width: '120px', render: formatAsignacionesHistoricasActionsCell }
             ],
             columnDefs: [
                 {
@@ -197,24 +177,25 @@ async function loadAsignacionesList() {
                     searchable: false
                 }
             ],
+            order: [[6, 'desc']], // Ordenar por fecha de finalización descendente
             initComplete: function() {
-                $('#asignaciones-datatable').on('click', 'button[data-action]', handleAsignacionesTableActions);
+                $('#asignaciones-historicas-datatable').on('click', 'button[data-action]', handleAsignacionesHistoricasTableActions);
             }
         });
 
         // Agregar información adicional
         const infoDiv = document.createElement('div');
-        infoDiv.className = 'alert alert-primary mt-3';
+        infoDiv.className = 'alert alert-info mt-3';
         infoDiv.innerHTML = `
             <i class="fas fa-info-circle me-2"></i>
-            <strong>Información:</strong> Esta vista muestra únicamente las asignaciones activas de equipos principales (Computadoras y Laptops). 
-            Para ver asignaciones finalizadas, utiliza la opción "Asignaciones Históricas" en el menú.
+            <strong>Información:</strong> Esta vista muestra únicamente las asignaciones de equipos principales (Computadoras y Laptops) que han sido finalizadas. 
+            Las asignaciones históricas son de solo lectura y no pueden ser editadas ni eliminadas.
         `;
         cardBody.appendChild(infoDiv);
 
     } catch (error) {
-        showAsignacionesError(error.message, cardBody);
+        showAsignacionesHistoricasError(error.message, cardBody);
     }
 }
 
-export { loadAsignacionesList };
+export { loadAsignacionesHistoricasList };
