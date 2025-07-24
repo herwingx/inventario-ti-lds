@@ -22,6 +22,15 @@ router.get('/:id', asignacionesController.getAsignacionById);
 // * [POST] /api/asignaciones - Crea una nueva asignación (valida reglas de negocio)
 router.post('/', asignacionesController.createAsignacion);
 
+// * [POST] /api/asignaciones/con-componentes - Crea una asignación con componentes
+router.post('/con-componentes', asignacionesController.createAsignacionConComponentes);
+
+// * [GET] /api/asignaciones/:id/componentes - Obtiene componentes de una asignación
+router.get('/:id/componentes', asignacionesController.getComponentesAsignacion);
+
+// * [PUT] /api/asignaciones/:id/componentes - Actualiza componentes de una asignación
+router.put('/:id/componentes', asignacionesController.updateComponentesAsignacion);
+
 // * [PUT] /api/asignaciones/:id - Actualiza una asignación por su ID (valida reglas de negocio)
 router.put('/:id', asignacionesController.updateAsignacion);
 

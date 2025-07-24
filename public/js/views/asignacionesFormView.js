@@ -287,10 +287,17 @@ async function renderAsignacionForm(asignacionToEdit = null) {
 </select>
               </div>
                             <hr class="my-4">
-                            <p class="text-lg font-semibold text-body">Componentes (Opcional):</p>
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-puzzle-piece text-primary me-2"></i>
+                                <h5 class="mb-0">Componentes Adicionales (Opcional)</h5>
+                            </div>
                             <div class="mb-3">
                                 <label class="form-label">Seleccionar Componentes ${isEditing ? 'Actuales y ' : ''}Disponibles</label>
-                                <div id="componentes-container" class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Tipos disponibles:</strong> Monitor, Teclado, Mouse, Impresora, Scanner, Router, Switch, Access Point, Cámara IP, Terminal de Cobro, Servidor, Disco Duro Externo, Webcam, Proyector, Firewall, NAS, Lector de Barras.
+                                </div>
+                                <div id="componentes-container" class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
                                     <div id="componentes-loading" class="text-center">
                                         <div class="spinner-border spinner-border-sm" role="status">
                                             <span class="sr-only">Cargando componentes...</span>
@@ -483,32 +490,75 @@ async function renderAsignacionForm(asignacionToEdit = null) {
                     return (a.numero_serie || '').localeCompare(b.numero_serie || '');
                 });
 
-                // Renderizar componentes
+                // Renderizar componentes agrupados por tipo
                 if (todosComponentes.length === 0) {
-                    container.innerHTML = '<p class="text-muted">No hay componentes disponibles</p>';
+                    container.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No hay componentes disponibles</p>
+                            <small class="text-muted">Todos los componentes están asignados o no hay equipos disponibles</small>
+                        </div>
+                    `;
                 } else {
-                    container.innerHTML = todosComponentes.map(comp => {
-                        const equipoId = comp.id_equipo || comp.id;
-                        const isChecked = comp.asignado || componentesAsignadosIds.includes(equipoId);
+                    // Agrupar componentes por tipo
+                    const componentesPorTipo = {};
+                    todosComponentes.forEach(comp => {
+                        const tipo = comp.nombre_tipo_equipo || comp.tipo_equipo_nombre || 'Sin Tipo';
+                        if (!componentesPorTipo[tipo]) {
+                            componentesPorTipo[tipo] = [];
+                        }
+                        componentesPorTipo[tipo].push(comp);
+                    });
+
+                    let html = '';
+                    Object.keys(componentesPorTipo).sort().forEach(tipo => {
+                        const componentes = componentesPorTipo[tipo];
+                        const disponibles = componentes.filter(c => !c.asignado).length;
+                        const asignados = componentes.filter(c => c.asignado).length;
                         
-                        const numeroSerie = comp.numero_serie || comp.equipo_numero_serie || 'Sin serie';
-                        const nombreEquipo = comp.nombre_equipo || comp.equipo_nombre || 'Sin nombre';
-                        const tipoEquipo = comp.nombre_tipo_equipo || comp.tipo_equipo_nombre || 'Sin tipo';
-                        const marca = comp.marca || 'N/A';
-                        const modelo = comp.modelo || 'N/A';
-                        
-                        return `
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" value="${equipoId}" 
-                                       id="componente_${equipoId}" name="componentes" ${isChecked ? 'checked' : ''}>
-                                <label class="form-check-label" for="componente_${equipoId}">
-                                    <strong>${numeroSerie}</strong> - ${nombreEquipo} 
-                                    <small class="text-muted">(${tipoEquipo} - ${marca} ${modelo})</small>
-                                    ${comp.asignado ? '<span class="badge badge-success ml-2">Asignado Actualmente</span>' : ''}
-                                </label>
+                        html += `
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <h6 class="mb-0 text-primary">
+                                        <i class="fas fa-tag me-1"></i>${tipo}
+                                    </h6>
+                                    <span class="badge bg-success text ms-2">
+                                        ${componentes.length} total
+                                        ${disponibles > 0 ? `(${disponibles} disponibles)` : ''}
+                                        ${asignados > 0 ? `(${asignados} asignados)` : ''}
+                                    </span>
+                                </div>
+                                <div class="ps-3">
+                                    ${componentes.map(comp => {
+                                        const equipoId = comp.id_equipo || comp.id;
+                                        const isChecked = comp.asignado || componentesAsignadosIds.includes(equipoId);
+                                        
+                                        const numeroSerie = comp.numero_serie || comp.equipo_numero_serie || 'Sin serie';
+                                        const nombreEquipo = comp.nombre_equipo || comp.equipo_nombre || 'Sin nombre';
+                                        const marca = comp.marca || 'N/A';
+                                        const modelo = comp.modelo || 'N/A';
+                                        
+                                        return `
+                                            <div class="form-check mb-2 ${comp.asignado ? '' : ''}">
+                                                <input class="form-check-input" type="checkbox" value="${equipoId}" 
+                                                       id="componente_${equipoId}" name="componentes" ${isChecked ? 'checked' : ''}>
+                                                <label class="form-check-label d-flex align-items-center" for="componente_${equipoId}">
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-bold">${numeroSerie}</div>
+                                                        <div class="text-muted small">${nombreEquipo}</div>
+                                                        <div class="text-muted small">${marca} ${modelo}</div>
+                                                    </div>
+                                                    ${comp.asignado ? '<span class="badge bg-success ms-2">Asignado Actualmente</span>' : '<span class="badge bg-primary ms-2">Disponible</span>'}
+                                                </label>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
                             </div>
                         `;
-                    }).join('');
+                    });
+                    
+                    container.innerHTML = html;
                 }
 
             } catch (error) {
@@ -747,6 +797,12 @@ async function showAsignacionForm(params = null) {
             }
             if (!asignacionToEdit) {
                 showAsignacionFormError(`No se encontró la asignación con ID ${asignacionId}.`, 'cargar');
+                return;
+            }
+            
+            // Verificar si la asignación está finalizada
+            if (asignacionToEdit.fecha_fin_asignacion) {
+                showAsignacionFormError('No se puede editar una asignación que ya ha sido finalizada. Las asignaciones finalizadas son de solo lectura.', 'cargar');
                 return;
             }
         } catch (error) {
