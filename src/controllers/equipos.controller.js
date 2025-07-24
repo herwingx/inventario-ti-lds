@@ -218,10 +218,94 @@ const deleteEquipo = async (req, res, next) => {
     }
 };
 
+// * [GET] /api/equipos/disponibles-componentes
+const getEquiposDisponiblesParaComponentes = async (req, res, next) => {
+    try {
+        // Primero, verificar qué tipos de equipo existen y cuántos están realmente disponibles
+        const tiposQuery = `
+          SELECT te.id, te.nombre_tipo, 
+                 COUNT(e.id) as total_equipos,
+                 SUM(CASE WHEN e.id_status = 5 THEN 1 ELSE 0 END) as con_status_disponible,
+                 SUM(CASE WHEN e.id_status = 5 AND NOT EXISTS (
+                     SELECT 1 FROM asignaciones a 
+                     WHERE a.id_equipo = e.id AND a.fecha_fin_asignacion IS NULL
+                 ) THEN 1 ELSE 0 END) as realmente_disponibles
+          FROM tipos_equipo te 
+          LEFT JOIN equipos e ON te.id = e.id_tipo_equipo 
+          WHERE te.id NOT IN (1, 2)
+          GROUP BY te.id, te.nombre_tipo
+        `;
+        const tiposResult = await query(tiposQuery);
+        console.log('Herwing - Análisis de componentes en BD:', tiposResult);
+        
+        // TEMPORAL: Mostrar TODOS los componentes disponibles (incluso con asignaciones)
+        const allAvailableQuery = `
+          SELECT
+            e.id, e.numero_serie, e.nombre_equipo,
+            te.nombre_tipo AS nombre_tipo_equipo,
+            st.nombre_status,
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM asignaciones a 
+                    WHERE a.id_equipo = e.id 
+                    AND a.fecha_fin_asignacion IS NULL
+                ) THEN 'SÍ'
+                ELSE 'NO'
+            END as tiene_asignacion_activa
+          FROM equipos e
+          JOIN tipos_equipo te ON e.id_tipo_equipo = te.id
+          JOIN status st ON e.id_status = st.id
+          WHERE e.id_status = 5 -- DISPONIBLE
+          AND te.id NOT IN (1, 2) -- No COMPUTADORA ni LAPTOP
+          ORDER BY te.nombre_tipo, e.numero_serie
+        `;
+        const allAvailable = await query(allAvailableQuery);
+        console.log('Herwing - TODOS los componentes con estado DISPONIBLE:', allAvailable);
+
+        // TEMPORAL: Mostrar componentes DISPONIBLES incluso si tienen asignaciones activas
+        // Esto es para solucionar el problema de datos inconsistentes
+        const sql = `
+          SELECT
+            e.id, e.numero_serie, e.nombre_equipo, e.marca, e.modelo,
+            e.id_tipo_equipo, te.nombre_tipo AS nombre_tipo_equipo,
+            e.id_sucursal_actual, s.nombre AS nombre_sucursal_actual,
+            s.id_empresa, em.nombre AS nombre_empresa,
+            e.procesador, e.ram, e.disco_duro, e.sistema_operativo, e.mac_address,
+            e.otras_caracteristicas, e.fecha_compra, e.fecha_registro, e.fecha_actualizacion,
+            e.id_status, st.nombre_status AS status_nombre
+          FROM equipos AS e
+          JOIN tipos_equipo AS te ON e.id_tipo_equipo = te.id
+          JOIN sucursales AS s ON e.id_sucursal_actual = s.id
+          JOIN empresas AS em ON s.id_empresa = em.id
+          JOIN status AS st ON e.id_status = st.id
+          WHERE e.id_status = 5 -- STATUS_DISPONIBLE
+          AND te.id NOT IN (1, 2) -- Excluir solo COMPUTADORA y LAPTOP (incluir todo lo demás)
+          -- TEMPORAL: Comentamos el filtro de asignaciones activas para mostrar todos los disponibles
+          -- AND NOT EXISTS (
+          --     SELECT 1 FROM asignaciones a 
+          --     WHERE a.id_equipo = e.id 
+          --     AND a.fecha_fin_asignacion IS NULL
+          -- )
+          ORDER BY te.nombre_tipo, e.numero_serie
+        `;
+        const equipos = await query(sql);
+        console.log('Herwing - Componentes disponibles encontrados (sin asignaciones activas):', equipos.length);
+        console.log('Herwing - Tipos encontrados:', equipos.map(e => e.nombre_tipo_equipo).filter((v, i, a) => a.indexOf(v) === i));
+        if (equipos.length > 0) {
+            console.log('Herwing - Ejemplo de componente:', equipos[0]);
+        }
+        res.status(200).json(equipos);
+    } catch (error) {
+        console.error('Herwing - Backend (getEquiposDisponiblesParaComponentes): Error:', error);
+        next(error);
+    }
+};
+
 // Exportamos las funciones del controlador.
 module.exports = {
     getAllEquipos,
     getEquipoById,
+    getEquiposDisponiblesParaComponentes,
     createEquipo,
     updateEquipo,
     deleteEquipo,

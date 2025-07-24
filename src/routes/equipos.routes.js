@@ -16,6 +16,33 @@ const equiposController = require('../controllers/equipos.controller');
 // * [GET] /api/equipos - Trae todos los equipos
 router.get('/', equiposController.getAllEquipos);
 
+// * [GET] /api/equipos/disponibles-componentes - Trae equipos disponibles para ser componentes
+router.get('/disponibles-componentes', equiposController.getEquiposDisponiblesParaComponentes);
+
+// * [GET] /api/equipos/debug-componentes - Debug: todos los componentes
+router.get('/debug-componentes', async (req, res) => {
+    try {
+        const { query } = require('../config/db');
+        const sql = `
+          SELECT e.id, e.numero_serie, e.nombre_equipo, te.nombre_tipo, e.id_status, st.nombre_status
+          FROM equipos e
+          JOIN tipos_equipo te ON e.id_tipo_equipo = te.id
+          LEFT JOIN status st ON e.id_status = st.id
+          WHERE te.id NOT IN (1, 2)
+          ORDER BY te.nombre_tipo, e.numero_serie
+        `;
+        const equipos = await query(sql);
+        res.status(200).json({
+            total: equipos.length,
+            disponibles: equipos.filter(e => e.id_status === 5).length,
+            asignados: equipos.filter(e => e.id_status === 4).length,
+            equipos: equipos
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // * [GET] /api/equipos/:id - Trae un equipo específico por su ID
 router.get('/:id', equiposController.getEquipoById);
 
