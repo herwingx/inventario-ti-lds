@@ -1,13 +1,31 @@
-//public/js/views/notaFormView.js
-// * Formulario de creación y edición de Notas
-import { createNota, updateNota, getNotaById, getEmpleados, getStatuses } from '../api.js';
+//public/js/views/notasFormView.js
+//* Este módulo se encarga de la lógica para el formulario de creación y edición de Notas.
+
+import {
+    createNota, updateNota, getNotaById,
+    getEquipos, getMantenimientos, getCuentasEmail
+} from '../api.js';
 import { showFormLoading } from '../utils/loading.js';
 import { showFormError } from '../utils/error.js';
 import { applyUppercaseToFields } from '../utils/textTransform.js';
 
+//* Referencia al contenedor principal donde voy a renderizar este formulario.
 const contentArea = document.getElementById('content-area');
-let empleadosCache = null;
-let statusesCache = null;
+
+//* Cache para los datos de los selects.
+let equiposCache = null;
+let mantenimientosCache = null;
+let cuentasEmailCache = null;
+
+//* Función para limpiar cachés cuando sea necesario
+function clearFormCaches() {
+    equiposCache = null;
+    mantenimientosCache = null;
+    cuentasEmailCache = null;
+    console.log('Cachés del formulario de notas limpiados');
+}
+
+//* FUNCIONES DE RENDERIZADO DEL FORMULARIO
 
 function showNotaFormLoading(action = 'Crear') {
     showFormLoading(action, 'nota');
@@ -20,13 +38,17 @@ function showNotaFormError(message, action = 'procesar') {
 async function renderNotaForm(notaToEdit = null) {
     const notaId = typeof notaToEdit === 'string' ? notaToEdit : (notaToEdit && notaToEdit.id);
     const isEditing = notaId !== null;
-    const formTitle = isEditing ? `Editar Nota (ID: ${notaId})` : 'Registrar Nueva Nota';
+    const formTitle = isEditing ? `Editar Nota (ID: ${notaId})` : 'Crear Nueva Nota';
+
     let currentNotaData = null;
-    if (isEditing && typeof notaToEdit === 'string') {
+    if (isEditing && (typeof notaToEdit === 'string' || !notaToEdit.titulo)) {
         try {
             currentNotaData = await getNotaById(notaId);
+            if (currentNotaData && (currentNotaData.data || currentNotaData.nota)) {
+                currentNotaData = currentNotaData.data || currentNotaData.nota;
+            }
             if (!currentNotaData) {
-                showNotaFormError(`No se encontró la nota con ID ${notaId}.`, 'cargar');
+                showNotaFormError(`No se encontró la nota con ID ${notaId} para editar.`, 'cargar');
                 return;
             }
         } catch (error) {
@@ -36,94 +58,134 @@ async function renderNotaForm(notaToEdit = null) {
     } else if (isEditing) {
         currentNotaData = notaToEdit;
     }
+
     showNotaFormLoading(isEditing ? 'Editar' : 'Crear');
+
     try {
-        if (!empleadosCache) empleadosCache = await getEmpleados();
-        if (!statusesCache) statusesCache = await getStatuses();
+        // Cargar datos para los selects si no están en caché
+        if (!equiposCache) {
+            try {
+                equiposCache = await getEquipos();
+            } catch (error) {
+                console.warn('No se pudieron cargar equipos:', error);
+                equiposCache = [];
+            }
+        }
+
+        if (!mantenimientosCache) {
+            try {
+                mantenimientosCache = await getMantenimientos();
+            } catch (error) {
+                console.warn('No se pudieron cargar mantenimientos:', error);
+                mantenimientosCache = [];
+            }
+        }
+
+        if (!cuentasEmailCache) {
+            try {
+                cuentasEmailCache = await getCuentasEmail();
+            } catch (error) {
+                console.warn('No se pudieron cargar cuentas de email:', error);
+                cuentasEmailCache = [];
+            }
+        }
+
+        // Renderizar el formulario
         contentArea.innerHTML = `
             <div class="col-xl-8 col-lg-10 mx-auto">
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="card-title">${formTitle}</h4>
+                        <h4 class="card-title">
+                            <i class="fas fa-sticky-note me-2"></i>${formTitle}
+                        </h4>
                     </div>
                     <div class="card-body">
-                        <form id="nota-form" class="basic-form">
+                        <form id="notaForm" class="basic-form">
                             <div class="mb-3">
                                 <label for="titulo" class="form-label">Título <span class="text-danger">*</span></label>
-                                <input type="text" id="titulo" name="titulo" required class="form-control input-default uppercase-field" placeholder="Ej: MANTENIMIENTO PROGRAMADO" value="${isEditing && currentNotaData.titulo ? currentNotaData.titulo : ''}">
+                                <input type="text" id="titulo" name="titulo" required class="form-control" 
+                                       value="${isEditing && currentNotaData && currentNotaData.titulo ? currentNotaData.titulo : ''}" 
+                                       placeholder="Ingrese el título de la nota">
                             </div>
+
                             <div class="mb-3">
-                                <label for="id_empleado" class="form-label">Empleado Relacionado</label>
-                                <select id="id_empleado" name="id_empleado" class="form-control select2">
-                                    <option value="">SIN ASIGNAR</option>
-                                    ${empleadosCache.map(emp => `<option value="${emp.id}" ${isEditing && currentNotaData.id_empleado === emp.id ? 'selected' : ''}>${emp.nombres} ${emp.apellidos} (ID: ${emp.id})</option>`).join('')}
+                                <label for="contenido" class="form-label">Contenido <span class="text-danger">*</span></label>
+                                <textarea id="contenido" name="contenido" required rows="8" class="form-control" 
+                                          placeholder="Escriba el contenido de la nota...">${isEditing && currentNotaData && currentNotaData.contenido ? currentNotaData.contenido : ''}</textarea>
+                            </div>
+
+                            <hr class="my-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-link me-2"></i>Asociaciones (Opcional)
+                            </h5>
+                            <p class="text-muted mb-3">Puede asociar esta nota a un equipo, mantenimiento o cuenta de email específica.</p>
+
+                            <div class="mb-3">
+                                <label for="id_equipo" class="form-label">Equipo Asociado</label>
+                                <select id="id_equipo" name="id_equipo" class="form-control select2">
+                                    <option value="">NINGUNO</option>
+                                    ${equiposCache.map(equipo => `
+                                        <option value="${equipo.id}" ${isEditing && currentNotaData && currentNotaData.id_equipo === equipo.id ? 'selected' : ''}>
+                                            ${equipo.numero_serie || 'Sin serie'} - ${equipo.nombre_equipo || 'Sin nombre'} (ID: ${equipo.id})
+                                        </option>
+                                    `).join('')}
                                 </select>
                             </div>
+
                             <div class="mb-3">
-                                <label for="fecha" class="form-label">Fecha <span class="text-danger">*</span></label>
-                                <input type="text" id="fecha" name="fecha" required class="datepicker-default form-control input-default" value="${isEditing && currentNotaData.fecha ? currentNotaData.fecha.split('T')[0] : ''}" placeholder="YYYY-MM-DD" autocomplete="off">
-                            </div>
-                            <div class="mb-3">
-                                <label for="id_status" class="form-label">Estado <span class="text-danger">*</span></label>
-                                <select id="id_status" name="id_status" required class="form-control select2">
-                                    <option value="">SELECCIONE UN ESTADO...</option>
-                                    ${statusesCache
-                                      .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
-                                      .map(status => `<option value="${status.id}" ${isEditing && currentNotaData.id_status === status.id ? 'selected' : (!isEditing && status.id === 1 ? 'selected' : '')}>${status.nombre_status}</option>`)
-                                      .join('')}
+                                <label for="id_mantenimiento" class="form-label">Mantenimiento Asociado</label>
+                                <select id="id_mantenimiento" name="id_mantenimiento" class="form-control select2">
+                                    <option value="">NINGUNO</option>
+                                    ${mantenimientosCache.map(mant => `
+                                        <option value="${mant.id}" ${isEditing && currentNotaData && currentNotaData.id_mantenimiento === mant.id ? 'selected' : ''}>
+                                            Mantenimiento ID: ${mant.id} - ${mant.descripcion ? mant.descripcion.substring(0, 50) + '...' : 'Sin descripción'}
+                                        </option>
+                                    `).join('')}
                                 </select>
                             </div>
+
                             <div class="mb-3">
-                                <label for="contenido" class="form-label">Contenido de la Nota</label>
-                                <textarea id="contenido" name="contenido" rows="3" class="form-control uppercase-field" placeholder="DESCRIBA EL CONTENIDO DE LA NOTA, DETALLES IMPORTANTES, OBSERVACIONES, ETC.">${isEditing && currentNotaData.contenido ? currentNotaData.contenido : ''}</textarea>
+                                <label for="id_cuenta_email" class="form-label">Cuenta Email Asociada</label>
+                                <select id="id_cuenta_email" name="id_cuenta_email" class="form-control select2">
+                                    <option value="">NINGUNA</option>
+                                    ${cuentasEmailCache.map(cuenta => `
+                                        <option value="${cuenta.id}" ${isEditing && currentNotaData && currentNotaData.id_cuenta_email === cuenta.id ? 'selected' : ''}>
+                                            ${cuenta.email || 'Sin email'} (ID: ${cuenta.id})
+                                        </option>
+                                    `).join('')}
+                                </select>
                             </div>
+
                             <div id="form-error-message" class="text-danger text-sm mb-3"></div>
+                            
                             <div class="d-flex justify-content-end gap-2">
-                                <button type="button" id="cancelNotaForm" class="btn btn-danger light btn-sl-sm"><span class="me-2"><i class="fa fa-times"></i></span>Cancelar</button>
-                                <button type="submit" class="btn btn-primary btn-sl-sm"><span class="me-2"><i class="fa fa-paper-plane"></i></span>${isEditing ? 'Guardar Cambios' : 'Registrar Nota'}</button>
+                                <button type="button" id="cancelNotaForm" class="btn btn-danger light btn-sl-sm">
+                                    <span class="me-2"><i class="fa fa-times"></i></span>Cancelar
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-sl-sm">
+                                    <span class="me-2"><i class="fa fa-paper-plane"></i></span>${isEditing ? 'Guardar Cambios' : 'Crear Nota'}
+                                </button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
         `;
-        if (window.$ && $.fn.select2) {
-            $('#id_empleado').select2({ width: '100%' });
-            $('#id_status').select2({ width: '100%' });
-        }
-        if (window.$ && $.fn.pickadate) {
-            if ($('#fecha').data('pickadate')) $('#fecha').pickadate('destroy');
-            setTimeout(function() {
-                var currentYear = new Date().getFullYear();
-                var minYear = 2000;
-                var years = currentYear - minYear + 1;
-                $('#fecha').pickadate({
-                    format: 'yyyy-mm-dd',
-                    selectMonths: true,
-                    selectYears: years,
-                    autoclose: true,
-                    min: [minYear, 0, 1],
-                    max: [currentYear, 11, 31],
-                    monthsFull: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
-                    monthsShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-                    weekdaysFull: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
-                    weekdaysShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
-                    today: 'Hoy',
-                    clear: 'Limpiar',
-                    close: 'Cerrar',
-                    labelMonthNext: 'Mes siguiente',
-                    labelMonthPrev: 'Mes anterior',
-                    labelMonthSelect: 'Selecciona un mes',
-                    labelYearSelect: 'Selecciona un año',
-                    firstDay: 1
-                });
-            }, 0);
-        }
 
-        // Inicializar transformación a mayúsculas en campos de texto
-        applyUppercaseToFields(['titulo', 'contenido']);
+        // Inicializar select2
+        setTimeout(() => {
+            if (window.$ && $.fn.select2) {
+                $('#id_equipo').select2({ width: '100%' });
+                $('#id_mantenimiento').select2({ width: '100%' });
+                $('#id_cuenta_email').select2({ width: '100%' });
+            }
+        }, 50);
 
-        document.getElementById('nota-form').addEventListener('submit', (event) => handleNotaFormSubmit(event, notaId));
+        // Inicializar transformación a mayúsculas
+        applyUppercaseToFields(['titulo']);
+
+        // Event listeners
+        document.getElementById('notaForm').addEventListener('submit', (event) => handleNotaFormSubmit(event, notaId));
         document.getElementById('cancelNotaForm').addEventListener('click', async () => {
             await Swal.fire({
                 title: 'Cancelado',
@@ -133,11 +195,11 @@ async function renderNotaForm(notaToEdit = null) {
             });
             if (typeof window.navigateTo === 'function') {
                 window.navigateTo('notas-list');
-            } else {
-                contentArea.innerHTML = `<p>Por favor, navega manualmente a la lista.</p>`;
             }
         });
+
     } catch (error) {
+        console.error('Error al renderizar el formulario de Nota:', error);
         showNotaFormError(error.message, 'cargar');
     }
 }
@@ -147,41 +209,94 @@ async function handleNotaFormSubmit(event, editingId = null) {
     const form = event.target;
     const formData = new FormData(form);
     const notaData = {};
+
+    // Convertir FormData a objeto
     for (let [key, value] of formData.entries()) {
-        if (['id_empleado', 'id_status'].includes(key)) {
+        if (['id_equipo', 'id_mantenimiento', 'id_cuenta_email'].includes(key)) {
             notaData[key] = value ? parseInt(value, 10) : null;
         } else {
             notaData[key] = value.trim() === '' ? null : value;
         }
     }
-    if (!notaData.titulo || !notaData.fecha || !notaData.id_status) {
-        document.getElementById('form-error-message').textContent = 'Título, Fecha y Estado son obligatorios.';
+
+    // Validaciones básicas
+    if (!notaData.titulo || !notaData.contenido) {
+        document.getElementById('form-error-message').textContent = 'Título y contenido son obligatorios.';
         return;
     }
+
     document.getElementById('form-error-message').textContent = '';
+    console.log('Enviando datos del formulario de Nota:', notaData, 'Editando ID:', editingId);
+
     try {
         let responseMessage = '';
         if (editingId) {
             await updateNota(editingId, notaData);
-            responseMessage = `Nota ID ${editingId} actualizada exitosamente.`;
+            responseMessage = `Nota con ID ${editingId} actualizada exitosamente.`;
         } else {
             const nuevaNota = await createNota(notaData);
-            responseMessage = `Nota "${nuevaNota.titulo}" (ID: ${nuevaNota.id}) creada exitosamente.`;
+            const notaId = nuevaNota.id || nuevaNota.insertId;
+            responseMessage = `Nota creada exitosamente con ID ${notaId}.`;
         }
+
+        // Limpiar cachés
+        clearFormCaches();
+
         await Swal.fire({
+            title: 'Operación Exitosa',
+            text: responseMessage,
             icon: 'success',
-            title: 'Éxito',
-            text: responseMessage
+            confirmButtonText: 'Aceptar'
         });
-        if (typeof window.navigateTo === 'function') window.navigateTo('notas-list');
+
+        if (typeof window.navigateTo === 'function') {
+            window.navigateTo('notas-list');
+        }
+
     } catch (error) {
-        document.getElementById('form-error-message').textContent = error.message || 'Ocurrió un error desconocido.';
+        console.error('Error al enviar el formulario de Nota:', error);
+        const errorDiv = document.getElementById('form-error-message');
+        if (errorDiv) {
+            errorDiv.textContent = error.message || 'Ocurrió un error desconocido.';
+        } else {
+            await Swal.fire({
+                title: 'Error',
+                text: error.message || 'Ocurrió un error desconocido al procesar el formulario.',
+                icon: 'error',
+                confirmButtonText: 'Aceptar'
+            });
+        }
     }
 }
 
 async function showNotaForm(params = null) {
+    // Limpiar cachés para asegurar datos actualizados
+    clearFormCaches();
+    
     const notaId = typeof params === 'string' ? params : (params && params.id);
-    await renderNotaForm(notaId);
+    console.log('Mostrando el formulario de Nota. ID para editar:', notaId);
+
+    let notaToEdit = null;
+    if (notaId) {
+        showNotaFormLoading('Editar');
+        try {
+            notaToEdit = await getNotaById(notaId);
+            if (notaToEdit && (notaToEdit.data || notaToEdit.nota)) {
+                notaToEdit = notaToEdit.data || notaToEdit.nota;
+            }
+            if (!notaToEdit) {
+                showNotaFormError(`No se encontró la nota con ID ${notaId}.`, 'cargar');
+                return;
+            }
+        } catch (error) {
+            showNotaFormError(error.message, 'cargar datos para edición');
+            return;
+        }
+    } else {
+        showNotaFormLoading('Crear');
+    }
+
+    await renderNotaForm(notaToEdit);
 }
 
-export { showNotaForm }; 
+export { showNotaForm, clearFormCaches };
