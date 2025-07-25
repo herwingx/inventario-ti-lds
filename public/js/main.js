@@ -24,6 +24,7 @@ import { loadCuentasEmailList } from './views/cuentasEmailView.js';
 import { loadMantenimientosList } from './views/mantenimientosView.js';
 import { loadNotasList } from './views/notasView.js';
 import { loadAsignacionesList } from './views/asignacionesView.js';
+import { loadAsignacionesHistoricasList } from './views/asignacionesHistoricasView.js';
 import { showAsignacionForm } from './views/asignacionesFormView.js';
 import { showAsignacionDetails } from './views/asignacionesDetailsView.js';
 import { loadLoginView } from './views/loginView.js';
@@ -31,9 +32,9 @@ import { loadProfileView } from './views/profileView.js';
 import { showCuentaEmailForm } from './views/cuentaEmailFormView.js';
 import { showMantenimientoForm } from './views/mantenimientoFormView.js';
 import { showNotaForm } from './views/notaFormView.js';
+import { showNotaDetails } from './views/notaDetailsView.js';
 import { showCuentaEmailDetails } from './views/cuentasEmailDetailsView.js';
 import { showMantenimientoDetails } from './views/mantenimientosDetailsView.js';
-import { showNotaDetails } from './views/notaDetailsView.js';
 import { loadDashboard } from './views/dashboardView.js';
 import { initSelectThemeHandlers } from './utils/selectTheme.js';
 //TODO: Crear e importar showCuentaEmailDetails
@@ -78,6 +79,7 @@ const viewsMap = {
     'mantenimientos-list': loadMantenimientosList,
     'notas-list': loadNotasList,
     'asignaciones-list': loadAsignacionesList,
+    'asignaciones-historicas': loadAsignacionesHistoricasList,
     'asignacion-form': showAsignacionForm,
     'asignacion-details': showAsignacionDetails,
     'profile': loadProfileView,
