@@ -24,7 +24,6 @@ import { loadCuentasEmailList } from './views/cuentasEmailView.js';
 import { loadMantenimientosList } from './views/mantenimientosView.js';
 import { loadNotasList } from './views/notasView.js';
 import { loadAsignacionesList } from './views/asignacionesView.js';
-import { loadAsignacionesHistoricasList } from './views/asignacionesHistoricasView.js';
 import { showAsignacionForm } from './views/asignacionesFormView.js';
 import { showAsignacionDetails } from './views/asignacionesDetailsView.js';
 import { loadLoginView } from './views/loginView.js';
@@ -79,7 +78,6 @@ const viewsMap = {
     'mantenimientos-list': loadMantenimientosList,
     'notas-list': loadNotasList,
     'asignaciones-list': loadAsignacionesList,
-    'asignaciones-historicas': loadAsignacionesHistoricasList,
     'asignacion-form': showAsignacionForm,
     'asignacion-details': showAsignacionDetails,
     'profile': loadProfileView,
