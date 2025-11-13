@@ -9,9 +9,9 @@ require('dotenv').config(); // Necesito las variables de entorno para la conexi�
 
 // * Defino los datos del usuario administrador que quiero crear.
 const adminUser = {
-    username: 'linea', // Usuario según README
-    password: 'digital', // Contraseña según README
-    email: 'admin@linea-digital.com',
+    username: '', // Usuario según README
+    password: '', // Contraseña según README
+    email: '',
     id_rol: 1, // Asumo que el ID 1 corresponde al rol 'Admin'
     id_status: 1 // Asumo que el ID 1 corresponde al status 'Activo'
 };
