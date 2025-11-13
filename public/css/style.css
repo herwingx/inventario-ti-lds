@@ -537,7 +537,8 @@ button,
 [type="button"],
 [type="reset"],
 [type="submit"] {
-  -webkit-appearance: button; }
+  -webkit-appearance: button;
+  appearance: button; }
   button:not(:disabled),
   [type="button"]:not(:disabled),
   [type="reset"]:not(:disabled),
@@ -584,7 +585,8 @@ legend {
 
 [type="search"] {
   outline-offset: -2px;
-  -webkit-appearance: textfield; }
+  -webkit-appearance: textfield;
+  appearance: textfield; }
 
 /* rtl:raw:
 [type="tel"],
@@ -1972,7 +1974,8 @@ textarea.form-control-lg {
   background-size: contain;
   border: 1px solid rgba(0, 0, 0, 0.25);
   appearance: none;
-  color-adjust: exact; }
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact; }
   .form-check-input[type="checkbox"] {
     border-radius: 0.25em; }
   .form-check-input[type="radio"] {
@@ -11484,6 +11487,7 @@ html[dir="rtl"] [direction="rtl"][data-sidebar-style="compact"]:not([data-layout
   -webkit-transform-origin: 50% 4px;
   -moz-animation: ring 8s .7s ease-in-out infinite;
   -moz-transform-origin: 50% 4px;
+  transform-origin: 50% 4px;
   animation: ring 8s .7s ease-in-out infinite; }
 
 @-webkit-keyframes ring {
@@ -12436,9 +12440,6 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
     width: 16rem; }
     [data-layout="horizontal"] .nav-header .nav-control {
       display: none; }
-    [data-layout="horizontal"] .nav-header .brand-logo {
-      /*  padding-left: 0;
-                justify-content: center; */ }
   [data-layout="horizontal"] .header {
     width: 100%;
     padding-left: 16rem; }
@@ -17390,13 +17391,6 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
     [data-theme-version="dark"] .dropdown a:hover {
       color: #fff; }
 
-[data-theme-version="dark"] {
-  /* .pulse-css{
-		background: #FAFF00;
-	} */
-  /* .pulse-css:after, .pulse-css:before{
-		background-color: #FAFF00;
-	} */ }
   [data-theme-version="dark"] input {
     color-scheme: dark; }
   [data-theme-version="dark"] .dropdown-menu {
@@ -17991,10 +17985,6 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
     .email-left-box .intro-title i {
       color: var(--primary); }
 
-.email-right-box {
-  /* @include media-breakpoint-between(sm, md) {
-        padding-left: 12rem;
-    } */ }
   @media (max-width: 575.98px) {
     .email-right-box {
       padding-left: 0;
@@ -18160,7 +18150,6 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
     transition-duration: 0.05s; }
 
 .mail-list a {
-  vertical-align: middle;
   padding: 0.625rem 0.9375rem;
   display: block;
   background: transparent;
@@ -20250,7 +20239,6 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
 
 .weather-one h2, .weather-one .h2 {
   display: inline-block;
-  float: right;
   font-size: 4.8rem; }
 
 .weather-one .city {
@@ -22128,7 +22116,7 @@ button {
   display: inline-block;
   margin: -0.5rem 0.75rem -0.5rem -1.188rem;
   padding: 0.5rem 0.80rem 0.5rem;
-  float: left; }
+  display: inline-block; }
   @media only screen and (max-width: 1199px) {
     .btn-icon-start {
       margin: -0.5rem 0.75rem -0.5rem -0.800rem; } }
@@ -24343,7 +24331,7 @@ code {
 .table {
   border-collapse: collapse;
   color: strong;
-    color-color: #3e4954; }
+ }
   .table thead tr {
     background: var(--primary);
     color: white;
@@ -29603,13 +29591,6 @@ html[dir="rtl"] [direction="rtl"][data-sidebar-style="compact"]:not([data-layout
     [data-theme-version="dark"] .dropdown a:hover {
       color: #fff; }
 
-[data-theme-version="dark"] {
-  /* .pulse-css{
-		background: #FAFF00;
-	} */
-  /* .pulse-css:after, .pulse-css:before{
-		background-color: #FAFF00;
-	} */ }
   [data-theme-version="dark"] input {
     color-scheme: dark; }
   [data-theme-version="dark"] .dropdown-menu {
