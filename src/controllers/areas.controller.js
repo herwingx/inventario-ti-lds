@@ -14,6 +14,13 @@ const getAllAreas = async (req, res, next) => {
         a.nombre,
         e.nombre AS nombre_empresa,
         a.id_empresa,
+        (
+            SELECT s.id 
+            FROM sucursales s 
+            JOIN tipos_sucursal ts ON s.id_tipo_sucursal = ts.id 
+            WHERE s.id_empresa = a.id_empresa AND ts.nombre_tipo = 'Corporativo' 
+            LIMIT 1
+        ) AS id_sucursal,
         a.fecha_registro,
         a.fecha_actualizacion,
         a.id_status,
@@ -26,9 +33,16 @@ const getAllAreas = async (req, res, next) => {
     let params = [];
 
     // Si se proporciona id_sucursal, filtrar áreas por la empresa de esa sucursal
+    // Nota: Si el área es global por empresa, filtramos por la empresa de la sucursal.
     if (id_sucursal) {
-      sql += ` WHERE a.id_empresa = (SELECT id_empresa FROM sucursales WHERE id = ?)`;
-      params.push(id_sucursal);
+      const sucursalRes = await query('SELECT id_empresa FROM sucursales WHERE id = ?', [id_sucursal]);
+      if (sucursalRes.length > 0) {
+        sql += ` WHERE a.id_empresa = ?`;
+        params.push(sucursalRes[0].id_empresa);
+      } else {
+        // Si la sucursal no existe, no devolvemos nada o error, aquí optamos por lista vacía seguro
+        sql += ` WHERE 1=0`;
+      }
     }
 
     sql += ` ORDER BY a.nombre`;
@@ -51,12 +65,20 @@ const getAreaById = async (req, res, next) => {
         a.id,
         a.nombre,
         e.nombre AS nombre_empresa,
+        a.id_empresa,
+        (
+            SELECT s.id 
+            FROM sucursales s 
+            JOIN tipos_sucursal ts ON s.id_tipo_sucursal = ts.id 
+            WHERE s.id_empresa = a.id_empresa AND ts.nombre_tipo = 'Corporativo' 
+            LIMIT 1
+        ) AS id_sucursal,
         a.fecha_registro,
         a.fecha_actualizacion,
         a.id_status,
         st.nombre_status AS status_nombre
       FROM areas AS a
-      JOIN empresas AS e ON s.id_empresa = e.id
+      JOIN empresas AS e ON a.id_empresa = e.id
       JOIN status AS st ON a.id_status = st.id
       WHERE a.id = ?
     `;
@@ -83,22 +105,27 @@ const createArea = async (req, res, next) => {
       return res.status(400).json({ message: 'Los campos nombre e id_sucursal son obligatorios.' });
     }
     // * Validar existencia de sucursal y que sea de tipo 'Corporativo'
-    const sucursalResult = await query('SELECT id, id_tipo_sucursal FROM sucursales WHERE id = ?', [id_sucursal]);
+    const sucursalResult = await query(
+      `SELECT s.id, s.id_empresa, ts.nombre_tipo 
+         FROM sucursales s
+         JOIN tipos_sucursal ts ON s.id_tipo_sucursal = ts.id
+         WHERE s.id = ?`,
+      [id_sucursal]
+    );
+
     if (sucursalResult.length === 0) {
       return res.status(400).json({ message: `El ID de sucursal ${id_sucursal} no es válido.` });
     }
     const sucursal = sucursalResult[0];
-    // * Obtener el ID del tipo de sucursal 'Corporativo'
-    const tipoCorporativoResult = await query('SELECT id FROM tipos_sucursal WHERE nombre_tipo = ?', ['Corporativo']);
-    if (tipoCorporativoResult.length === 0) {
-      console.error("Error de configuración: No se encontró el tipo de sucursal 'Corporativo' en la DB.");
-      return res.status(500).json({ message: 'Error interno de configuración del servidor: Tipo de sucursal "Corporativo" no definido.' });
-    }
-    const idTipoCorporativo = tipoCorporativoResult[0].id;
+
     // * Regla de negocio: solo se puede crear área en sucursal de tipo 'Corporativo'
-    if (sucursal.id_tipo_sucursal !== idTipoCorporativo) {
+    // * Usamos comparación case-insensitive por seguridad
+    if (sucursal.nombre_tipo.toUpperCase() !== 'CORPORATIVO') {
       return res.status(400).json({ message: `Las áreas solo pueden ser creadas para sucursales de tipo 'Corporativo'. La sucursal con ID ${id_sucursal} no es de este tipo.` });
     }
+
+    const id_empresa = sucursal.id_empresa;
+
     // * Validar existencia de status si se envió
     if (id_status !== undefined) {
       const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
@@ -107,9 +134,13 @@ const createArea = async (req, res, next) => {
       }
     }
     // * Construcción dinámica de la consulta para insertar solo los campos presentes
-    let sql = 'INSERT INTO areas (nombre, id_sucursal';
+    let sql = 'INSERT INTO areas (nombre, id_empresa';
     let placeholders = ['?', '?'];
-    const values = [nombre, id_sucursal];
+    const values = [nombre, id_empresa];
+
+    // NOTA: No insertamos id_sucursal porque la tabla no lo tiene. 
+    // asociamos el área a la EMPRESA de la sucursal.
+
     if (id_status !== undefined) {
       sql += ', id_status';
       placeholders.push('?');
@@ -122,14 +153,14 @@ const createArea = async (req, res, next) => {
       message: 'Área creada exitosamente',
       id: newAreaId,
       nombre: nombre,
-      id_sucursal: id_sucursal
+      id_sucursal: id_sucursal // Devolvemos el id_sucursal original para referencia del frontend
     });
   } catch (error) {
     // * Si ocurre un error, lo paso al middleware global para manejo centralizado
     console.error('Error al crear área:', error);
     if (error.code === 'ER_DUP_ENTRY') {
       res.status(409).json({
-        message: `Ya existe un área con el nombre "${req.body.nombre}" para la sucursal con ID ${req.body.id_sucursal}.`,
+        message: `Ya existe un área con el nombre "${req.body.nombre}" para esa empresa.`,
         error: error.message
       });
     } else {
@@ -147,38 +178,36 @@ const updateArea = async (req, res, next) => {
     if (nombre === undefined && id_sucursal === undefined && id_status === undefined) {
       return res.status(400).json({ message: 'Se debe proporcionar al menos un campo para actualizar (nombre, id_sucursal, id_status).' });
     }
-    // * Validar que la sucursal objetivo es de tipo 'Corporativo'
-    let targetSucursalId = id_sucursal;
-    if (targetSucursalId === undefined) {
-      const currentAreaResult = await query('SELECT id_sucursal FROM areas WHERE id = ?', [id]);
-      if (currentAreaResult.length === 0) {
-        return res.status(404).json({ message: `Área con ID ${id} no encontrada.` });
+
+    let id_empresa = undefined;
+
+    // * Validar que la sucursal objetivo es de tipo 'Corporativo' si se actualiza
+    if (id_sucursal !== undefined) {
+      const sucursalResult = await query(
+        `SELECT s.id, s.id_empresa, ts.nombre_tipo 
+             FROM sucursales s
+             JOIN tipos_sucursal ts ON s.id_tipo_sucursal = ts.id
+             WHERE s.id = ?`,
+        [id_sucursal]
+      );
+      if (sucursalResult.length === 0) {
+        return res.status(400).json({ message: `El ID de sucursal ${id_sucursal} no es válido.` });
       }
-      targetSucursalId = currentAreaResult[0].id_sucursal;
+      const sucursal = sucursalResult[0];
+
+      if (sucursal.nombre_tipo.toUpperCase() !== 'CORPORATIVO') {
+        return res.status(400).json({ message: `Las áreas solo pueden estar en sucursales de tipo 'Corporativo'.` });
+      }
+      id_empresa = sucursal.id_empresa;
     }
-    const sucursalResult = await query('SELECT id, id_tipo_sucursal FROM sucursales WHERE id = ?', [targetSucursalId]);
-    if (sucursalResult.length === 0) {
-      const errorMessage = id_sucursal !== undefined ?
-        `El ID de sucursal ${id_sucursal} no es válido.` :
-        `Error de integridad: Sucursal con ID ${targetSucursalId} asociada al área ${id} no encontrada.`;
-      return res.status(id_sucursal !== undefined ? 400 : 500).json({ message: errorMessage });
-    }
-    const sucursal = sucursalResult[0];
-    const tipoCorporativoResult = await query('SELECT id FROM tipos_sucursal WHERE nombre_tipo = ?', ['Corporativo']);
-    if (tipoCorporativoResult.length === 0) {
-      console.error("Error de configuración: No se encontró el tipo de sucursal 'Corporativo' en la DB.");
-      return res.status(500).json({ message: 'Error interno de configuración del servidor: Tipo de sucursal "Corporativo" no definido.' });
-    }
-    const idTipoCorporativo = tipoCorporativoResult[0].id;
-    if (sucursal.id_tipo_sucursal !== idTipoCorporativo) {
-      return res.status(400).json({ message: `Las áreas solo pueden estar en sucursales de tipo 'Corporativo'. La sucursal con ID ${targetSucursalId} no es de este tipo.` });
-    }
+
     if (id_status !== undefined) {
       const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
       if (statusExists.length === 0) {
         return res.status(400).json({ message: `El ID de status ${id_status} no es válido.` });
       }
     }
+
     let sql = 'UPDATE areas SET ';
     const params = [];
     const updates = [];
@@ -186,9 +215,9 @@ const updateArea = async (req, res, next) => {
       updates.push('nombre = ?');
       params.push(nombre);
     }
-    if (id_sucursal !== undefined) {
-      updates.push('id_sucursal = ?');
-      params.push(id_sucursal);
+    if (id_empresa !== undefined) {
+      updates.push('id_empresa = ?');
+      params.push(id_empresa);
     }
     if (id_status !== undefined) {
       updates.push('id_status = ?');
@@ -208,7 +237,7 @@ const updateArea = async (req, res, next) => {
     console.error(`Error al actualizar área con ID ${req.params.id}:`, error);
     if (error.code === 'ER_DUP_ENTRY') {
       res.status(409).json({
-        message: `Ya existe un área con el nombre "${req.body.nombre}" para la sucursal con ID ${req.body.id_sucursal}.`,
+        message: `Ya existe un área con el nombre "${req.body.nombre}" para esa empresa.`,
         error: error.message
       });
     } else {
