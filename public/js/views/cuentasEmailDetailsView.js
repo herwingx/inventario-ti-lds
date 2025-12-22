@@ -43,12 +43,16 @@ function renderCuentaEmailDetails(cuenta) {
     }
     addDetail('ID', cuenta.id);
     addDetail('Email', cuenta.email);
-    addDetail('Empleado Asignado', cuenta.nombre_empleado);
-    addDetail('Sucursal', cuenta.nombre_sucursal);
-    addDetail('Área', cuenta.nombre_area);
-    addDetail('Tipo', cuenta.tipo);
+    addDetail('Usuario Email', cuenta.usuario_email);
+    addDetail('Contraseña', cuenta.password_data);
+    // Construir nombre completo del empleado
+    const nombreEmpleado = (cuenta.nombre_empleado && cuenta.apellido_empleado)
+        ? `${cuenta.nombre_empleado} ${cuenta.apellido_empleado}`
+        : (cuenta.nombre_empleado || cuenta.apellido_empleado || null);
+    addDetail('Empleado Asignado', nombreEmpleado);
     addDetail('Estado', cuenta.status_nombre, true);
-    const fechaRegistroFormateada = cuenta.fecha_registro ? new Date(cuenta.fecha_registro).toLocaleString() : 'N/A';
+    addDetail('Observaciones', cuenta.observaciones);
+    const fechaRegistroFormateada = cuenta.fecha_creacion ? new Date(cuenta.fecha_creacion).toLocaleString() : 'N/A';
     const fechaActualizacionFormateada = cuenta.fecha_actualizacion ? new Date(cuenta.fecha_actualizacion).toLocaleString() : 'N/A';
     addDetail('Fecha de Registro', fechaRegistroFormateada);
     addDetail('Última Actualización', fechaActualizacionFormateada);
@@ -88,4 +92,4 @@ export async function showCuentaEmailDetails(params) {
     } catch (error) {
         showCuentaEmailDetailsError(error.message || 'No se pudo obtener la cuenta de email.');
     }
-} 
+}

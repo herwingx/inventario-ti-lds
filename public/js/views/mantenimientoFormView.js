@@ -1,13 +1,12 @@
 //public/js/views/mantenimientoFormView.js
 // * Formulario de creación y edición de Mantenimientos
-import { createMantenimiento, updateMantenimiento, getMantenimientoById, getEquipos, getEmpleados, getStatuses } from '../api.js';
+import { createMantenimiento, updateMantenimiento, getMantenimientoById, getEquipos, getStatuses } from '../api.js';
 import { showFormLoading } from '../utils/loading.js';
 import { showFormError } from '../utils/error.js';
 import { applyUppercaseToFields } from '../utils/textTransform.js';
 
 const contentArea = document.getElementById('content-area');
 let equiposCache = null;
-let empleadosCache = null;
 let statusesCache = null;
 
 function showMantenimientoFormLoading(action = 'Crear') {
@@ -40,7 +39,6 @@ async function renderMantenimientoForm(mantToEdit = null) {
     showMantenimientoFormLoading(isEditing ? 'Editar' : 'Crear');
     try {
         if (!equiposCache) equiposCache = await getEquipos();
-        if (!empleadosCache) empleadosCache = await getEmpleados();
         if (!statusesCache) statusesCache = await getStatuses();
         contentArea.innerHTML = `
             <div class="col-xl-8 col-lg-10 mx-auto">
@@ -54,37 +52,46 @@ async function renderMantenimientoForm(mantToEdit = null) {
                                 <label for="id_equipo" class="form-label">Equipo <span class="text-danger">*</span></label>
                                 <select id="id_equipo" name="id_equipo" required class="form-control select2">
                                     <option value="">SELECCIONE UN EQUIPO...</option>
-                                    ${equiposCache.map(eq => `<option value="${eq.id}" ${isEditing && currentMantData.id_equipo === eq.id ? 'selected' : ''}>${eq.numero_serie} - ${eq.nombre_equipo || 'Sin Nombre'}</option>`).join('')}
+                                    ${equiposCache.map(eq => `<option value="${eq.id}" ${isEditing && currentMantData.id_equipo === eq.id ? 'selected' : ''}>[${eq.nombre_tipo_equipo || 'Sin Tipo'}] ${eq.numero_serie} - ${eq.nombre_equipo || 'Sin Nombre'}</option>`).join('')}
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <label for="id_empleado" class="form-label">Responsable</label>
-                                <select id="id_empleado" name="id_empleado" class="form-control select2">
-                                    <option value="">SIN ASIGNAR</option>
-                                    ${empleadosCache.map(emp => `<option value="${emp.id}" ${isEditing && currentMantData.id_empleado === emp.id ? 'selected' : ''}>${emp.nombres} ${emp.apellidos} (ID: ${emp.id})</option>`).join('')}
-                                </select>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="fecha_inicio" class="form-label">Fecha de Inicio <span class="text-danger">*</span></label>
+                                    <input type="text" id="fecha_inicio" name="fecha_inicio" required class="datepicker-default form-control input-default" value="${isEditing && currentMantData.fecha_inicio ? currentMantData.fecha_inicio.split('T')[0] : ''}" placeholder="YYYY-MM-DD" autocomplete="off">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="fecha_fin" class="form-label">Fecha de Fin</label>
+                                    <input type="text" id="fecha_fin" name="fecha_fin" class="datepicker-default form-control input-default" value="${isEditing && currentMantData.fecha_fin ? currentMantData.fecha_fin.split('T')[0] : ''}" placeholder="YYYY-MM-DD" autocomplete="off">
+                                </div>
                             </div>
                             <div class="mb-3">
-                                <label for="fecha_inicio" class="form-label">Fecha de Inicio <span class="text-danger">*</span></label>
-                                <input type="text" id="fecha_inicio" name="fecha_inicio" required class="datepicker-default form-control input-default" value="${isEditing && currentMantData.fecha_inicio ? currentMantData.fecha_inicio.split('T')[0] : ''}" placeholder="YYYY-MM-DD" autocomplete="off">
+                                <label for="diagnostico" class="form-label">Diagnóstico</label>
+                                <textarea id="diagnostico" name="diagnostico" rows="3" class="form-control uppercase-field" placeholder="DESCRIBA EL PROBLEMA O DIAGNÓSTICO DEL EQUIPO">${isEditing && currentMantData.diagnostico ? currentMantData.diagnostico : ''}</textarea>
                             </div>
                             <div class="mb-3">
-                                <label for="fecha_fin" class="form-label">Fecha de Fin</label>
-                                <input type="text" id="fecha_fin" name="fecha_fin" class="datepicker-default form-control input-default" value="${isEditing && currentMantData.fecha_fin ? currentMantData.fecha_fin.split('T')[0] : ''}" placeholder="YYYY-MM-DD" autocomplete="off">
+                                <label for="solucion" class="form-label">Solución Aplicada</label>
+                                <textarea id="solucion" name="solucion" rows="3" class="form-control uppercase-field" placeholder="DESCRIBA LA SOLUCIÓN O REPARACIÓN REALIZADA">${isEditing && currentMantData.solucion ? currentMantData.solucion : ''}</textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="costo" class="form-label">Costo</label>
+                                    <input type="number" step="0.01" id="costo" name="costo" class="form-control input-default" value="${isEditing && currentMantData.costo ? currentMantData.costo : ''}" placeholder="0.00">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="proveedor" class="form-label">Proveedor</label>
+                                    <input type="text" id="proveedor" name="proveedor" class="form-control input-default uppercase-field" value="${isEditing && currentMantData.proveedor ? currentMantData.proveedor : ''}" placeholder="NOMBRE DEL PROVEEDOR">
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="id_status" class="form-label">Estado <span class="text-danger">*</span></label>
                                 <select id="id_status" name="id_status" required class="form-control select2">
                                     <option value="">SELECCIONE UN ESTADO...</option>
                                     ${statusesCache
-                                      .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
-                                      .map(status => `<option value="${status.id}" ${isEditing && currentMantData.id_status === status.id ? 'selected' : (!isEditing && status.id === 1 ? 'selected' : '')}>${status.nombre_status}</option>`)
-                                      .join('')}
+                .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
+                .map(status => `<option value="${status.id}" ${isEditing && currentMantData.id_status === status.id ? 'selected' : (!isEditing && status.id === 1 ? 'selected' : '')}>${status.nombre_status}</option>`)
+                .join('')}
                                 </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="descripcion" class="form-label">Descripción del Mantenimiento</label>
-                                <textarea id="descripcion" name="descripcion" rows="3" class="form-control uppercase-field" placeholder="DESCRIBA EL TIPO DE MANTENIMIENTO, TAREAS REALIZADAS, REPUESTOS UTILIZADOS, OBSERVACIONES, ETC.">${isEditing && currentMantData.descripcion ? currentMantData.descripcion : ''}</textarea>
                             </div>
                             <div id="form-error-message" class="text-danger text-sm mb-3"></div>
                             <div class="d-flex justify-content-end gap-2">
@@ -98,13 +105,12 @@ async function renderMantenimientoForm(mantToEdit = null) {
         `;
         if (window.$ && $.fn.select2) {
             $('#id_equipo').select2({ width: '100%' });
-            $('#id_empleado').select2({ width: '100%' });
             $('#id_status').select2({ width: '100%' });
         }
         if (window.$ && $.fn.pickadate) {
             if ($('#fecha_inicio').data('pickadate')) $('#fecha_inicio').pickadate('destroy');
             if ($('#fecha_fin').data('pickadate')) $('#fecha_fin').pickadate('destroy');
-            setTimeout(function() {
+            setTimeout(function () {
                 var currentYear = new Date().getFullYear();
                 var minYear = 2000;
                 var years = currentYear - minYear + 1;
@@ -132,7 +138,7 @@ async function renderMantenimientoForm(mantToEdit = null) {
         }
 
         // Inicializar transformación a mayúsculas en campos de texto
-        applyUppercaseToFields(['descripcion']);
+        applyUppercaseToFields(['diagnostico', 'solucion', 'proveedor']);
 
         document.getElementById('mantenimiento-form').addEventListener('submit', (event) => handleMantenimientoFormSubmit(event, mantId));
         document.getElementById('cancelMantenimiento-form').addEventListener('click', async () => {
@@ -159,8 +165,10 @@ async function handleMantenimientoFormSubmit(event, editingId = null) {
     const formData = new FormData(form);
     const mantData = {};
     for (let [key, value] of formData.entries()) {
-        if (['id_equipo', 'id_empleado', 'id_status'].includes(key)) {
+        if (['id_equipo', 'id_status'].includes(key)) {
             mantData[key] = value ? parseInt(value, 10) : null;
+        } else if (key === 'costo') {
+            mantData[key] = value ? parseFloat(value) : null;
         } else {
             mantData[key] = value.trim() === '' ? null : value;
         }
@@ -196,4 +204,4 @@ async function showMantenimientoForm(params = null) {
     await renderMantenimientoForm(mantId);
 }
 
-export { showMantenimientoForm }; 
+export { showMantenimientoForm };
