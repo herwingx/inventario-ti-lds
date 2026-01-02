@@ -1,216 +1,152 @@
-# 🖥️ Sistema de Inventario TI - Línea Digital
+#  Inventario TI & Soporte LDS
 
-Sistema de gestión de inventario de equipos de TI desarrollado con Node.js, Express y MySQL.
+> **Gestión Inteligente de Activos** — Sistema integral para el control de inventario tecnológico, asignaciones y mantenimientos de soporte técnico.
 
-## 📋 Requisitos Previos
+<!-- BADGES: Usa style=flat-square -->
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow?style=flat-square&logo=javascript&logoColor=white)](https://developer.mozilla.org/es/docs/Web/JavaScript)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-5.0-black?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-- **Node.js** v18 o superior
-- **MySQL** 5.7 o superior
-- **npm** o **yarn**
+<p align="center">
+  <img src="public/images/logo.png" alt="Logo Inventario" width="200"/>
+</p>
 
 ---
 
-## 🚀 Instalación y Configuración
+## ✨ Características
+
+| Característica           | Descripción                                                         |
+| :----------------------- | :------------------------------------------------------------------ |
+| 💻 **Gestión de Activos** | Control detallado de equipos, periféricos y direcciones IP.         |
+| 👥 **Asignaciones**       | Vinculación de activos a empleados con historial de movimientos.    |
+| 🔧 **Mantenimientos**     | Registro y seguimiento de mantenimientos preventivos y correctivos. |
+| 🔐 **Seguridad JWT**      | Autenticación robusta basada en tokens para protección de API.      |
+| 🏢 **Multisucursal**      | Soporte para múltiples empresas, sucursales y áreas.                |
+| 📊 **Dashboard**          | Visualización de estado del sistema y recursos.                     |
+
+---
+
+## 🚀 Inicio Rápido
+
+### Requisitos
+- Node.js v18+
+- MySQL Server
+- NPM o Yarn
 
 ### 1. Clonar el repositorio
-
 ```bash
-git clone <url-del-repositorio>
+git clone https://github.com/herwingxtech/inventario_soporte.git
 cd inventario-ti-lds
 ```
 
-### 2. Instalar dependencias
+### 2. Configurar variables de entorno
+
+Crea un archivo `.env` en la raíz del proyecto basado en las variables requeridas:
+
+```env
+PORT=3000
+NODE_ENV=development
+APP_URL=http://localhost:3000/soporte
+API_URL=http://localhost:3000/soporte/api
+
+# Base de Datos
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=secret
+DB_NAME=inventario_soporte
+DB_PORT=3306
+
+# Seguridad
+JWT_SECRET=tu_secreto_super_seguro
+JWT_EXPIRE=24h
+```
+
+### 3. Instalar dependencias
 
 ```bash
 npm install
 ```
 
-### 3. Configurar variables de entorno
-
-Copia el archivo de ejemplo y edítalo con tus credenciales:
+### 4. Iniciar la aplicación
 
 ```bash
-cp .env.example .env
-```
-
-Edita el archivo `.env` con tus configuraciones:
-
-```env
-# Cambiar por la IP de tu máquina
-APP_URL=http://TU_IP/soporte
-API_URL=http://TU_IP/soporte/api
-PORT=3000
-NODE_ENV=development
-
-# Base de datos
-DB_HOST=TU_IP
-DB_USER=tu_usuario
-DB_PASSWORD=tu_password
-DB_NAME=inventario_soporte
-DB_PORT=3306
-
-# JWT (ver sección de generación)
-JWT_SECRET=tu_jwt_secret
-JWT_EXPIRE=24h
-```
-
----
-
-## 🔐 Generación de JWT Secret
-
-Para generar un token JWT seguro, ejecuta:
-
-```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-```
-
-Esto generará una cadena hexadecimal de 128 caracteres. Cópiala y pégala en tu archivo `.env` como `JWT_SECRET`.
-
-**Ejemplo de salida:**
-```
-cab2e4b1ec7560f8ac7cb807fcb9570b1cbebc6f3ff76d56439735b2eb414b4489e29867a007743f8b161f74f25284febc08625a5a5784752d65ce3b4fc95836
-```
-
-> ⚠️ **Importante:** Nunca compartas tu JWT_SECRET ni lo subas a Git.
-
----
-
-## 🗄️ Base de Datos
-
-### Crear backup
-
-```bash
-# Backup básico
-mysqldump -h TU_IP -u usuario -p inventario_soporte > backup.sql
-
-# Backup con fecha
-mysqldump -h TU_IP -u usuario -p inventario_soporte > backup_$(date +%Y%m%d_%H%M%S).sql
-
-# Backup comprimido
-mysqldump -h TU_IP -u usuario -p inventario_soporte | gzip > backup_$(date +%Y%m%d).sql.gz
-```
-
-### Restaurar backup
-
-```bash
-# Desde archivo .sql
-mysql -h TU_IP -u usuario -p inventario_soporte < backup.sql
-
-# Desde archivo comprimido .sql.gz
-gunzip < backup.sql.gz | mysql -h TU_IP -u usuario -p inventario_soporte
-```
-
-### Crear la base de datos (primera vez)
-
-```bash
-mysql -h TU_IP -u usuario -p -e "CREATE DATABASE IF NOT EXISTS inventario_soporte CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-```
-
----
-
-## 💻 Ejecutar la Aplicación
-
-### Modo Desarrollo
-
-```bash
+# Modo desarrollo
 npm run dev
-```
 
-La aplicación estará disponible en: `http://localhost:3000/soporte/`
-
-### Modo Producción
-
-```bash
+# Modo producción
 npm start
 ```
 
 ---
 
-## 📁 Estructura del Proyecto
+## 🏗️ Arquitectura
 
-```
-inventario-ti-lds/
-├── public/              # Archivos estáticos (frontend)
-│   ├── css/            # Estilos CSS
-│   ├── js/             # JavaScript del frontend
-│   │   ├── views/      # Vistas de la SPA
-│   │   ├── utils/      # Utilidades
-│   │   └── api.js      # Cliente API
-│   ├── vendor/         # Librerías de terceros
-│   └── index.html      # Punto de entrada
-├── src/                 # Código del backend
-│   ├── config/         # Configuración
-│   ├── controllers/    # Controladores
-│   ├── middleware/     # Middlewares
-│   └── routes/         # Rutas de la API
-├── server.js           # Servidor Express
-├── package.json
-├── .env                # Variables de entorno (no subir a Git)
-└── .env.example        # Ejemplo de configuración
+```mermaid
+graph TD
+    A[Cliente Web] <-->|HTTP/JSON| B(API Gateway / Express)
+    B <-->|Autenticación| C{JWT Service}
+    B <-->|Consultas SQL| D[(MySQL Database)]
+    
+    subgraph Backend
+    B
+    C
+    end
+    
+    subgraph Data
+    D
+    end
 ```
 
----
+## 📦 Opciones de Despliegue
 
-## 🔧 Scripts Disponibles
+| Método     | Archivo               | Ideal para                                |
+| :--------- | :-------------------- | :---------------------------------------- |
+| **Local**  | `npm script`          | Desarrollo y Pruebas rapido               |
+| **Docker** | `Dockerfile`          | Despliegue en contenedores (Próximamente) |
+| **PM2**    | `ecosystem.config.js` | Producción en servidor Linux              |
 
-| Script | Descripción |
-|--------|-------------|
-| `npm start` | Inicia el servidor en producción |
-| `npm run dev` | Inicia el servidor con nodemon (desarrollo) |
+## 🔧 Comandos Útiles
 
----
-
-## 🌐 Endpoints de la API
-
-Base URL: `/soporte/api`
-
-| Módulo | Endpoint |
-|--------|----------|
-| Autenticación | `/auth/login`, `/auth/register` |
-| Equipos | `/equipos` |
-| Empleados | `/empleados` |
-| Asignaciones | `/asignaciones` |
-| Direcciones IP | `/direcciones-ip` |
-| Cuentas Email | `/cuentas-email` |
-| Mantenimientos | `/mantenimientos` |
-| Notas | `/notas` |
-
----
-
-## 🛠️ Solución de Problemas
-
-### Error de conexión a la base de datos
-
-1. Verifica que MySQL esté corriendo
-2. Confirma las credenciales en `.env`
-3. Asegúrate que el host/IP sea accesible
-
-### Error de JWT
-
-Si recibes errores de token:
-1. Genera un nuevo JWT_SECRET
-2. Reinicia el servidor
-3. Vuelve a iniciar sesión
-
-### Puerto en uso
-
-Si el puerto 3000 está ocupado:
 ```bash
-# Ver qué proceso usa el puerto
-lsof -i :3000
-
-# Cambiar el puerto en .env
-PORT=3001
+npm run dev      # Iniciar servidor con nodemon
+npm start        # Iniciar servidor en producción
+npm test         # Ejecutar pruebas (Pendiente)
 ```
 
----
+## 📚 Documentación
 
-## 👨‍💻 Autor
+| Documento                 | Descripción                       |
+| :------------------------ | :-------------------------------- |
+| [API Routes](src/routes/) | Definición de endpoints de la API |
+| [Schemas](src/models/)    | Modelos de datos (si aplica)      |
 
-Desarrollado con ❤️ por [herwingxtech](https://github.com/herwingxtech)
+## 🛠️ Stack Tecnológico
 
----
+**Frontend**
+- HTML5 / CSS3 (Vanilla)
+- JavaScript (Vanilla)
+- Bootstrap Select
+
+**Backend**
+- Node.js
+- Express.js
+- JSON Web Tokens (JWT)
+- MySQL2
+
+## 🔒 Seguridad
+- ✅ Autenticación vía JWT
+- ✅ Protección de rutas middleware
+- ✅ Variables de entorno seguras
+- ✅ Sanitización de consultas SQL (MySQL2 Prepared Statements)
+
+## 🤝 Contribuir
+1. Fork del repositorio
+2. Crear rama: `git checkout -b feat/nueva-feature`
+3. Commit: `git commit -m "feat: descripción"`
+4. Push: `git push origin feat/nueva-feature`
+5. Crear Pull Request
 
 ## 📄 Licencia
-
-Este proyecto es privado y de uso interno.
+Este proyecto está bajo la licencia ISC.
