@@ -1,4 +1,4 @@
-#  Inventario TI & Soporte LDS
+# 📦 Inventario TI & Soporte LDS
 
 > **Gestión Inteligente de Activos** — Sistema integral para el control de inventario tecnológico, asignaciones y mantenimientos de soporte técnico.
 
@@ -45,6 +45,12 @@ cd inventario-ti-lds
 
 Crea un archivo `.env` en la raíz del proyecto basado en las variables requeridas:
 
+```bash
+cp .env.example .env
+```
+
+Variables principales:
+
 ```env
 PORT=3000
 NODE_ENV=development
@@ -62,6 +68,11 @@ DB_PORT=3306
 JWT_SECRET=tu_secreto_super_seguro
 JWT_EXPIRE=24h
 ```
+
+> 📘 **Tip:** Para generar un `JWT_SECRET` seguro, ejecuta:
+> ```bash
+> node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+> ```
 
 ### 3. Instalar dependencias
 
@@ -107,6 +118,18 @@ graph TD
 | **Docker** | `Dockerfile`          | Despliegue en contenedores (Próximamente) |
 | **PM2**    | `ecosystem.config.js` | Producción en servidor Linux              |
 
+## 🗄️ Gestión de Base de Datos
+
+Comandos útiles para respaldar y restaurar la información.
+
+```bash
+# Crear Backup
+mysqldump -h LOGIN_HOST -u usuario -p inventario_soporte > backup_$(date +%Y%m%d).sql
+
+# Restaurar Backup
+mysql -h LOGIN_HOST -u usuario -p inventario_soporte < backup.sql
+```
+
 ## 🔧 Comandos Útiles
 
 ```bash
@@ -115,7 +138,20 @@ npm start        # Iniciar servidor en producción
 npm test         # Ejecutar pruebas (Pendiente)
 ```
 
-## 📚 Documentación
+## 🌐 Endpoints de la API
+
+La API base se encuentra en `/api`. Aquí los módulos principales:
+
+| Módulo           | Endpoint Base     | Descripción                  |
+| :--------------- | :---------------- | :--------------------------- |
+| **Auth**         | `/auth`           | Login y registro de usuarios |
+| **Equipos**      | `/equipos`        | CRUD de equipos de cómputo   |
+| **Empleados**    | `/empleados`      | Gestión de personal          |
+| **Asignaciones** | `/asignaciones`   | Préstamos y devoluciones     |
+| **IPs**          | `/direcciones-ip` | Control de direccionamiento  |
+| **Soporte**      | `/mantenimientos` | Tickets y mantenimiento      |
+
+## 📚 Documentación Adicional
 
 | Documento                 | Descripción                       |
 | :------------------------ | :-------------------------------- |
@@ -134,6 +170,85 @@ npm test         # Ejecutar pruebas (Pendiente)
 - Express.js
 - JSON Web Tokens (JWT)
 - MySQL2
+
+## � Despliegue en Linux (Producción)
+
+Guía para desplegar la aplicación en un servidor Ubuntu/Debian usando PM2 y Nginx.
+
+### 1. Preparación del Entorno
+Asegúrate de tener instalado Git, Node.js, MySQL y Nginx:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install git nodejs npm mysql-server nginx -y
+```
+
+### 2. Instalación y Build
+Sigue los pasos de "Inicio Rápido" para clonar e instalar dependencias. Luego:
+
+```bash
+# Instalar PM2 globalmente
+sudo npm install -g pm2
+```
+
+### 3. Ejecución con PM2
+PM2 mantendrá la aplicación activa 24/7.
+
+```bash
+# Iniciar aplicación
+pm2 start server.js --name "inventario-lds"
+
+# Guardar lista de procesos para reinicios
+pm2 save
+pm2 startup
+```
+
+### 4. Configuración Nginx (Reverse Proxy)
+Configura Nginx para servir la app en el puerto 80/443.
+
+Edita la configuración: `sudo nano /etc/nginx/sites-available/inventario`
+
+```nginx
+server {
+    listen 80;
+    server_name inventario.tu-dominio.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+Activa el sitio y reinicia Nginx:
+```bash
+sudo ln -s /etc/nginx/sites-available/inventario /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+---
+
+## �🛠️ Solución de Problemas
+
+### Error de conexión a la base de datos
+1. Verifica que MySQL esté corriendo.
+2. Confirma las credenciales en `.env`.
+3. Asegúrate que la base de datos `inventario_soporte` exista.
+
+### Error de JWT
+Si recibes errores de token, genera un nuevo `JWT_SECRET` y reinicia el servidor.
+
+### Puerto ocupado
+Si el puerto 3000 está en uso:
+```bash
+lsof -i :3000  # Ver proceso
+kill -9 PID    # Matar proceso (opcional)
+```
 
 ## 🔒 Seguridad
 - ✅ Autenticación vía JWT
