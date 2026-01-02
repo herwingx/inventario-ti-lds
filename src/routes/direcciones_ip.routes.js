@@ -12,8 +12,12 @@ const direccionesIpController = require('../controllers/direcciones_ip.controlle
 // Montadas bajo /api/direcciones-ip en server.js.
 // ===============================================================
 
-// * [GET] /api/direcciones-ip - Trae todas las direcciones IP
+// * [GET] /api/direcciones-ip - Trae todas las direcciones IP (con filtros opcionales)
+// * Query params: segmento (0-15), status (ID), disponibles (true/false)
 router.get('/', direccionesIpController.getAllDireccionesIp);
+
+// * [GET] /api/direcciones-ip/segmentos - Obtiene resumen de IPs por segmento para dashboard
+router.get('/segmentos', direccionesIpController.getSegmentosResumen);
 
 // * [GET] /api/direcciones-ip/:id - Trae una dirección IP específica por su ID
 router.get('/:id', direccionesIpController.getDireccionIpById);

@@ -24,7 +24,7 @@ function showMantenimientoDetailsError(message) {
 //* Renderiza la vista de detalles del mantenimiento.
 function renderMantenimientoDetails(mantenimiento) {
     contentArea.innerHTML = '';
-    
+
     if (!mantenimiento) {
         showMantenimientoDetailsError('No se encontraron datos para este mantenimiento.');
         return;
@@ -62,18 +62,30 @@ function renderMantenimientoDetails(mantenimiento) {
     }
 
     addDetail('ID', mantenimiento.id);
-    addDetail('Equipo', mantenimiento.equipo_nombre || mantenimiento.numero_serie);
-    addDetail('Tipo de Mantenimiento', mantenimiento.tipo);
+    // Construir nombre completo del equipo
+    const equipoInfo = mantenimiento.equipo_nombre
+        ? `${mantenimiento.equipo_nombre} (${mantenimiento.equipo_numero_serie || 'Sin serie'})`
+        : (mantenimiento.equipo_numero_serie || null);
+    addDetail('Equipo', equipoInfo);
+
+    const fechaInicioF = mantenimiento.fecha_inicio ? new Date(mantenimiento.fecha_inicio).toLocaleDateString() : 'N/A';
+    const fechaFinF = mantenimiento.fecha_fin ? new Date(mantenimiento.fecha_fin).toLocaleDateString() : 'N/A';
+    addDetail('Fecha de Inicio', fechaInicioF);
+    addDetail('Fecha de Fin', fechaFinF);
+
+    addDetail('Diagnóstico', mantenimiento.diagnostico);
+    addDetail('Solución Aplicada', mantenimiento.solucion);
+
+    // Formatear costo con moneda
+    const costoFormateado = mantenimiento.costo ? `$${parseFloat(mantenimiento.costo).toFixed(2)}` : null;
+    addDetail('Costo', costoFormateado);
     addDetail('Proveedor', mantenimiento.proveedor);
-    addDetail('Responsable', mantenimiento.responsable);
-    addDetail('Descripción', mantenimiento.descripcion);
+
     addDetail('Estado', mantenimiento.status_nombre, true);
-    
-    const fechaMantenimientoF = mantenimiento.fecha_mantenimiento ? new Date(mantenimiento.fecha_mantenimiento).toLocaleDateString() : 'N/A';
+
     const fechaRegistroF = mantenimiento.fecha_registro ? new Date(mantenimiento.fecha_registro).toLocaleString() : 'N/A';
     const fechaActualizacionF = mantenimiento.fecha_actualizacion ? new Date(mantenimiento.fecha_actualizacion).toLocaleString() : 'N/A';
-    
-    addDetail('Fecha de Mantenimiento', fechaMantenimientoF);
+
     addDetail('Fecha de Registro', fechaRegistroF);
     addDetail('Última Actualización', fechaActualizacionF);
 
@@ -102,11 +114,11 @@ function renderMantenimientoDetails(mantenimiento) {
 //* FUNCIÓN PRINCIPAL DE CARGA DE LA VISTA DE DETALLES
 //* `params` debe contener `{ id: mantenimientoId }`.
 export async function showMantenimientoDetails(params) {
-    console.log('Herwing va a mostrar los detalles de un mantenimiento. Parámetros:', params);
-    
+    console.log('Mostrando los detalles de un mantenimiento. Parámetros:', params);
+
     //* Extraer el ID del parámetro. Si params es un string, usarlo directamente; si es un objeto, extraer params.id.
     const mantenimientoId = typeof params === 'string' ? params : (params && params.id);
-    
+
     if (!mantenimientoId) {
         console.error('No se proporcionó un ID de mantenimiento para mostrar los detalles.');
         contentArea.innerHTML = '<p class="text-red-500">Error al cargar detalles del mantenimiento: No se proporcionó un ID de mantenimiento para mostrar los detalles.</p>';

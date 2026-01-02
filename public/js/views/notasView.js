@@ -25,6 +25,21 @@ function showNotasListError(message, container) {
     showListError(target, 'Notas', message, 'notasList', () => loadNotasList());
 }
 
+// * Muestra un mensaje cuando no hay notas registradas.
+function showNotasEmpty(container) {
+    const target = container || contentArea;
+    target.innerHTML = `
+        <div class="text-center py-5">
+            <i class="fas fa-sticky-note fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">No hay notas registradas</h5>
+            <p class="text-muted">Cuando registres notas, aparecerán aquí.</p>
+            <button class="btn btn-primary btn-sm mt-2" onclick="window.navigateTo('nota-form')">
+                <i class="fas fa-plus me-2"></i>Crear Nota
+            </button>
+        </div>
+    `;
+}
+
 function renderNotasListViewLayout() {
     contentArea.innerHTML = '';
     const cardContainer = document.createElement('div');
@@ -47,7 +62,7 @@ function renderNotasListViewLayout() {
 function formatNotasActionsCell(data, type, row) {
     if (type === 'display') {
         const notaId = row[0];
-        
+
         return `
             <div class="d-flex gap-1 justify-content-center">
                 <button type="button" class="action-btn view-btn" 
@@ -102,7 +117,7 @@ function formatNotasActionsCell(data, type, row) {
 function handleNotasTableActions(event) {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
-    
+
     const action = button.dataset.action;
     const notaId = button.dataset.id;
     if (action === 'view') {
@@ -115,7 +130,7 @@ function handleNotasTableActions(event) {
         }
     } else if (action === 'delete') {
         (async () => {
-            const result = Swal.fire({
+            const result = await Swal.fire({
                 title: '¿Eliminar Nota?',
                 text: `¿Estás seguro de eliminar la nota con ID ${notaId}? Esta acción no se puede deshacer.`,
                 icon: 'warning',
@@ -126,8 +141,11 @@ function handleNotasTableActions(event) {
             });
             if (result.isConfirmed) {
                 try {
+                    console.log('Eliminando nota:', notaId);
                     await deleteNota(notaId);
+                    console.log('Nota eliminada, recargando tabla...');
                     await reloadNotasTable();
+                    console.log('Tabla recargada exitosamente');
                     Swal.fire({
                         title: 'Eliminada',
                         text: 'La nota ha sido eliminada exitosamente.',
@@ -160,7 +178,7 @@ async function loadNotasList() {
     try {
         const notas = await getNotas();
         if (!notas || notas.length === 0) {
-            showNotasListError('No hay notas registradas en el sistema.', cardBody);
+            showNotasEmpty(cardBody);
             return;
         }
         // Limpiar el spinner y agregar la tabla
@@ -204,7 +222,7 @@ async function loadNotasList() {
                     searchable: false
                 }
             ],
-            initComplete: function() {
+            initComplete: function () {
                 $('#notas-datatable').on('click', 'button[data-action]', handleNotasTableActions);
             }
         });
@@ -214,7 +232,7 @@ async function loadNotasList() {
 }
 
 async function reloadNotasTable() {
-    if (window.notasDataTable) {
+    if (notasDataTable) {
         try {
             const notas = await getNotas();
             const tableData = notas.map(nota => [
@@ -230,7 +248,7 @@ async function reloadNotasTable() {
                 nota.fecha_creacion ? new Date(nota.fecha_creacion).toLocaleString() : 'N/A',
                 null
             ]);
-            window.notasDataTable.clear().rows.add(tableData).draw();
+            notasDataTable.clear().rows.add(tableData).draw();
         } catch (error) {
             console.error('Error al recargar la tabla:', error);
         }

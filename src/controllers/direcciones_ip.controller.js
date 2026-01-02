@@ -9,25 +9,30 @@ const { query } = require('../config/db');
 // * Función de ayuda para validar formato de IPv4/IPv6 (simplificado)
 // * Nota: Solo valida el formato, no garantiza que la IP sea asignable o ruteable.
 function isValidIpAddress(ip) {
-    // * Permito null o vacío si el campo no es obligatorio.
-    if (!ip || typeof ip !== 'string') return false;
-    ip = ip.trim();
-    const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    const ipv6Regex = /^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$/i;
-    return ipv4Regex.test(ip) || ipv6Regex.test(ip);
+  // * Permito null o vacío si el campo no es obligatorio.
+  if (!ip || typeof ip !== 'string') return false;
+  ip = ip.trim();
+  const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  const ipv6Regex = /^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$/i;
+  return ipv4Regex.test(ip) || ipv6Regex.test(ip);
 }
 
-// * [GET] /api/direcciones-ip - Trae todas las direcciones IP con JOINs a sucursales y status
+// * [GET] /api/direcciones-ip - Trae direcciones IP con filtros opcionales para supernetting /20
+// * Query Params opcionales:
+// *   - segmento: número 0-15 (tercer octeto de la IP 192.168.X.x)
+// *   - status: ID del status (ej: 4=ASIGNADO, 5=DISPONIBLE)
+// *   - disponibles: "true" para obtener solo IPs disponibles (status=5 y sin asignación activa)
 const getAllDireccionesIp = async (req, res, next) => {
   try {
-    const sql = `
+    // * Extraer parámetros de filtro del query string
+    const { segmento, status, disponibles } = req.query;
+
+    let sql = `
       SELECT
         di.id,
         di.direccion_ip,
         di.id_sucursal,
         s.nombre AS nombre_sucursal,
-        -- Si id_sucursal es NULL, s.id_empresa será NULL, y el LEFT JOIN
-        -- permitirá que la fila de IP se mantenga, con nombre_empresa como NULL.
         s.id_empresa,
         em.nombre AS nombre_empresa,
         di.comentario,
@@ -35,21 +40,107 @@ const getAllDireccionesIp = async (req, res, next) => {
         di.fecha_actualizacion,
         di.id_status,
         st.nombre_status AS status_nombre,
+        -- Campo calculado: segmento (tercer octeto) para facilitar filtrado en frontend
+        CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(di.direccion_ip, '.', 3), '.', -1) AS UNSIGNED) AS segmento,
         -- Verificar si tiene asignación activa
         CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END AS asignacion_activa
       FROM direcciones_ip AS di
       LEFT JOIN sucursales AS s ON di.id_sucursal = s.id
-      -- CAMBIO CLAVE: De JOIN a LEFT JOIN para incluir IPs sin sucursal/empresa
       LEFT JOIN empresas AS em ON s.id_empresa = em.id
       JOIN status AS st ON di.id_status = st.id
-      -- LEFT JOIN para verificar asignaciones activas
       LEFT JOIN asignaciones AS a ON di.id = a.id_ip AND a.fecha_fin_asignacion IS NULL
     `;
-    const direcciones = await query(sql);
+
+    const params = [];
+    const conditions = [];
+
+    // * Filtro por segmento (tercer octeto de la IP)
+    if (segmento !== undefined && segmento !== '' && segmento !== null) {
+      const segmentoNum = parseInt(segmento, 10);
+      if (!isNaN(segmentoNum) && segmentoNum >= 0 && segmentoNum <= 15) {
+        conditions.push(`di.direccion_ip LIKE ?`);
+        params.push(`192.168.${segmentoNum}.%`);
+      }
+    }
+
+    // * Filtro por status específico
+    if (status !== undefined && status !== '' && status !== null) {
+      const statusNum = parseInt(status, 10);
+      if (!isNaN(statusNum)) {
+        conditions.push(`di.id_status = ?`);
+        params.push(statusNum);
+      }
+    }
+
+    // * Filtro para IPs disponibles (para selects en asignaciones)
+    if (disponibles === 'true') {
+      conditions.push(`di.id_status = 5`); // 5 = DISPONIBLE
+      conditions.push(`a.id IS NULL`); // Sin asignación activa
+    }
+
+    // * Construir cláusula WHERE si hay condiciones
+    if (conditions.length > 0) {
+      sql += ` WHERE ` + conditions.join(' AND ');
+    }
+
+    // * Ordenar por segmento y luego por último octeto para orden natural
+    sql += ` ORDER BY segmento ASC, CAST(SUBSTRING_INDEX(di.direccion_ip, '.', -1) AS UNSIGNED) ASC`;
+
+    const direcciones = await query(sql, params);
     res.status(200).json(direcciones);
   } catch (error) {
-    // ! Si hay error, lo paso al middleware global
-    console.error('Error al obtener todas las direcciones IP:', error);
+    console.error('Error al obtener direcciones IP:', error);
+    next(error);
+  }
+};
+
+// * [GET] /api/direcciones-ip/segmentos - Obtiene resumen de IPs por segmento para el dashboard
+const getSegmentosResumen = async (req, res, next) => {
+  try {
+    const sql = `
+      SELECT 
+        CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(di.direccion_ip, '.', 3), '.', -1) AS UNSIGNED) AS segmento,
+        COUNT(*) AS total,
+        SUM(CASE WHEN di.id_status = 5 AND a.id IS NULL THEN 1 ELSE 0 END) AS disponibles,
+        SUM(CASE WHEN di.id_status = 4 OR a.id IS NOT NULL THEN 1 ELSE 0 END) AS asignadas,
+        SUM(CASE WHEN di.id_status = 8 THEN 1 ELSE 0 END) AS reservadas,
+        SUM(CASE WHEN di.id_status NOT IN (4, 5, 8) AND a.id IS NULL THEN 1 ELSE 0 END) AS otros
+      FROM direcciones_ip AS di
+      LEFT JOIN asignaciones AS a ON di.id = a.id_ip AND a.fecha_fin_asignacion IS NULL
+      WHERE di.direccion_ip LIKE '192.168.%'
+      GROUP BY segmento
+      ORDER BY segmento ASC
+    `;
+    const segmentos = await query(sql);
+
+    // * Agregar nombres descriptivos a cada segmento
+    const nombresSegmentos = {
+      0: 'INFRAESTRUCTURA Y TI',
+      1: 'DIRECCIÓN GENERAL TMT',
+      2: 'CONTABILIDAD TMT',
+      3: 'OPERACIONES TMT',
+      4: 'ALMACÉN TMT',
+      5: 'MESA DE CONTROL TMT',
+      6: 'RECURSOS HUMANOS TMT',
+      7: 'COMERCIAL VENTAS/CADENAS',
+      8: 'COMERCIAL TAE',
+      9: 'COMERCIAL TARIFARIOS',
+      10: 'COMERCIAL PUBLICIDAD',
+      11: 'COMERCIAL PLATAFORMAS',
+      12: 'ATENCIÓN Y DESARROLLO',
+      13: 'INVITADOS Y MÓVILES',
+      14: 'CORPORATIVO LIDIFON',
+      15: 'RESERVADO EXPANSIÓN'
+    };
+
+    const segmentosConNombre = segmentos.map(seg => ({
+      ...seg,
+      nombre: nombresSegmentos[seg.segmento] || `SEGMENTO ${seg.segmento}`
+    }));
+
+    res.status(200).json(segmentosConNombre);
+  } catch (error) {
+    console.error('Error al obtener resumen de segmentos:', error);
     next(error);
   }
 };
@@ -254,6 +345,7 @@ const deleteDireccionIp = async (req, res, next) => {
 // * Exporto todas las funciones del controlador para usarlas en las rutas
 module.exports = {
   getAllDireccionesIp,
+  getSegmentosResumen,
   getDireccionIpById,
   createDireccionIp,
   updateDireccionIp,
