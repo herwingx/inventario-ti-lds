@@ -25,6 +25,21 @@ function showCuentasEmailError(message, container) {
     showListError(target, 'Cuentas de Email', message, 'cuentasEmailList', () => loadCuentasEmailList());
 }
 
+// * Muestra un mensaje cuando no hay cuentas de email registradas.
+function showCuentasEmailEmpty(container) {
+    const target = container || contentArea;
+    target.innerHTML = `
+        <div class="text-center py-5">
+            <i class="fas fa-envelope fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">No hay cuentas de email registradas</h5>
+            <p class="text-muted">Cuando registres cuentas de email, aparecerán aquí.</p>
+            <button class="btn btn-primary btn-sm mt-2" onclick="window.navigateTo('cuenta-email-form')">
+                <i class="fas fa-plus me-2"></i>Registrar Cuenta Email
+            </button>
+        </div>
+    `;
+}
+
 function renderCuentasEmailListViewLayout() {
     contentArea.innerHTML = '';
     const cardContainer = document.createElement('div');
@@ -47,7 +62,7 @@ function renderCuentasEmailListViewLayout() {
 function formatCuentasEmailActionsCell(data, type, row) {
     if (type === 'display') {
         const cuentaId = row[0];
-        
+
         return `
             <div class="d-flex gap-1 justify-content-center">
                 <button type="button" class="action-btn view-btn" 
@@ -102,7 +117,7 @@ function formatCuentasEmailActionsCell(data, type, row) {
 function handleCuentasEmailTableActions(event) {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
-    
+
     const action = button.dataset.action;
     const cuentaId = button.dataset.id;
     if (action === 'view') {
@@ -115,7 +130,7 @@ function handleCuentasEmailTableActions(event) {
         }
     } else if (action === 'delete') {
         (async () => {
-            const result = Swal.fire({
+            const result = await Swal.fire({
                 title: '¿Eliminar Cuenta de Email?',
                 text: `¿Estás seguro de eliminar la cuenta de email (ID: ${cuentaId})? Esta acción no se puede deshacer.`,
                 icon: 'warning',
@@ -158,7 +173,7 @@ async function loadCuentasEmailList() {
     try {
         const cuentasEmail = await getCuentasEmail();
         if (!cuentasEmail || cuentasEmail.length === 0) {
-            showCuentasEmailError('No hay cuentas de email corporativo registradas.', cardBody);
+            showCuentasEmailEmpty(cardBody);
             return;
         }
         // Limpiar el spinner y agregar la tabla
@@ -198,7 +213,7 @@ async function loadCuentasEmailList() {
                     searchable: false
                 }
             ],
-            initComplete: function() {
+            initComplete: function () {
                 $('#cuentasemail-datatable').on('click', 'button[data-action]', handleCuentasEmailTableActions);
             }
         });

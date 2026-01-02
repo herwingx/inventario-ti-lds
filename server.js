@@ -15,7 +15,7 @@ const rolesRoutes = require('./src/routes/roles.routes'); // * Rutas para roles
 const usuariosSistemaRoutes = require('./src/routes/usuarios_sistema.routes'); // * Rutas para usuarios del sistema
 const cuentasEmailRoutes = require('./src/routes/cuentas_email.routes'); // * Rutas para cuentas de email
 const mantenimientosRoutes = require('./src/routes/mantenimientos.routes'); // * Rutas para mantenimientos
-const notasRoutes =  require('./src/routes/notas.routes'); // * Rutas para notas
+const notasRoutes = require('./src/routes/notas.routes'); // * Rutas para notas
 const asignacionesRoutes = require('./src/routes/asignaciones.routes'); // * Rutas para asignaciones
 const authRoutes = require('./src/routes/auth.routes'); // * Rutas de autenticación
 const { protect } = require('./src/middleware/auth.middleware'); // * Middleware de protección JWT
@@ -29,7 +29,7 @@ app.use((req, res, next) => {
   if (req.url === '/soporte') {
     return res.redirect(301, '/soporte/');
   }
-  
+
   // Si la URL comienza con /soporte/, la procesamos removiendo el prefijo
   if (req.url.startsWith('/soporte/')) {
     req.url = req.url.replace('/soporte', '');
@@ -98,9 +98,10 @@ app.use('/api/auth', authRoutes);
 // * Middleware de Protección JWT
 // ! Todas las rutas definidas DESPUÉS de esta línea requerirán un token JWT válido.
 // ! Aplico el middleware a todas las rutas que comiencen con /api.
-app.use('/api', protect); 
+app.use('/api', protect);
 // TODO: Aquí se montan las rutas principales de la API
 // * Cada entidad tiene su propio archivo de rutas
+// * (Se reiniciará el servidor automáticamente si se usa nodemon)
 app.use('/api/status', statusRoutes); // * Estado
 app.use('/api/empresas', empresasRoutes); // * Empresas
 app.use('/api/sucursales', sucursalesRoutes); // * Sucursales
@@ -133,8 +134,8 @@ app.use((err, req, res, next) => {
   const statusCode = err.status || 500;
 
   res.status(statusCode).json({
-      message: err.message || 'Ocurrió un error interno en el servidor',
-      error: process.env.NODE_ENV === 'development' ? err.stack : {}
+    message: err.message || 'Ocurrió un error interno en el servidor',
+    error: process.env.NODE_ENV === 'development' ? err.stack : {}
   });
 });
 
@@ -144,7 +145,7 @@ app.listen(port, '0.0.0.0', () => {
   console.log('El acceso externo debe ser a través del puerto 80 del host, manejado por Apache.');
   console.log(`Configurado para manejar prefijo /soporte y /soporte/ en producción`);
   // * Pruebo la conexión al pool de la base de datos al arrancar
-   pool.getConnection()
+  pool.getConnection()
     .then(connection => {
       console.log('Pool de conexiones a DB creado y listo.');
       connection.release(); // * Libero la conexión de vuelta al pool
@@ -155,4 +156,3 @@ app.listen(port, '0.0.0.0', () => {
       console.error('Asegúrate de que el contenedor Docker esté corriendo y las credenciales en .env sean correctas.');
     });
 });
-

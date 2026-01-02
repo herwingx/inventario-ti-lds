@@ -2,7 +2,6 @@
 // * Este módulo se encarga de toda la lógica para la vista de listado
 // * de los registros de Mantenimiento de equipos.
 
-//? ¿Necesitaré importar 'deleteMantenimiento' aquí o en una vista de detalle/modal?
 import { getMantenimientos, deleteMantenimiento } from '../api.js';
 import { showListLoading } from '../utils/loading.js';
 import { showListError } from '../utils/error.js';
@@ -20,6 +19,21 @@ let mantenimientosDataTable = null;
 // * Muestra un mensaje de carga mientras se obtienen los datos de los mantenimientos.
 function showMantenimientosLoading() {
     showListLoading(contentArea, 'Mantenimientos');
+}
+
+// * Muestra un mensaje cuando no hay registros.
+function showMantenimientosEmpty(container) {
+    const target = container || contentArea;
+    target.innerHTML = `
+        <div class="text-center py-5">
+            <i class="fas fa-tools fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">No hay registros de mantenimiento</h5>
+            <p class="text-muted">Cuando registres mantenimientos, aparecerán aquí.</p>
+            <button class="btn btn-primary btn-sm mt-2" onclick="window.navigateTo('mantenimiento-form')">
+                <i class="fas fa-plus me-2"></i>Registrar Mantenimiento
+            </button>
+        </div>
+    `;
 }
 
 // * Muestra un mensaje de error si falla la carga de datos de los mantenimientos.
@@ -50,7 +64,7 @@ function renderMantenimientosListViewLayout() {
 function formatMantenimientosActionsCell(data, type, row) {
     if (type === 'display') {
         const mantenimientoId = row[0];
-        
+
         return `
             <div class="d-flex gap-1 justify-content-center">
                 <button type="button" class="action-btn view-btn" 
@@ -105,7 +119,7 @@ function formatMantenimientosActionsCell(data, type, row) {
 function handleMantenimientosTableActions(event) {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
-    
+
     const action = button.dataset.action;
     const mantenimientoId = button.dataset.id;
     if (action === 'view') {
@@ -118,7 +132,7 @@ function handleMantenimientosTableActions(event) {
         }
     } else if (action === 'delete') {
         (async () => {
-            const result = Swal.fire({
+            const result = await Swal.fire({
                 title: '¿Eliminar Mantenimiento?',
                 text: `¿Estás seguro de eliminar el registro de mantenimiento (ID: ${mantenimientoId})? Esta acción no se puede deshacer.`,
                 icon: 'warning',
@@ -162,7 +176,7 @@ async function loadMantenimientosList() {
     try {
         const mantenimientos = await getMantenimientos();
         if (!mantenimientos || mantenimientos.length === 0) {
-            showMantenimientosError('No hay registros de mantenimiento en el sistema.', cardBody);
+            showMantenimientosEmpty(cardBody);
             return;
         }
         // Limpiar el spinner y agregar la tabla
@@ -204,7 +218,7 @@ async function loadMantenimientosList() {
                     searchable: false
                 }
             ],
-            initComplete: function() {
+            initComplete: function () {
                 $('#mantenimientos-datatable').on('click', 'button[data-action]', handleMantenimientosTableActions);
             }
         });
@@ -214,7 +228,7 @@ async function loadMantenimientosList() {
 }
 
 async function reloadMantenimientosTable() {
-    if (window.mantenimientosDataTable) {
+    if (mantenimientosDataTable) {
         try {
             const mantenimientos = await getMantenimientos();
             const tableData = mantenimientos.map(mantenimiento => [
@@ -227,7 +241,7 @@ async function reloadMantenimientosTable() {
                 getStatusBadge(mantenimiento.status_nombre || 'N/A'),
                 null
             ]);
-            window.mantenimientosDataTable.clear().rows.add(tableData).draw();
+            mantenimientosDataTable.clear().rows.add(tableData).draw();
         } catch (error) {
             console.error('Error al recargar la tabla:', error);
         }

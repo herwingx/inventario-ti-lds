@@ -53,10 +53,18 @@ async function renderCuentaEmailForm(cuentaToEdit = null) {
                                 <input type="email" id="email" name="email" required class="form-control input-default" value="${isEditing && currentCuentaData.email ? currentCuentaData.email : ''}" placeholder="usuario@empresa.com">
                             </div>
                             <div class="mb-3">
+                                <label for="usuario_email" class="form-label">Usuario de Email</label>
+                                <input type="text" id="usuario_email" name="usuario_email" class="form-control input-default" value="${isEditing && currentCuentaData.usuario_email ? currentCuentaData.usuario_email : ''}" placeholder="usuario.ejemplo">
+                            </div>
+                            <div class="mb-3">
+                                <label for="password_data" class="form-label">Contraseña</label>
+                                <input type="text" id="password_data" name="password_data" class="form-control input-default" value="${isEditing && currentCuentaData.password_data ? currentCuentaData.password_data : ''}" placeholder="Contraseña de la cuenta">
+                            </div>
+                            <div class="mb-3">
                                 <label for="id_empleado" class="form-label">Empleado Asignado</label>
                                 <select id="id_empleado" name="id_empleado" class="form-control select2">
                                     <option value="">SIN ASIGNAR</option>
-                                    ${empleadosCache.map(emp => `<option value="${emp.id}" ${isEditing && currentCuentaData.id_empleado === emp.id ? 'selected' : ''}>${emp.nombres} ${emp.apellidos} (ID: ${emp.id})</option>`).join('')}
+                                    ${empleadosCache.map(emp => `<option value="${emp.id}" ${isEditing && currentCuentaData.id_empleado_asignado === emp.id ? 'selected' : ''}>${emp.nombres} ${emp.apellidos} (ID: ${emp.id})</option>`).join('')}
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -64,14 +72,14 @@ async function renderCuentaEmailForm(cuentaToEdit = null) {
                                 <select id="id_status" name="id_status" required class="form-control select2">
                                     <option value="">SELECCIONE UN ESTADO...</option>
                                     ${statusesCache
-                                      .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
-                                      .map(status => `<option value="${status.id}" ${isEditing && currentCuentaData.id_status === status.id ? 'selected' : (!isEditing && status.id === 1 ? 'selected' : '')}>${status.nombre_status}</option>`)
-                                      .join('')}
+                .filter(status => isEditing || ![2, 6, 7, 9, 12].includes(status.id))
+                .map(status => `<option value="${status.id}" ${isEditing && currentCuentaData.id_status === status.id ? 'selected' : (!isEditing && status.id === 1 ? 'selected' : '')}>${status.nombre_status}</option>`)
+                .join('')}
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="notas" class="form-label">Notas</label>
-                                <textarea id="notas" name="notas" rows="3" class="form-control uppercase-field" placeholder="DESCRIBA EL PROPÓSITO DE LA CUENTA, DEPARTAMENTO, PERMISOS ESPECIALES, OBSERVACIONES, ETC.">${isEditing && currentCuentaData.notas ? currentCuentaData.notas : ''}</textarea>
+                                <label for="observaciones" class="form-label">Observaciones</label>
+                                <textarea id="observaciones" name="observaciones" rows="3" class="form-control uppercase-field" placeholder="DESCRIBA EL PROPÓSITO DE LA CUENTA, DEPARTAMENTO, PERMISOS ESPECIALES, OBSERVACIONES, ETC.">${isEditing && currentCuentaData.observaciones ? currentCuentaData.observaciones : ''}</textarea>
                             </div>
                             <div id="form-error-message" class="text-danger text-sm mb-3"></div>
                             <div class="d-flex justify-content-end gap-2">
@@ -89,7 +97,7 @@ async function renderCuentaEmailForm(cuentaToEdit = null) {
         }
 
         // Inicializar transformación a mayúsculas en campos de texto
-        applyUppercaseToFields(['notas']);
+        applyUppercaseToFields(['observaciones']);
 
         document.getElementById('cuentaEmailForm').addEventListener('submit', (event) => handleCuentaEmailFormSubmit(event, cuentaId));
         document.getElementById('cancelCuentaEmailForm').addEventListener('click', async () => {
@@ -117,7 +125,12 @@ async function handleCuentaEmailFormSubmit(event, editingId = null) {
     const cuentaData = {};
     for (let [key, value] of formData.entries()) {
         if (['id_empleado', 'id_status'].includes(key)) {
-            cuentaData[key] = value ? parseInt(value, 10) : null;
+            // Mapear id_empleado a id_empleado_asignado para el backend
+            if (key === 'id_empleado') {
+                cuentaData['id_empleado_asignado'] = value ? parseInt(value, 10) : null;
+            } else {
+                cuentaData[key] = value ? parseInt(value, 10) : null;
+            }
         } else {
             cuentaData[key] = value.trim() === '' ? null : value;
         }
@@ -153,4 +166,4 @@ async function showCuentaEmailForm(params = null) {
     await renderCuentaEmailForm(cuentaId);
 }
 
-export { showCuentaEmailForm }; 
+export { showCuentaEmailForm };

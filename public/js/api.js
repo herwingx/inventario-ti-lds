@@ -10,13 +10,13 @@ const API_URL = window.location.origin + '/soporte/api';
 //* Función genérica para manejar peticiones HTTP y errores.
 async function request(endpoint, method = 'GET', body = null) {
   const url = `${API_URL}${endpoint}`; //* Construye la URL completa.
-  
+
   //* Obtengo el token de localStorage.
   const token = localStorage.getItem('authToken');
 
   const headers = {
     //* Indica que enviamos/esperamos JSON.
-    'Content-Type': 'application/json', 
+    'Content-Type': 'application/json',
   };
 
   //* Si tengo un token, lo añado al encabezado 'Authorization'.
@@ -87,69 +87,75 @@ async function request(endpoint, method = 'GET', body = null) {
 // ===============================================================
 
 //* --- Equipos ---
-const getEquipos = () => request('/equipos'); 
-const getEquipoById = (id) => request(`/equipos/${id}`); 
+const getEquipos = () => request('/equipos');
+const getEquipoById = (id) => request(`/equipos/${id}`);
 const getEquiposDisponiblesParaComponentes = () => request('/equipos/disponibles-componentes');
-const createEquipo = (equipoData) => request('/equipos', 'POST', equipoData); 
-const updateEquipo = (id, equipoData) => request(`/equipos/${id}`, 'PUT', equipoData); 
-const deleteEquipo = (id) => request(`/equipos/${id}`, 'DELETE'); 
+const createEquipo = (equipoData) => request('/equipos', 'POST', equipoData);
+const updateEquipo = (id, equipoData) => request(`/equipos/${id}`, 'PUT', equipoData);
+const deleteEquipo = (id) => request(`/equipos/${id}`, 'DELETE');
 
 //* --- Empleados ---
-const getEmpleados = () => request('/empleados'); 
-const getEmpleadoById = (id) => request(`/empleados/${id}`); 
-const createEmpleado = (empleadoData) => request('/empleados', 'POST', empleadoData); 
-const updateEmpleado = (id, empleadoData) => request(`/empleados/${id}`, 'PUT', empleadoData); 
-const deleteEmpleado = (id) => request(`/empleados/${id}`, 'DELETE'); 
+const getEmpleados = () => request('/empleados');
+const getEmpleadoById = (id) => request(`/empleados/${id}`);
+const createEmpleado = (empleadoData) => request('/empleados', 'POST', empleadoData);
+const updateEmpleado = (id, empleadoData) => request(`/empleados/${id}`, 'PUT', empleadoData);
+const deleteEmpleado = (id) => request(`/empleados/${id}`, 'DELETE');
 
 //* --- Direcciones IP ---
-const getDireccionesIp = () => request('/direcciones-ip'); 
-const getDireccionIpById = (id) => request(`/direcciones-ip/${id}`); 
-const createDireccionIp = (ipData) => request('/direcciones-ip', 'POST', ipData); 
-const updateDireccionIp = (id, ipData) => request(`/direcciones-ip/${id}`, 'PUT', ipData); 
-const deleteDireccionIp = (id) => request(`/direcciones-ip/${id}`, 'DELETE'); 
+// * Obtener IPs con filtros opcionales: segmento (0-15), status (ID), disponibles (true/false)
+const getDireccionesIp = (filters = {}) => {
+  const queryParams = new URLSearchParams(filters).toString();
+  const url = queryParams ? `/direcciones-ip?${queryParams}` : '/direcciones-ip';
+  return request(url);
+};
+const getDireccionIpById = (id) => request(`/direcciones-ip/${id}`);
+const getSegmentosResumen = () => request('/direcciones-ip/segmentos'); // Resumen por segmento para dashboard
+const createDireccionIp = (ipData) => request('/direcciones-ip', 'POST', ipData);
+const updateDireccionIp = (id, ipData) => request(`/direcciones-ip/${id}`, 'PUT', ipData);
+const deleteDireccionIp = (id) => request(`/direcciones-ip/${id}`, 'DELETE');
 
 //* --- Status ---
-const getStatuses = () => request('/status'); 
+const getStatuses = () => request('/status');
 
 //* --- Empresas ---
-const getEmpresas = () => request('/empresas'); 
+const getEmpresas = () => request('/empresas');
 
 //* --- Tipos Equipo ---
-const getTiposEquipo = () => request('/tipos-equipo'); 
+const getTiposEquipo = () => request('/tipos-equipo');
 
 //* --- Tipos Sucursal ---
-const getTiposSucursal = () => request('/tipos-sucursal'); 
+const getTiposSucursal = () => request('/tipos-sucursal');
 
 //* --- Roles ---
-const getRoles = () => request('/roles'); 
+const getRoles = () => request('/roles');
 
 //* --- Usuarios Sistema ---
-const getUsuariosSistema = () => request('/usuarios-sistema'); 
-const getUsuarioSistemaById = (id) => request(`/usuarios-sistema/${id}`); 
-const createUsuarioSistema = (userData) => request('/usuarios-sistema', 'POST', userData); 
-const updateUsuarioSistema = (id, userData) => request(`/usuarios-sistema/${id}`, 'PUT', userData); 
-const deleteUsuarioSistema = (id) => request(`/usuarios-sistema/${id}`, 'DELETE'); 
+const getUsuariosSistema = () => request('/usuarios-sistema');
+const getUsuarioSistemaById = (id) => request(`/usuarios-sistema/${id}`);
+const createUsuarioSistema = (userData) => request('/usuarios-sistema', 'POST', userData);
+const updateUsuarioSistema = (id, userData) => request(`/usuarios-sistema/${id}`, 'PUT', userData);
+const deleteUsuarioSistema = (id) => request(`/usuarios-sistema/${id}`, 'DELETE');
 
 //* --- Cuentas Email ---
-const getCuentasEmail = () => request('/cuentas-email'); 
-const getCuentaEmailById = (id) => request(`/cuentas-email/${id}`); 
-const createCuentaEmail = (emailData) => request('/cuentas-email', 'POST', emailData); 
-const updateCuentaEmail = (id, emailData) => request(`/cuentas-email/${id}`, 'PUT', emailData); 
-const deleteCuentaEmail = (id) => request(`/cuentas-email/${id}`, 'DELETE'); 
+const getCuentasEmail = () => request('/cuentas-email');
+const getCuentaEmailById = (id) => request(`/cuentas-email/${id}`);
+const createCuentaEmail = (emailData) => request('/cuentas-email', 'POST', emailData);
+const updateCuentaEmail = (id, emailData) => request(`/cuentas-email/${id}`, 'PUT', emailData);
+const deleteCuentaEmail = (id) => request(`/cuentas-email/${id}`, 'DELETE');
 
 //* --- Mantenimientos ---
-const getMantenimientos = () => request('/mantenimientos'); 
-const getMantenimientoById = (id) => request(`/mantenimientos/${id}`); 
-const createMantenimiento = (mantenimientoData) => request('/mantenimientos', 'POST', mantenimientoData); 
-const updateMantenimiento = (id, mantenimientoData) => request(`/mantenimientos/${id}`, 'PUT', mantenimientoData); 
-const deleteMantenimiento = (id) => request(`/mantenimientos/${id}`, 'DELETE'); 
+const getMantenimientos = () => request('/mantenimientos');
+const getMantenimientoById = (id) => request(`/mantenimientos/${id}`);
+const createMantenimiento = (mantenimientoData) => request('/mantenimientos', 'POST', mantenimientoData);
+const updateMantenimiento = (id, mantenimientoData) => request(`/mantenimientos/${id}`, 'PUT', mantenimientoData);
+const deleteMantenimiento = (id) => request(`/mantenimientos/${id}`, 'DELETE');
 
 //* --- Notas ---
-const getNotas = () => request('/notas'); 
-const getNotaById = (id) => request(`/notas/${id}`); 
-const createNota = (notaData) => request('/notas', 'POST', notaData); 
-const updateNota = (id, notaData) => request(`/notas/${id}`, 'PUT', notaData); 
-const deleteNota = (id) => request(`/notas/${id}`, 'DELETE'); 
+const getNotas = () => request('/notas');
+const getNotaById = (id) => request(`/notas/${id}`);
+const createNota = (notaData) => request('/notas', 'POST', notaData);
+const updateNota = (id, notaData) => request(`/notas/${id}`, 'PUT', notaData);
+const deleteNota = (id) => request(`/notas/${id}`, 'DELETE');
 
 //* --- Asignaciones ---
 //!Añadimos funciones para obtener asignaciones filtradas (ej: por equipoId, activa)
@@ -158,28 +164,28 @@ const getAsignaciones = (filters = {}) => {
   const url = queryParams ? `/asignaciones?${queryParams}` : '/asignaciones';
   return request(url);
 };
-const getAsignacionById = (id) => request(`/asignaciones/${id}`); 
-const createAsignacion = (asignacionData) => request('/asignaciones', 'POST', asignacionData); 
+const getAsignacionById = (id) => request(`/asignaciones/${id}`);
+const createAsignacion = (asignacionData) => request('/asignaciones', 'POST', asignacionData);
 const createAsignacionConComponentes = (asignacionData) => request('/asignaciones/con-componentes', 'POST', asignacionData);
-const updateAsignacion = (id, asignacionData) => request(`/asignaciones/${id}`, 'PUT', asignacionData); 
+const updateAsignacion = (id, asignacionData) => request(`/asignaciones/${id}`, 'PUT', asignacionData);
 const deleteAsignacion = (id) => request(`/asignaciones/${id}`, 'DELETE');
 
 //* Funciones para manejar componentes de asignaciones
 const getComponentesAsignacion = (asignacionId) => request(`/asignaciones/${asignacionId}/componentes`);
-const updateComponentesAsignacion = (asignacionId, componentesData) => request(`/asignaciones/${asignacionId}/componentes`, 'PUT', componentesData); 
+const updateComponentesAsignacion = (asignacionId, componentesData) => request(`/asignaciones/${asignacionId}/componentes`, 'PUT', componentesData);
 
 //* --- Sucursales ---
-const getSucursales = () => request('/sucursales'); 
+const getSucursales = () => request('/sucursales');
 
 //* --- Areas ---
 const getAreas = (id_sucursal = null) => {
   const endpoint = id_sucursal ? `/areas?id_sucursal=${id_sucursal}` : '/areas';
   return request(endpoint);
-}; 
-const getAreaById = (id) => request(`/areas/${id}`); 
-const createArea = (areaData) => request('/areas', 'POST', areaData); 
-const updateArea = (id, areaData) => request(`/areas/${id}`, 'PUT', areaData); 
-const deleteArea = (id) => request(`/areas/${id}`, 'DELETE'); 
+};
+const getAreaById = (id) => request(`/areas/${id}`);
+const createArea = (areaData) => request('/areas', 'POST', areaData);
+const updateArea = (id, areaData) => request(`/areas/${id}`, 'PUT', areaData);
+const deleteArea = (id) => request(`/areas/${id}`, 'DELETE');
 
 //* Función para la API de autenticación.
 const login = (credentials) => request('/auth/login', 'POST', credentials);
@@ -189,13 +195,13 @@ const login = (credentials) => request('/auth/login', 'POST', credentials);
 //* por otros módulos JS.
 export {
   //* Auth
-  login, 
+  login,
   //* Equipos
   getEquipos, getEquipoById, getEquiposDisponiblesParaComponentes, createEquipo, updateEquipo, deleteEquipo,
   //* Empleados
   getEmpleados, getEmpleadoById, createEmpleado, updateEmpleado, deleteEmpleado,
   //* Direcciones IP
-  getDireccionesIp, getDireccionIpById, createDireccionIp, updateDireccionIp, deleteDireccionIp,
+  getDireccionesIp, getDireccionIpById, getSegmentosResumen, createDireccionIp, updateDireccionIp, deleteDireccionIp,
   //* Status
   getStatuses,
   //* Empresas

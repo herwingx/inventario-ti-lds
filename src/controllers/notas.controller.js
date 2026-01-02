@@ -9,14 +9,14 @@ const { query } = require('../config/db'); // * Utilizo la función personalizad
 // * Función de ayuda para validar formato de fecha (YYYY-MM-DD) de forma segura (UTC)
 // * Devuelve true si el string coincide con el formato y es una fecha real válida.
 function isValidDate(dateString) {
-    // * Permito null/vacío si el campo no es obligatorio.
-    if (!dateString) return true;
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!regex.test(dateString)) return false;
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return false;
-    const [year, month, day] = dateString.split('-').map(Number);
-    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  // * Permito null/vacío si el campo no es obligatorio.
+  if (!dateString) return true;
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(dateString)) return false;
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return false;
+  const [year, month, day] = dateString.split('-').map(Number);
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
 // ===============================================================
@@ -96,7 +96,7 @@ const createNota = async (req, res, next) => {
   try {
     // * Extraigo los datos del body. titulo y contenido son obligatorios
     const {
-        titulo, contenido, id_equipo, id_mantenimiento, id_usuario_sistema
+      titulo, contenido, id_equipo, id_mantenimiento, id_usuario_sistema
     } = req.body;
     // * Validaciones de campos obligatorios
     if (!titulo || !contenido) {
@@ -155,7 +155,7 @@ const updateNota = async (req, res, next) => {
     // * Extraigo el ID y los datos a actualizar
     const { id } = req.params;
     const {
-        titulo, contenido, id_equipo, id_mantenimiento, id_usuario_sistema
+      titulo, contenido, id_equipo, id_mantenimiento, id_usuario_sistema
     } = req.body;
     // * Validar que al menos un campo sea enviado
     const updateFields = Object.keys(req.body);
@@ -168,30 +168,24 @@ const updateNota = async (req, res, next) => {
     if (contenido !== undefined && contenido !== null && contenido.trim() === '') {
       return res.status(400).json({ message: 'El campo contenido no puede estar vacío.' });
     }
-    // * Validar existencia de FKs si se intenta actualizar
+    // * Validar existencia de FKs si se intenta actualizar (campos opcionales, pueden ser null)
     if (id_equipo !== undefined && id_equipo !== null) {
       const equipoExists = await query('SELECT id FROM equipos WHERE id = ?', [id_equipo]);
       if (equipoExists.length === 0) {
         return res.status(400).json({ message: `El ID de equipo ${id_equipo} no es válido.` });
       }
-    } else if (id_equipo === null) {
-      return res.status(400).json({ message: 'El campo id_equipo no puede ser nulo.' });
     }
     if (id_mantenimiento !== undefined && id_mantenimiento !== null) {
       const mantenimientoExists = await query('SELECT id FROM mantenimientos WHERE id = ?', [id_mantenimiento]);
       if (mantenimientoExists.length === 0) {
         return res.status(400).json({ message: `El ID de mantenimiento ${id_mantenimiento} no es válido.` });
       }
-    } else if (id_mantenimiento === null) {
-      return res.status(400).json({ message: 'El campo id_mantenimiento no puede ser nulo.' });
     }
     if (id_usuario_sistema !== undefined && id_usuario_sistema !== null) {
       const usuarioExists = await query('SELECT id FROM usuarios_sistema WHERE id = ?', [id_usuario_sistema]);
       if (usuarioExists.length === 0) {
         return res.status(400).json({ message: `El ID de usuario_sistema ${id_usuario_sistema} no es válido.` });
       }
-    } else if (id_usuario_sistema === null) {
-      return res.status(400).json({ message: 'El campo id_usuario_sistema no puede ser nulo.' });
     }
     // * Construyo la consulta UPDATE dinámicamente
     let sql = 'UPDATE notas SET ';

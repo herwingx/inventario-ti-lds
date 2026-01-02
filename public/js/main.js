@@ -33,6 +33,8 @@ import { showCuentaEmailForm } from './views/cuentaEmailFormView.js';
 import { showMantenimientoForm } from './views/mantenimientoFormView.js';
 import { showNotaForm } from './views/notaFormView.js';
 import { showNotaDetails } from './views/notaDetailsView.js';
+import { loadAreasList } from './views/areasView.js';
+import { showAreaForm } from './views/areaFormView.js';
 import { showCuentaEmailDetails } from './views/cuentasEmailDetailsView.js';
 import { showMantenimientoDetails } from './views/mantenimientosDetailsView.js';
 import { loadDashboard } from './views/dashboardView.js';
@@ -89,6 +91,8 @@ const viewsMap = {
     'mantenimiento-details': showMantenimientoDetails,
     'nota-form': showNotaForm,
     'nota-details': showNotaDetails,
+    'areas-list': loadAreasList,
+    'area-form': showAreaForm,
     //TODO: 'usuarios-list': loadUsuariosList, 'usuario-form': showUsuarioForm, 'usuario-details': showUsuarioDetails
 };
 
@@ -145,19 +149,19 @@ function navigateTo(viewName, params = null, pushState = true) {
         window.location.replace('/soporte/');
         return;
     }
-    
+
     const loadViewFunction = viewsMap[viewName];
     if (loadViewFunction) {
         loadViewFunction(params);
     } else {
         contentArea.innerHTML = `<p class="text-red-500 font-bold">Error:</p><p class="text-red-500">La vista solicitada "${viewName}" no está implementada.</p>`;
     }
-    
+
     // Actualiza la URL usando pushState si corresponde
     if (pushState) {
         let url = '/soporte/' + viewName;
         if (params) url += '/' + params;
-        
+
         // Verificar si ya estamos en la misma vista para evitar entradas duplicadas
         const currentPath = window.location.pathname;
         if (currentPath !== url) {
@@ -166,12 +170,12 @@ function navigateTo(viewName, params = null, pushState = true) {
             if ((currentPath === '/soporte/home' || currentPath === '/soporte/') && history.length === 1) {
                 history.pushState({ viewName: 'home', params: null }, '', '/soporte/home');
             }
-            
+
             history.pushState({ viewName, params }, '', url);
         }
         window.currentView = viewName;
     }
-    
+
     updateSidebarUI();
 }
 window.navigateTo = navigateTo; //* Hago navigateTo global.
@@ -195,7 +199,7 @@ window.loadAsignacionesListGlobal = loadAsignacionesList;
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM completamente cargado. Inicia configuración de eventos.');
-    
+
     // Inicializar manejadores de tema para selects
     initSelectThemeHandlers();
 
@@ -271,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const viewNameFromUrl = partsFromPop[0] === '' ? 'home' : partsFromPop[0];
             const paramsFromUrl = partsFromPop.length > 1 ? partsFromPop[1] : null;
             console.log(`popstate sin estado válido, cargando desde URL actual: "${viewNameFromUrl}"`);
-            
+
             // Verificar si la vista es válida antes de navegar
             if (viewsMap[viewNameFromUrl]) {
                 navigateTo(viewNameFromUrl, paramsFromUrl, false);
