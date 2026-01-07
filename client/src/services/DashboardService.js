@@ -9,44 +9,33 @@ export default {
    * Obtiene las estadísticas del dashboard
    * @returns {Promise<Object>} Objeto con contadores de equipos, empleados, asignaciones y mantenimientos
    */
+  /**
+   * Obtiene las estadísticas del dashboard
+   * @returns {Promise<Object>} Objeto con estadísticas completas del dashboard
+   */
   async getStats() {
-    // Helper para safely obtener counts
-    const getCount = async (promise) => {
-      try {
-        const res = await promise
-        return Array.isArray(res.data) ? res.data.length : 0
-      } catch (e) {
-        console.warn('Error fetching stat:', e.message)
-        return 0
-      }
-    }
-
-    // Para mantenimientos y asignaciones que requieren filtrado, hacemos lógica específica
-    // Idealmente el backend debería darnos endpoints /count
-
-    // Equipos
-    const equiposCount = await getCount(apiClient.get('/equipos'))
-
-    // Empleados
-    const empleadosCount = await getCount(apiClient.get('/empleados'))
-
-    // Asignaciones
-    let asignacionesCount = 0
     try {
-      const res = await apiClient.get('/asignaciones')
-      if (Array.isArray(res.data)) {
-        asignacionesCount = res.data.filter(a => !a.fecha_fin_asignacion).length
+      const res = await apiClient.get('/dashboard/stats')
+
+      // Mapeamos la respuesta del backend a la estructura que espera la vista
+      // El backend devuelve: { stats: { equipos: { total, ... }, empleados, asignaciones_activas }, activity: { ... } }
+      const backendData = res.data
+
+      return {
+        // Stats básicas para las cards
+        equipos: backendData.stats.equipos.total || 0,
+        empleados: backendData.stats.empleados || 0,
+        asignaciones: backendData.stats.asignaciones_activas || 0,
+        mantenimientos: backendData.stats.equipos.mantenimiento || 0,
+
+        // Datos adicionales para gráficos o secciones detalle
+        equipos_disponibles: backendData.stats.equipos.disponibles || 0,
+        equipos_por_tipo: backendData.stats.equipos.por_tipo || [],
+        actividad_reciente: backendData.activity.recent_assignments || []
       }
-    } catch (e) { console.warn('Error asignaciones:', e.message) }
-
-    // Mantenimientos
-    const mantenimientosCount = await getCount(apiClient.get('/mantenimientos'))
-
-    return {
-      equipos: equiposCount,
-      empleados: empleadosCount,
-      asignaciones: asignacionesCount,
-      mantenimientos: mantenimientosCount
+    } catch (e) {
+      console.error('Error fetching dashboard stats:', e.message)
+      throw e
     }
   }
 }

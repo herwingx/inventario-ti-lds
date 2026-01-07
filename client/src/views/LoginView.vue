@@ -12,6 +12,7 @@ import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import Toast from 'primevue/toast'
+import { Layers } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const toast = useToast()
@@ -57,11 +58,7 @@ const handleLogin = async () => {
       <div class="flex flex-col items-center mb-8">
           <!-- Logo Placeholder from image -->
           <div class="mb-4">
-             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-gray-400">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-             </svg>
+             <Layers class="text-gray-400" :size="60" stroke-width="1.5" />
           </div>
           <h1 class="text-xl font-medium text-white">Inicio de sesión</h1>
       </div>

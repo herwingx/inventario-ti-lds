@@ -17,6 +17,14 @@ import { FilterMatchMode } from '@primevue/core/api'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import EquiposService from '../services/EquiposService'
+import { 
+  Search, 
+  Plus, 
+  Eye, 
+  Pencil, 
+  Trash2, 
+  AlertTriangle 
+} from 'lucide-vue-next'
 
 // Componentes PrimeVue
 import DataTable from 'primevue/datatable'
@@ -132,11 +140,11 @@ const confirmDeleteEquipo = (equipo) => {
     confirm.require({
         message: `¿Estás seguro de que deseas eliminar permanentemente ${equipo.nombre_equipo}? Esta acción no se puede deshacer.`,
         header: 'Confirmar Eliminación',
-        icon: 'pi pi-exclamation-triangle',
+        // Icono removido de propiedades directas para usar el slot o componente por defecto de confirm
         rejectLabel: 'Cancelar',
         acceptLabel: 'Eliminar Equipo',
-        rejectClass: 'p-button-secondary p-button-text',
-        acceptClass: 'p-button-danger !bg-red-500 !border-none hover:!bg-red-600 !px-6',
+        rejectClass: 'btn-secondary',
+        acceptClass: 'btn-danger ml-2',
         accept: async () => {
             try {
                 await EquiposService.delete(equipo.id)
@@ -165,7 +173,7 @@ const skeletonRows = new Array(5).fill({})
         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-1">
             <!-- Search Input (Primary) -->
             <div class="relative w-full sm:w-72">
-                 <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none"></i>
+                 <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
                  <InputText v-model="filters['global'].value" placeholder="Buscar serial, marca, modelo..." class="w-full !pl-10 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white !py-2.5 !rounded-lg focus:!border-primary" />
             </div>
 
@@ -177,7 +185,10 @@ const skeletonRows = new Array(5).fill({})
         </div>
 
         <!-- Right: New Equipment Button -->
-        <Button label="Nuevo Equipo" icon="pi pi-plus" class="!bg-primary !border-none hover:!bg-primary-hover !font-bold !px-6 !py-2.5 !rounded-lg !text-white !text-sm shadow-lg shadow-emerald-900/20 w-full md:w-auto" @click="openNew" />
+        <button class="btn-primary w-full md:w-auto" @click="openNew">
+          <Plus :size="18" />
+          <span>Nuevo Equipo</span>
+        </button>
       </div>
 
       <!-- DATATABLE -->
@@ -197,7 +208,7 @@ const skeletonRows = new Array(5).fill({})
         <template #empty>
             <div class="flex flex-col items-center justify-center p-12 text-center">
                 <div class="w-24 h-24 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mb-4 transition-colors">
-                    <i class="pi pi-search text-4xl text-gray-400 dark:text-gray-500"></i>
+                    <Search class="text-gray-400 dark:text-gray-500" :size="40" />
                 </div>
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-300 mb-1">No se encontraron resultados</h3>
                 <p class="text-gray-500 text-sm max-w-xs mx-auto">Intenta ajustar tus filtros de búsqueda o agrega un nuevo equipo al inventario.</p>
@@ -268,18 +279,18 @@ const skeletonRows = new Array(5).fill({})
                     <Skeleton size="2rem" class="!bg-gray-200 dark:!bg-dark-border" />
                     <Skeleton size="2rem" class="!bg-gray-200 dark:!bg-dark-border" />
                 </div>
-                <div v-else class="flex gap-1 justify-start">
+                <div v-else class="flex gap-1 justify-end">
                     <!-- View Button -->
-                    <button class="w-7 h-7 rounded bg-gray-100 dark:bg-dark-bg hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center transition-all border border-gray-200 dark:border-transparent hover:border-blue-500" @click="viewEquipo(data)" title="Ver detalles">
-                        <i class="pi pi-eye text-xs"></i>
+                    <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center transition-all" @click="viewEquipo(data)" title="Ver detalles">
+                        <Eye :size="16" />
                     </button>
                     <!-- Edit Button -->
-                    <button class="w-7 h-7 rounded bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-dark-border text-primary flex items-center justify-center transition-all border border-gray-200 dark:border-transparent" @click="editEquipo(data)" title="Editar">
-                        <i class="pi pi-pencil text-xs"></i>
+                    <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all" @click="editEquipo(data)" title="Editar">
+                        <Pencil :size="16" />
                     </button>
                     <!-- Delete Button -->
-                    <button class="w-7 h-7 rounded bg-gray-100 dark:bg-dark-bg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 flex items-center justify-center transition-all border border-gray-200 dark:border-transparent hover:border-red-500" @click="confirmDeleteEquipo(data)" title="Eliminar">
-                        <i class="pi pi-trash text-xs"></i>
+                    <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center transition-all" @click="confirmDeleteEquipo(data)" title="Eliminar">
+                        <Trash2 :size="16" />
                     </button>
                 </div>
             </template>

@@ -113,14 +113,7 @@ onUnmounted(() => {
     </footer>
   </div>
   <Toast />
-  <ConfirmDialog :pt="{ 
-    root: { class: 'bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-2xl rounded-xl overflow-hidden' },
-    header: { class: 'bg-white dark:bg-dark-card text-gray-900 dark:text-white border-b border-gray-100 dark:border-dark-border px-6 py-4 font-bold' },
-    content: { class: 'bg-white dark:bg-dark-card text-gray-700 dark:text-gray-300 px-6 py-6' },
-    footer: { class: 'bg-gray-50/50 dark:bg-dark-bg/30 px-6 py-4 flex justify-end gap-2' },
-    message: { class: 'flex flex-col items-center text-center gap-4' },
-    icon: { class: 'text-5xl mb-2' }
-  }" />
+  <ConfirmDialog />
 </template>
 
 <style scoped>

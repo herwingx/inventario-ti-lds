@@ -14,7 +14,7 @@ import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
-import Button from 'primevue/button'
+import { Check, X, Mail } from 'lucide-vue-next'
 import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
@@ -116,12 +116,15 @@ const handleSubmit = async () => {
   <div class="animate-fade-in-up max-w-2xl mx-auto">
     <div class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-8 border border-gray-200 dark:border-dark-border">
         
-        <div class="mb-8 border-b pb-4 flex justify-between items-center">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-100 dark:border-dark-border pb-4 gap-4">
             <div>
                  <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ isEditing ? 'Editar Cuenta' : 'Nueva Cuenta de Correo' }}</h2>
-                 <p class="text-gray-500 text-sm">Gestión de cuentas corporativas.</p>
+                 <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Gestión de cuentas corporativas para empleados</p>
             </div>
-            <Button icon="pi pi-times" text rounded class="!text-gray-400" @click="router.back()" />
+            <button @click="router.back()" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                <X :size="20" />
+                <span>Cancelar</span>
+            </button>
         </div>
 
         <div v-if="loading" class="space-y-4">
@@ -172,9 +175,16 @@ const handleSubmit = async () => {
             </div>
 
             <!-- Botones -->
-            <div class="flex justify-end gap-3 pt-6 border-t">
-                <Button label="Cancelar" severity="secondary" text @click="router.back()" />
-                <Button type="submit" :label="isEditing ? 'Guardar Cambios' : 'Crear Cuenta'" icon="pi pi-check" :loading="submitting" class="!bg-primary !border-none" />
+            <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-dark-border">
+                <button type="button" @click="router.back()" class="btn-secondary">
+                    <X :size="18" />
+                    Cancelar
+                </button>
+                <button type="submit" class="btn-primary" :disabled="submitting">
+                    <Check v-if="!submitting" :size="18" />
+                    <i v-else class="pi pi-spin pi-spinner text-lg"></i>
+                    <span>{{ isEditing ? 'Guardar Cambios' : 'Crear Cuenta' }}</span>
+                </button>
             </div>
 
         </form>

@@ -9,6 +9,7 @@ import { FilterMatchMode } from '@primevue/core/api'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import EmpresasService from '../services/EmpresasService'
+import { Search, Plus, Pencil, Trash2, Building } from 'lucide-vue-next'
 
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -53,9 +54,10 @@ const editEmpresa = (data) => {
 const confirmDelete = (data) => {
     confirm.require({
         message: `¿Estás seguro de eliminar "${data.nombre}"?`,
-        header: 'Confirmar Eliminación',
-        icon: 'pi pi-exclamation-triangle',
-        acceptClass: 'p-button-danger !bg-red-500 !border-none',
+        rejectLabel: 'Cancelar',
+        acceptLabel: 'Eliminar Empresa',
+        rejectClass: 'btn-secondary',
+        acceptClass: 'btn-danger ml-2',
         accept: async () => {
             try {
                 await EmpresasService.delete(data.id)
@@ -77,10 +79,13 @@ const skeletonRows = new Array(3).fill({})
       
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <div class="relative w-full sm:w-64">
-             <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none"></i>
+             <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
              <InputText v-model="filters['global'].value" placeholder="Buscar empresa..." class="w-full !pl-10 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white !py-2.5 !rounded-lg focus:!border-primary" />
         </div>
-        <Button label="Nueva Empresa" icon="pi pi-plus" class="!bg-primary !border-none hover:!bg-primary-hover !font-bold !px-6 !py-2.5 !rounded-lg !text-white !text-sm shadow-lg w-full md:w-auto" @click="openNew" />
+        <button class="btn-primary w-full md:w-auto" @click="openNew">
+            <Plus :size="18" />
+            <span>Nueva Empresa</span>
+        </button>
       </div>
 
       <DataTable 
@@ -95,7 +100,9 @@ const skeletonRows = new Array(3).fill({})
       >
         <template #empty>
             <div class="flex flex-col items-center justify-center p-12 text-center">
-                <i class="pi pi-building text-4xl text-gray-400 mb-3"></i>
+                <div class="w-24 h-24 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mb-4 transition-colors">
+                    <Building class="text-gray-400 dark:text-gray-500" :size="40" />
+                </div>
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-300 mb-1">No se encontraron empresas</h3>
             </div>
         </template>
@@ -122,14 +129,14 @@ const skeletonRows = new Array(3).fill({})
                  </div>
                 <div v-else class="flex gap-1 justify-end">
                     <!-- Edit Button -->
-                    <button class="w-7 h-7 rounded bg-gray-100 hover:bg-gray-200 text-primary flex items-center justify-center transition-all" @click="editEmpresa(data)" title="Editar">
-                        <i class="pi pi-pencil text-xs"></i>
+                    <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all" @click="editEmpresa(data)" title="Editar">
+                        <Pencil :size="16" />
                     </button>
                     <!-- Delete Button -->
-                    <button class="w-7 h-7 rounded bg-gray-100 hover:bg-red-50 text-red-500 flex items-center justify-center transition-all" @click="confirmDelete(data)" title="Eliminar">
-                        <i class="pi pi-trash text-xs"></i>
+                    <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center transition-all" @click="confirmDelete(data)" title="Eliminar">
+                        <Trash2 :size="16" />
                     </button>
-                 </div>
+                </div>
             </template>
         </Column>
       </DataTable>

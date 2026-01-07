@@ -3,6 +3,8 @@
  * @fileoverview Tarjeta de Acceso Rápido.
  * Componente visual para navegar rápidamente a secciones importantes del dashboard.
  */
+import { ArrowRight, Box } from 'lucide-vue-next'
+
 defineProps({
   title: {
     type: String,
@@ -13,8 +15,8 @@ defineProps({
     default: ''
   },
   icon: {
-    type: String,
-    default: 'pi pi-box'
+    type: [String, Object, Function],
+    default: Box
   },
   color: {
     type: String,
@@ -43,14 +45,14 @@ const colorConfig = {
   >
     <!-- Icono grande de fondo -->
     <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
-      <i :class="icon" class="text-[80px]"></i>
+      <component :is="icon" :size="80" />
     </div>
 
     <!-- Contenido -->
     <div class="relative z-10">
       <!-- Icono pequeño -->
       <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-        <i :class="icon" class="text-white text-xl"></i>
+        <component :is="icon" class="text-white" :size="24" stroke-width="2" />
       </div>
 
       <!-- Texto -->
@@ -64,7 +66,7 @@ const colorConfig = {
 
     <!-- Flecha indicadora (esquina superior derecha) -->
     <div class="absolute right-4 top-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0">
-      <i class="pi pi-arrow-right text-white text-sm"></i>
+      <ArrowRight class="text-white" :size="16" />
     </div>
   </div>
 </template>

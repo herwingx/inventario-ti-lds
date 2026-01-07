@@ -74,7 +74,7 @@ const confirmDeleteEquipo = () => {
     rejectLabel: 'Cancelar',
     acceptLabel: 'Eliminar Equipo',
     rejectClass: 'p-button-secondary p-button-text',
-    acceptClass: 'p-button-danger !bg-red-500 !border-none hover:!bg-red-600 !px-6',
+    acceptClass: 'p-button-danger',
     accept: async () => {
       try {
         await EquiposService.delete(equipo.value.id)
@@ -190,41 +190,39 @@ const infoSections = computed(() => {
       </div>
     </div>
 
-    <!-- Grid de secciones -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div 
         v-for="(section, index) in infoSections" 
         :key="index"
-        class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 border border-gray-200 dark:border-dark-border transition-colors duration-300"
+        class="detail-card"
         :class="{ 'lg:col-span-2': section.fields.some(f => f.fullWidth) }"
       >
         <!-- Título de la sección -->
-        <div class="flex items-center gap-3 mb-5 pb-4 border-b border-gray-200 dark:border-dark-border">
-          <div :class="['w-10 h-10 rounded-lg flex items-center justify-center', section.color, 'bg-opacity-10 dark:bg-opacity-20']">
+        <div class="detail-section-header">
+          <div :class="['detail-section-icon', section.color]">
             <i :class="['pi', section.icon, section.color, 'text-lg']"></i>
           </div>
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white">{{ section.title }}</h2>
+          <h2 class="detail-section-title">{{ section.title }}</h2>
         </div>
 
         <!-- Campos -->
-        <div v-if="loading" class="space-y-4">
+        <div v-if="loading" class="space-y-6">
           <div v-for="i in 3" :key="i" class="flex justify-between">
             <Skeleton width="6rem" class="!bg-gray-200 dark:!bg-dark-border" />
             <Skeleton width="10rem" class="!bg-gray-200 dark:!bg-dark-border" />
           </div>
         </div>
 
-        <div v-else class="space-y-4">
+        <div v-else class="space-y-6">
           <div 
             v-for="(field, fieldIndex) in section.fields" 
             :key="fieldIndex"
             :class="[
               'flex',
               field.fullWidth ? 'flex-col gap-2' : 'justify-between items-center',
-              'py-2'
             ]"
           >
-            <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">
+            <span class="detail-label">
               {{ field.label }}
             </span>
             
@@ -233,16 +231,15 @@ const infoSections = computed(() => {
               v-if="field.isTag" 
               :value="field.value" 
               :severity="getSeverity(field.value)"
-              class="!text-xs !font-bold px-3 py-1.5 !rounded-md text-white tracking-wide"
+              class="!text-[10px] !font-bold px-3 py-1.5 !rounded-md tracking-wide"
             />
             
             <!-- Texto normal -->
             <span 
               v-else
               :class="[
-                'text-sm font-bold text-gray-900 dark:text-white',
-                field.mono ? 'font-mono' : '',
-                field.fullWidth ? 'bg-gray-50 dark:bg-dark-bg p-3 rounded-lg border border-gray-200 dark:border-dark-border' : ''
+                field.mono ? 'detail-value-mono' : 'detail-value',
+                field.fullWidth ? 'detail-content-box' : ''
               ]"
             >
               {{ field.value }}

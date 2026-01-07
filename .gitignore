@@ -114,3 +114,6 @@ tmp/
 uploads/
 files/
 .env
+
+.gemini/
+gha-creds-*.json

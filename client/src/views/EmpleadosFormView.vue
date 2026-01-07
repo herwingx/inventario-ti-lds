@@ -9,11 +9,9 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import EmpleadosService from '../services/EmpleadosService'
 import CatalogosService from '../services/CatalogosService'
-
-// Componentes PrimeVue
+import { Check, X, Info } from 'lucide-vue-next'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
-import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import Skeleton from 'primevue/skeleton'
 import Fluid from 'primevue/fluid'
@@ -194,8 +192,8 @@ const goBack = () => {
         icon: 'pi pi-info-circle',
         rejectLabel: 'Continuar Editando',
         acceptLabel: 'Salir sin Guardar',
-        rejectClass: 'p-button-secondary p-button-text',
-        acceptClass: 'p-button-warning !bg-orange-500 !border-none hover:!bg-orange-600',
+        rejectClass: 'btn-secondary',
+        acceptClass: 'btn-warning ml-2',
         accept: () => {
             toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
             router.push({ name: 'empleados' })
@@ -223,13 +221,15 @@ const goBack = () => {
     <!-- Form Container -->
     <div v-else class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 md:p-8 border border-gray-200 dark:border-dark-border transition-colors duration-300">
         
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-dark-border pb-4">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-100 dark:border-dark-border pb-4 gap-4">
             <div>
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ formTitle }}</h2>
                 <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Complete la información del empleado</p>
             </div>
-            <Button icon="pi pi-times" label="Cancelar" text @click="goBack" class="!text-gray-500 hover:!text-gray-700 dark:!text-gray-400 dark:hover:!text-white" />
+            <button @click="goBack" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                <X :size="20" />
+                <span>Cancelar</span>
+            </button>
         </div>
 
         <form @submit.prevent="handleSubmit">
@@ -299,8 +299,15 @@ const goBack = () => {
 
                  <!-- Footer Actions -->
                  <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100 dark:border-dark-border">
-                     <Button label="Cancelar" severity="secondary" text class="!px-6" @click="goBack" />
-                     <Button type="submit" :label="isEditing ? 'Guardar Cambios' : 'Registrar Empleado'" icon="pi pi-check" :loading="submitting" class="!bg-primary !border-none hover:!bg-primary-hover !px-8" />
+                     <button @click="goBack" class="btn-secondary" type="button">
+                        <X :size="18" />
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-primary" :disabled="submitting">
+                        <Check v-if="!submitting" :size="18" />
+                        <i v-else class="pi pi-spin pi-spinner text-lg"></i>
+                        <span>{{ isEditing ? 'Guardar Cambios' : 'Registrar Empleado' }}</span>
+                    </button>
                  </div>
             </Fluid>
         </form>
