@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'
 import { useToast } from 'primevue/usetoast'
@@ -59,14 +59,12 @@ onMounted(() => {
 })
 
 // Watch route changes
-import { watch } from 'vue'
 watch(() => route.query.view, (newVal) => {
     if (newVal === 'history') viewMode.value = 'history'
     else if (newVal === 'active' || !newVal) viewMode.value = 'active'
 })
 
 // Watch viewMode change
-import { watch } from 'vue'
 watch(viewMode, () => {
     loadAsignaciones()
 })
