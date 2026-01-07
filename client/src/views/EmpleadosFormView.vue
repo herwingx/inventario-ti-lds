@@ -1,0 +1,321 @@
+<script setup>
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
+import EmpleadosService from '../services/EmpleadosService'
+import CatalogosService from '../services/CatalogosService'
+
+// Componentes PrimeVue
+import InputText from 'primevue/inputtext'
+import Select from 'primevue/select'
+import Button from 'primevue/button'
+import DatePicker from 'primevue/datepicker'
+import Skeleton from 'primevue/skeleton'
+import Fluid from 'primevue/fluid'
+
+const route = useRoute()
+const router = useRouter()
+const toast = useToast()
+
+// Estados de Carga
+const loading = ref(false)
+const submitting = ref(false)
+
+// Datos de Catálogos
+const empresas = ref([])
+const allAreas = ref([]) // Todas las áreas
+const areas = ref([]) // Áreas filtradas por empresa
+const statuses = ref([])
+
+// Modelo del Formulario
+const form = ref({
+    numero_empleado: '',
+    nombres: '',
+    apellidos: '',
+    email_personal: '',
+    telefono: '',
+    puesto: '',
+    fecha_nacimiento: null,
+    fecha_ingreso: null,
+    id_empresa: null,
+    id_area: null,
+    id_status: null
+})
+
+const isEditing = computed(() => !!route.params.id)
+const formTitle = computed(() => isEditing.value ? `Editar Empleado #${route.params.id}` : 'Registrar Nuevo Empleado')
+
+// Validaciones simples
+const errors = ref({})
+
+onMounted(async () => {
+    loading.value = true
+    try {
+        // Cargar catálogos en paralelo
+        const [empresasRes, areasRes, statusRes] = await Promise.all([
+            CatalogosService.getEmpresas(),
+            CatalogosService.getAreas(),
+            CatalogosService.getStatuses()
+        ])
+        
+        empresas.value = empresasRes
+        allAreas.value = areasRes // Guardar todas las áreas
+        statuses.value = statusRes
+
+        // Si es edición, cargar datos del empleado
+        if (isEditing.value) {
+            const empleadoData = await EmpleadosService.getById(route.params.id)
+            populateForm(empleadoData)
+            // Filtrar áreas según la empresa del empleado
+            if (empleadoData.id_empresa) {
+                areas.value = allAreas.value.filter(area => area.id_empresa === empleadoData.id_empresa)
+            }
+        } else {
+            // Predetectar estado ACTIVO si existe
+            const defaultStatus = statuses.value.find(s => s.nombre_status === 'ACTIVO')
+            if (defaultStatus) form.value.id_status = defaultStatus.id
+        }
+    } catch (error) {
+        console.error('Error cargando datos:', error)
+        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos necesarios.', life: 3000 })
+    } finally {
+        loading.value = false
+    }
+})
+
+const populateForm = (data) => {
+    form.value.numero_empleado = data.numero_empleado
+    form.value.nombres = data.nombres
+    form.value.apellidos = data.apellidos
+    form.value.email_personal = data.email_personal
+    form.value.telefono = data.telefono
+    form.value.puesto = data.puesto
+    form.value.fecha_nacimiento = data.fecha_nacimiento ? new Date(data.fecha_nacimiento) : null
+    form.value.fecha_ingreso = data.fecha_ingreso ? new Date(data.fecha_ingreso) : null
+    form.value.id_empresa = data.id_empresa
+    form.value.id_area = data.id_area
+    form.value.id_status = data.id_status
+}
+
+// Helpers Texto
+const toUpperCase = (field) => {
+    if (form.value[field]) {
+        form.value[field] = form.value[field].toUpperCase()
+    }
+}
+
+const capitalize = (field) => {
+    if (form.value[field]) {
+        form.value[field] = form.value[field]
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+    }
+}
+
+// Watcher para filtrar áreas cuando cambia la empresa
+watch(() => form.value.id_empresa, (newEmpresa) => {
+    if (newEmpresa) {
+        // Filtrar áreas por empresa
+        areas.value = allAreas.value.filter(area => area.id_empresa === newEmpresa)
+        // Limpiar área seleccionada si ya no pertenece a la nueva empresa
+        if (form.value.id_area) {
+            const areaExists = areas.value.find(area => area.id === form.value.id_area)
+            if (!areaExists) {
+                form.value.id_area = null
+            }
+        }
+    } else {
+        // Si no hay empresa, mostrar todas las áreas
+        areas.value = allAreas.value
+    }
+})
+
+// Submit
+const handleSubmit = async () => {
+    // Validaciones
+    errors.value = {}
+    if (!form.value.nombres) errors.value.nombres = 'El nombre es obligatorio'
+    if (!form.value.apellidos) errors.value.apellidos = 'Los apellidos son obligatorios'
+    if (!form.value.id_status) errors.value.id_status = 'El estado es obligatorio'
+
+    if (Object.keys(errors.value).length > 0) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Por favor complete los campos obligatorios.', life: 3000 })
+        return
+    }
+
+    submitting.value = true
+    try {
+        // Construir payload
+        const payload = { ...form.value }
+        
+        // Formato fechas (YYYY-MM-DD) para enviar backend
+        if (payload.fecha_nacimiento) {
+            payload.fecha_nacimiento = payload.fecha_nacimiento.toISOString().split('T')[0]
+        }
+        if (payload.fecha_ingreso) {
+            payload.fecha_ingreso = payload.fecha_ingreso.toISOString().split('T')[0]
+        }
+
+        if (isEditing.value) {
+            await EmpleadosService.update(route.params.id, payload)
+            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Empleado actualizado correctamente', life: 3000 })
+        } else {
+            await EmpleadosService.create(payload)
+            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Empleado registrado correctamente', life: 3000 })
+        }
+
+        // Navegar de vuelta tras un breve delay
+        setTimeout(() => {
+            router.push({ name: 'empleados' })
+        }, 1000)
+
+    } catch (error) {
+        console.error('Error submit:', error)
+        const msg = error.response?.data?.message || 'Error al guardar el empleado'
+        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+    } finally {
+        submitting.value = false
+    }
+}
+
+const confirm = useConfirm()
+
+const goBack = () => {
+    confirm.require({
+        message: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
+        header: 'Confirmar Salida',
+        icon: 'pi pi-info-circle',
+        rejectLabel: 'Continuar Editando',
+        acceptLabel: 'Salir sin Guardar',
+        rejectClass: 'p-button-secondary p-button-text',
+        acceptClass: 'p-button-warning !bg-orange-500 !border-none hover:!bg-orange-600',
+        accept: () => {
+            toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
+            router.push({ name: 'empleados' })
+        }
+    })
+}
+</script>
+
+<template>
+  <div class="animate-fade-in-up max-w-7xl mx-auto">
+    
+    <!-- Loading State -->
+    <div v-if="loading" class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-8 border border-gray-200 dark:border-dark-border">
+        <div class="flex flex-col gap-6">
+            <Skeleton width="10rem" height="2rem" />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Skeleton height="3rem" />
+                <Skeleton height="3rem" />
+                <Skeleton height="3rem" />
+                <Skeleton height="3rem" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div v-else class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 md:p-8 border border-gray-200 dark:border-dark-border transition-colors duration-300">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-dark-border pb-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ formTitle }}</h2>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Complete la información del empleado</p>
+            </div>
+            <Button icon="pi pi-times" label="Cancelar" text @click="goBack" class="!text-gray-500 hover:!text-gray-700 dark:!text-gray-400 dark:hover:!text-white" />
+        </div>
+
+        <form @submit.prevent="handleSubmit">
+            <Fluid>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 gap-y-8">
+                     
+                     <!-- NOMBRES & APELLIDOS -->
+                     <div class="md:col-span-1">
+                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Nombres <span class="text-red-500">*</span></label>
+                         <InputText v-model="form.nombres" @blur="capitalize('nombres')" placeholder="Ej: Juan Carlos" :invalid="!!errors.nombres" class="!bg-gray-50 dark:!bg-dark-bg" />
+                         <small class="text-red-500" v-if="errors.nombres">{{ errors.nombres }}</small>
+                     </div>
+                     <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Apellidos <span class="text-red-500">*</span></label>
+                        <InputText v-model="form.apellidos" @blur="capitalize('apellidos')" placeholder="Ej: García López" :invalid="!!errors.apellidos" class="!bg-gray-50 dark:!bg-dark-bg" />
+                        <small class="text-red-500" v-if="errors.apellidos">{{ errors.apellidos }}</small>
+                    </div>
+
+                    <!-- NUMERO EMPLEADO & EMAIL -->
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">No. Empleado</label>
+                        <InputText v-model="form.numero_empleado" @input="toUpperCase('numero_empleado')" placeholder="Ej: EMP001" class="!bg-gray-50 dark:!bg-dark-bg" />
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email Personal</label>
+                        <InputText v-model="form.email_personal" type="email" placeholder="ejemplo@correo.com" class="!bg-gray-50 dark:!bg-dark-bg" />
+                    </div>
+
+                    <!-- TELEFONO & PUESTO -->
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Teléfono</label>
+                        <InputText v-model="form.telefono" placeholder="Ej: 5551234567" class="!bg-gray-50 dark:!bg-dark-bg" />
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Puesto</label>
+                        <InputText v-model="form.puesto" @input="toUpperCase('puesto')" placeholder="Ej: ANALISTA DE SISTEMAS" class="!bg-gray-50 dark:!bg-dark-bg" />
+                    </div>
+
+                    <!-- EMPRESA & AREA -->
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Empresa</label>
+                        <Select v-model="form.id_empresa" :options="empresas" optionLabel="nombre" optionValue="id" placeholder="Seleccione empresa" filter class="!bg-gray-50 dark:!bg-dark-bg w-full" />
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Área</label>
+                        <Select v-model="form.id_area" :options="areas" optionLabel="nombre" optionValue="id" placeholder="Seleccione área" filter class="!bg-gray-50 dark:!bg-dark-bg w-full" />
+                    </div>
+
+                    <!-- FECHAS -->
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Fecha de Nacimiento</label>
+                        <DatePicker v-model="form.fecha_nacimiento" dateFormat="yy-mm-dd" showIcon iconDisplay="input" placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Fecha de Ingreso</label>
+                        <DatePicker v-model="form.fecha_ingreso" dateFormat="yy-mm-dd" showIcon iconDisplay="input" placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
+                    </div>
+
+                    <!-- STATUS -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Estado <span class="text-red-500">*</span></label>
+                        <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" placeholder="Seleccione Estado" class="!bg-gray-50 dark:!bg-dark-bg w-full" :invalid="!!errors.id_status" />
+                        <small class="text-red-500" v-if="errors.id_status">{{ errors.id_status }}</small>
+                    </div>
+
+                 </div>
+
+                 <!-- Footer Actions -->
+                 <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100 dark:border-dark-border">
+                     <Button label="Cancelar" severity="secondary" text class="!px-6" @click="goBack" />
+                     <Button type="submit" :label="isEditing ? 'Guardar Cambios' : 'Registrar Empleado'" icon="pi pi-check" :loading="submitting" class="!bg-primary !border-none hover:!bg-primary-hover !px-8" />
+                 </div>
+            </Fluid>
+        </form>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom primevue inputs overrides if needed */
+:deep(.p-inputtext), :deep(.p-select) {
+    transition: all 0.2s;
+}
+</style>
