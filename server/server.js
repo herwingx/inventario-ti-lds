@@ -1,0 +1,167 @@
+// ! Archivo principal del servidor Express para el sistema de inventario
+const express = require('express');
+require('dotenv').config(); // * Cargo las variables de entorno desde .env
+const { pool } = require('./src/config/db'); // * Importo el pool de conexiones a la base de datos
+const statusRoutes = require('./src/routes/status.routes'); // * Rutas para el estado del sistema
+const empresasRoutes = require('./src/routes/empresas.routes'); // * Rutas para empresas
+const sucursalesRoutes = require('./src/routes/sucursales.routes'); // * Rutas para sucursales
+const areasRoutes = require('./src/routes/areas.routes'); // * Rutas para áreas
+const tiposSucursalRoutes = require('./src/routes/tipos_sucursal.routes'); // * Rutas para tipos de sucursal
+const tiposEquipoRoutes = require('./src/routes/tipos_equipo.routes'); // * Rutas para tipos de equipo
+const empleadosRoutes = require('./src/routes/empleados.routes'); // * Rutas para empleados
+const direccionesIpRoutes = require('./src/routes/direcciones_ip.routes'); // * Rutas para direcciones IP
+const equiposRoutes = require('./src/routes/equipos.routes'); // * Rutas para equipos
+const rolesRoutes = require('./src/routes/roles.routes'); // * Rutas para roles
+const usuariosSistemaRoutes = require('./src/routes/usuarios_sistema.routes'); // * Rutas para usuarios del sistema
+const cuentasEmailRoutes = require('./src/routes/cuentas_email.routes'); // * Rutas para cuentas de email
+const mantenimientosRoutes = require('./src/routes/mantenimientos.routes'); // * Rutas para mantenimientos
+const notasRoutes = require('./src/routes/notas.routes'); // * Rutas para notas
+const asignacionesRoutes = require('./src/routes/asignaciones.routes'); // * Rutas para asignaciones
+const authRoutes = require('./src/routes/auth.routes'); // * Rutas de autenticación
+const { protect } = require('./src/middleware/auth.middleware'); // * Middleware de protección JWT
+
+const app = express();
+const port = process.env.PORT || 3000; // * Puerto del servidor (por defecto 3000 si no hay .env)
+
+// * Middleware de CORS
+const cors = require('cors');
+app.use(cors({
+  origin: 'http://localhost:5173', // Permitir el frontend de Vue
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// * Middleware para manejar el prefijo /soporte y /soporte/ en producción
+app.use((req, res, next) => {
+  // Si la URL comienza exactamente con /soporte (sin slash), redirigir a /soporte/
+  if (req.url === '/soporte') {
+    return res.redirect(301, '/soporte/');
+  }
+
+  // Si la URL comienza con /soporte/, la procesamos removiendo el prefijo
+  if (req.url.startsWith('/soporte/')) {
+    req.url = req.url.replace('/soporte', '');
+    // Si queda solo /, lo convertimos a /
+    if (req.url === '') {
+      req.url = '/';
+    }
+  }
+  next();
+});
+
+// * Configuración de MIME types para archivos estáticos
+app.use((req, res, next) => {
+  if (req.url.endsWith('.css')) {
+    res.setHeader('Content-Type', 'text/css');
+  } else if (req.url.endsWith('.js')) {
+    res.setHeader('Content-Type', 'application/javascript');
+  } else if (req.url.endsWith('.svg')) {
+    res.setHeader('Content-Type', 'image/svg+xml');
+  }
+  next();
+});
+
+// * Middleware para servir archivos estáticos desde la carpeta 'public'.
+// * Todo lo que esté en 'public' se puede acceder directamente por URL.
+app.use(express.static('public', {
+  setHeaders: (res, path, stat) => {
+    if (path.endsWith('.css')) {
+      res.set('Content-Type', 'text/css');
+    } else if (path.endsWith('.js')) {
+      res.set('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.svg')) {
+      res.set('Content-Type', 'image/svg+xml');
+    }
+  }
+}));
+
+// * Middleware para parsear JSON en las peticiones (body-parser integrado)
+app.use(express.json());
+// * Middleware para parsear datos de formularios (URL-encoded)
+app.use(express.urlencoded({ extended: true }));
+
+// ? Ruta de prueba para verificar conexión a la base de datos
+app.get('/db-test', async (req, res) => {
+  try {
+    // * Hago una consulta simple para probar la conexión
+    const [rows] = await pool.execute('SELECT 1 + 1 AS solution');
+    res.json({
+      message: 'Conexión a base de datos exitosa!',
+      solution: rows[0].solution
+    });
+  } catch (error) {
+    // ! Si falla la conexión, muestro el error
+    console.error('Error al conectar o consultar la base de datos:', error);
+    res.status(500).json({
+      message: 'Error al conectar a la base de datos.',
+      error: error.message // * Devuelvo el mensaje de error para depuración
+    });
+  }
+});
+
+// * Rutas de Autenticación (Públicas - NO protegidas por el middleware `protect`)
+// * El login debe ser accesible sin un token.
+app.use('/api/auth', authRoutes);
+
+// * Middleware de Protección JWT
+// ! Todas las rutas definidas DESPUÉS de esta línea requerirán un token JWT válido.
+// ! Aplico el middleware a todas las rutas que comiencen con /api.
+app.use('/api', protect);
+// TODO: Aquí se montan las rutas principales de la API
+// * Cada entidad tiene su propio archivo de rutas
+// * (Se reiniciará el servidor automáticamente si se usa nodemon)
+app.use('/api/status', statusRoutes); // * Estado
+app.use('/api/empresas', empresasRoutes); // * Empresas
+app.use('/api/sucursales', sucursalesRoutes); // * Sucursales
+app.use('/api/areas', areasRoutes); // * Áreas
+app.use('/api/tipos-sucursal', tiposSucursalRoutes); // * Tipos de sucursal
+app.use('/api/tipos-equipo', tiposEquipoRoutes); // * Tipos de equipo
+app.use('/api/empleados', empleadosRoutes); // * Empleados
+app.use('/api/direcciones-ip', direccionesIpRoutes); // * Direcciones IP
+app.use('/api/equipos', equiposRoutes); // * Equipos
+app.use('/api/roles', rolesRoutes); // * Roles
+app.use('/api/usuarios-sistema', usuariosSistemaRoutes); // * Usuarios del sistema
+app.use('/api/cuentas-email', cuentasEmailRoutes); // * Cuentas de email
+app.use('/api/mantenimientos', mantenimientosRoutes); // * Mantenimientos
+app.use('/api/notas/', notasRoutes); // * Notas
+app.use('/api/asignaciones/', asignacionesRoutes); // * Asignaciones
+
+// ? Middleware para rutas limpias de SPA: sirve index.html para cualquier ruta que no sea API ni archivo estático
+const path = require('path');
+app.get(/^\/(?!api\/|.*\..*$).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ! Middleware global para manejo de errores
+// * Si ocurre un error en cualquier parte, cae aquí
+app.use((err, req, res, next) => {
+  console.error('-------- ERROR CAPTURADO POR MIDDLEWARE GLOBAL --------');
+  console.error(err.stack);
+  console.error('-----------------------------------------------------');
+
+  const statusCode = err.status || 500;
+
+  res.status(statusCode).json({
+    message: err.message || 'Ocurrió un error interno en el servidor',
+    error: process.env.NODE_ENV === 'development' ? err.stack : {}
+  });
+});
+
+// ! Inicio del servidor
+app.listen(port, '0.0.0.0', () => {
+  console.log(`\n🚀 Servidor corriendo en: http://localhost:${port}`);
+  console.log(`🔧 Modo: ${process.env.NODE_ENV || 'development'}`);
+
+  // * Pruebo la conexión al pool de la base de datos al arrancar
+  pool.getConnection()
+    .then(connection => {
+      console.log('✅ Base de datos conectada exitosamente.');
+      connection.release(); // * Libero la conexión de vuelta al pool
+    })
+    .catch(err => {
+      // ! Si falla la conexión inicial, aviso por consola
+      console.error('❌ Error al conectar a la base de datos:', err.message);
+      console.error('   Verifica que las credenciales en .env sean correctas.');
+    });
+});
