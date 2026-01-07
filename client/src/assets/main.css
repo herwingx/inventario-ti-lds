@@ -17,8 +17,7 @@
 
   body {
     @apply font-sans antialiased font-medium;
-    @apply bg-light-bg text-light-text;
-    @apply dark:bg-dark-bg dark:text-dark-text;
+    @apply bg-light-bg text-light-text dark:bg-dark-bg dark:text-dark-text;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
@@ -134,8 +133,8 @@
 
   /* Show accent bar only on expanded state if we want solid block on collapsed? 
      User said "collapsed is completely the color of the border". 
-     If it's solid bg, the sidebar bar might be redundant or invisible if same color. 
-     Let's keep it for expanded, maybe hide for collapsed if full fill looks better.
+     If it's solid bg,the sidebar bar might be redundant or invisible if same color. 
+     Let's keep it for expanded,maybe hide for collapsed if full fill looks better.
   */
   .sidebar-item:hover::before,
   .sidebar-item.active::before {
@@ -153,7 +152,7 @@
   }
 
   /* --- SUBMENU ITEM OVERRIDES --- */
-  /* Remove background, specific text color, remove icon */
+  /* Remove background,specific text color,remove icon */
 
   .sidebar-submenu .sidebar-item:hover,
   .sidebar-submenu .sidebar-item.active {
@@ -182,33 +181,127 @@
   }
 
   /* Buttons */
+  .btn-base {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply px-5 py-2.5 rounded-xl;
+    @apply font-bold tracking-tight text-sm;
+    @apply transition-all duration-300 ease-out;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-dark-bg;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
   .btn-primary {
-    @apply bg-primary hover:bg-primary-hover;
-    @apply text-white font-medium;
-    @apply px-4 py-2 rounded-lg;
-    @apply transition-all duration-200;
-    @apply shadow-sm hover:shadow-md;
+    @apply btn-base;
+    @apply bg-primary text-white;
+    @apply shadow-lg shadow-primary/20;
+    @apply hover:bg-primary-hover hover:shadow-primary/40 hover:-translate-y-0.5;
+    @apply active:translate-y-0 active:scale-95;
+    @apply focus:ring-primary;
   }
 
-  /* Badge */
-  .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  .btn-secondary {
+    @apply btn-base;
+    @apply bg-gray-100 text-gray-700 dark:bg-dark-border dark:text-gray-200;
+    @apply hover:bg-gray-200 dark:hover:bg-zinc-700 hover:shadow-md;
+    @apply active:scale-95;
+    @apply focus:ring-gray-300;
   }
 
-  .badge-success {
-    @apply bg-success/20 text-success;
+  .btn-danger {
+    @apply btn-base;
+    @apply bg-red-500 text-white;
+    @apply shadow-lg shadow-red-500/20;
+    @apply hover:bg-red-600 hover:shadow-red-500/40 hover:-translate-y-0.5;
+    @apply active:translate-y-0 active:scale-95;
+    @apply focus:ring-red-500;
   }
 
-  .badge-warning {
-    @apply bg-warning/20 text-warning;
+  .btn-warning {
+    @apply btn-base;
+    @apply bg-amber-500 text-white;
+    @apply shadow-lg shadow-amber-500/20;
+    @apply hover:bg-amber-600 hover:shadow-amber-500/40 hover:-translate-y-0.5;
+    @apply active:translate-y-0 active:scale-95;
+    @apply focus:ring-amber-500;
   }
 
-  .badge-danger {
-    @apply bg-danger/20 text-danger;
+  .btn-info {
+    @apply btn-base;
+    @apply bg-blue-500 text-white;
+    @apply shadow-lg shadow-blue-500/20;
+    @apply hover:bg-blue-600 hover:shadow-blue-500/40 hover:-translate-y-0.5;
+    @apply active:translate-y-0 active:scale-95;
+    @apply focus:ring-blue-500;
   }
 
-  .badge-info {
-    @apply bg-info/20 text-info;
+  .btn-success {
+    @apply btn-base;
+    @apply bg-emerald-500 text-white;
+    @apply shadow-lg shadow-emerald-500/20;
+    @apply hover:bg-emerald-600 hover:shadow-emerald-500/40 hover:-translate-y-0.5;
+    @apply active:translate-y-0 active:scale-95;
+    @apply focus:ring-emerald-500;
+  }
+
+  .btn-ghost {
+    @apply btn-base shadow-none;
+    @apply bg-transparent text-gray-600 dark:text-gray-400;
+    @apply hover:bg-gray-100 dark:hover:bg-white/5 hover:text-primary dark:hover:text-white;
+    @apply focus:ring-gray-200 dark:focus:ring-gray-700;
+  }
+
+  /* Badge / Tag Overrides - Components Layer */
+  .p-tag {
+    @apply !font-bold !tracking-wide !rounded-lg !px-3 !py-1 !text-[10px] !uppercase !border;
+  }
+
+  /* Fix for formatter: Splitting dark mode to prevent @apply parsing errors */
+  .p-tag-success {
+    @apply !bg-emerald-50 !text-emerald-700 !border-emerald-200 !font-bold;
+  }
+
+  .dark .p-tag-success {
+    @apply !bg-emerald-500/10 !text-emerald-400 !border-emerald-500/20;
+  }
+
+  .p-tag-warn {
+    @apply !bg-amber-50 !text-amber-700 !border-amber-200 !font-bold;
+  }
+
+  .dark .p-tag-warn {
+    @apply !bg-amber-500/10 !text-amber-400 !border-amber-500/20;
+  }
+
+  .p-tag-danger {
+    @apply !bg-red-50 !text-red-700 !border-red-200 !font-bold;
+  }
+
+  .dark .p-tag-danger {
+    @apply !bg-red-500/10 !text-red-400 !border-red-500/20;
+  }
+
+  .p-tag-info {
+    @apply !bg-blue-50 !text-blue-700 !border-blue-200 !font-bold;
+  }
+
+  .dark .p-tag-info {
+    @apply !bg-blue-500/10 !text-blue-400 !border-blue-500/20;
+  }
+
+  .p-tag-secondary {
+    @apply !bg-gray-50 !text-gray-700 !border-gray-200 !font-bold;
+  }
+
+  .dark .p-tag-secondary {
+    @apply !bg-zinc-500/10 !text-zinc-400 !border-zinc-500/20;
+  }
+
+  .p-tag-contrast {
+    @apply !bg-zinc-900 !text-white !border-transparent !font-bold;
+  }
+
+  .dark .p-tag-contrast {
+    @apply !bg-white !text-zinc-900;
   }
 }
 
@@ -387,51 +480,157 @@
   color: #9ca3af !important;
 }
 
-/* Tags Colors Overrides (Global) */
-.p-tag-success {
-  background-color: #059669 !important;
-  color: #ffffff !important;
-}
-
-.p-tag-warn {
-  background-color: #d97706 !important;
-  color: #ffffff !important;
-}
-
-.p-tag-danger {
-  background-color: #dc2626 !important;
-  color: #ffffff !important;
-}
-
-.p-tag-contrast {
-  background-color: #4b5563 !important;
-  color: #ffffff !important;
-}
-
-.dark .p-tag-success {
-  background-color: #10b981 !important;
-  color: #ffffff !important;
-}
-
-.dark .p-tag-warn {
-  background-color: #f59e0b !important;
-  color: #000000 !important;
-}
-
-.dark .p-tag-danger {
-  background-color: #ef4444 !important;
-  color: #ffffff !important;
-}
-
-.dark .p-tag-contrast {
-  background-color: #6b7280 !important;
-  color: #ffffff !important;
-}
-
 /* Global Input Focus Override */
-.p-inputtext:focus {
-  box-shadow: none !important;
+.p-inputtext:focus,
+.p-select:not(.p-disabled).p-focus,
+.p-datepicker-input:focus,
+.p-textarea:focus {
+  box-shadow: 0 0 0 2px rgba(19, 180, 151, 0.2) !important;
   border-color: #13B497 !important;
+}
+
+/* ========================================
+   MODALS & DIALOGS CUSTOMIZATION
+   ======================================== */
+
+/* Dialog Root */
+.p-dialog {
+  @apply !rounded-2xl !overflow-hidden !border-none !shadow-2xl;
+  @apply !bg-white;
+}
+.dark .p-dialog {
+  @apply !bg-dark-card;
+}
+
+.p-dialog-header {
+  @apply !bg-white !text-gray-900;
+  @apply !px-6 !py-5 !border-b !border-gray-100;
+}
+.dark .p-dialog-header {
+  @apply !bg-dark-card !text-white;
+  @apply !border-dark-border;
+}
+
+.p-dialog-content {
+  @apply !bg-white !text-gray-700;
+  @apply !px-6 !py-8;
+}
+.dark .p-dialog-content {
+  @apply !bg-dark-card !text-gray-300;
+}
+
+.p-dialog-footer {
+  @apply !bg-gray-50 !px-6 !py-4;
+  @apply !border-t !border-gray-100;
+  @apply flex justify-end gap-3;
+}
+.dark .p-dialog-footer {
+  @apply !bg-dark-bg/50;
+  @apply !border-dark-border;
+}
+
+/* Backdrop / Mask */
+.p-dialog-mask {
+  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.4);
+}
+.dark .p-dialog-mask {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Specific for Confirmation Dialog Icons */
+.p-confirm-dialog .p-dialog-content {
+  @apply flex flex-col items-center text-center gap-4;
+}
+
+.p-confirm-dialog-icon {
+  @apply !text-6xl !mb-2 !transition-all !duration-500 !scale-110 !drop-shadow-sm;
+}
+
+.p-confirm-dialog-message {
+  @apply !text-xl !font-bold !text-gray-800 !tracking-tight;
+}
+.dark .p-confirm-dialog-message {
+  @apply !text-gray-100;
+}
+
+/* Confirmation Dialog Action Buttons */
+.p-confirm-dialog .p-dialog-footer .p-button {
+  @apply !font-bold !px-8 !py-3 !rounded-xl !text-sm !transition-all !duration-300;
+}
+
+/* Ensure PrimeVue buttons in dialogs use our standard if possible 
+   but since they are generated,we override their base colors if they don't have .btn- classes
+*/
+.p-dialog-footer .p-button-secondary {
+  @apply !bg-gray-100 !border-none !text-gray-700 hover:!bg-gray-200 hover:!shadow-md;
+}
+.dark .p-dialog-footer .p-button-secondary {
+  @apply !bg-dark-border !text-gray-200 hover:!bg-zinc-700;
+}
+
+.p-dialog-footer .p-button-danger {
+  @apply !bg-red-500 !border-none !text-white hover:!bg-red-600 !shadow-lg !shadow-red-500/30 active:!scale-95;
+}
+
+.p-dialog-footer .p-button-success {
+  @apply !bg-emerald-500 !border-none !text-white hover:!bg-emerald-600 !shadow-lg !shadow-emerald-500/30 active:!scale-95;
+}
+
+.p-dialog-footer .p-button-warning {
+  @apply !bg-amber-500 !border-none !text-white hover:!bg-amber-600 !shadow-lg !shadow-amber-500/30 active:!scale-95;
+}
+
+.p-dialog-footer .p-button-info {
+  @apply !bg-blue-500 !border-none !text-white hover:!bg-blue-600 !shadow-lg !shadow-blue-500/30 active:!scale-95;
+}
+
+/* Primary / Standard Button in Dialogs */
+.p-dialog-footer .p-button:not(.p-button-secondary):not(.p-button-danger):not(.p-button-success):not(.p-button-warning):not(.p-button-info):not(.p-button-text) {
+  @apply !bg-primary !border-none !text-white hover:!bg-primary-hover !shadow-lg !shadow-primary/30 active:!scale-95;
+}
+
+.p-dialog-footer .p-button-text {
+  @apply !text-primary hover:!bg-primary/5 !border-none shadow-none active:!scale-95 transition-all;
+}
+
+/* Status Icons Colors with Glow effect in Dark mode */
+.p-confirm-dialog .pi-exclamation-triangle {
+  @apply !text-amber-500;
+}
+.dark .p-confirm-dialog .pi-exclamation-triangle {
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.5)) !important;
+}
+
+.p-confirm-dialog .pi-info-circle {
+  @apply !text-blue-500;
+}
+.dark .p-confirm-dialog .pi-info-circle {
+  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5)) !important;
+}
+
+.p-confirm-dialog .pi-times-circle {
+  @apply !text-red-500;
+}
+.dark .p-confirm-dialog .pi-times-circle {
+  filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.5)) !important;
+}
+
+.p-confirm-dialog .pi-check-circle {
+  @apply !text-emerald-500;
+}
+.dark .p-confirm-dialog .pi-check-circle {
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5)) !important;
+}
+
+/* Aura Preset Overrides for Dark Mode Select/Dropdown in Modal */
+.p-dialog .p-select,
+.p-dialog .p-multiselect {
+  @apply !bg-gray-50 !border-gray-200;
+}
+.dark .p-dialog .p-select,
+.dark .p-dialog .p-multiselect {
+  @apply !bg-dark-bg !border-dark-border;
 }
 
 /* ========================================
@@ -513,4 +712,229 @@
   @apply !border-primary;
   @apply ring-1 ring-primary;
   box-shadow: none !important;
+}
+
+/* ========================================
+
+   PRIMEVUE MULTISELECT CUSTOMIZATION
+
+   ======================================== */
+
+   
+
+/* 1. Multiselect Overlay Panel */
+
+body .p-multiselect-overlay {
+
+  @apply !bg-white;
+
+  @apply !border !border-gray-200;
+
+  @apply !shadow-xl;
+
+}
+
+.dark body .p-multiselect-overlay {
+
+  @apply !bg-dark-card;
+
+  @apply !border-dark-border;
+
+}
+
+
+
+/* 2. Options List */
+
+body .p-multiselect-list {
+
+  @apply !bg-transparent;
+
+  @apply !py-1;
+
+}
+
+body .p-multiselect-option {
+
+  @apply !text-gray-700;
+
+  @apply !transition-colors !duration-150;
+
+}
+
+.dark body .p-multiselect-option {
+
+  @apply !text-gray-200;
+
+}
+
+
+
+/* Hover state for options */
+
+body .p-multiselect-option:not(.p-disabled).p-focus {
+
+  @apply !bg-gray-100;
+
+  @apply !text-primary;
+
+}
+
+.dark body .p-multiselect-option:not(.p-disabled).p-focus {
+
+  @apply !bg-white/5;
+
+  @apply !text-primary;
+
+}
+
+
+
+body .p-multiselect-option.p-highlight {
+
+  @apply !bg-primary/10;
+
+  @apply !text-primary !font-bold;
+
+}
+
+.dark body .p-multiselect-option.p-highlight {
+
+  @apply !bg-primary/20;
+
+}
+
+
+
+/* 3. Multiselect Header (Search Area) */
+
+body .p-multiselect-header {
+
+  @apply !bg-gray-50;
+
+  @apply !border-b !border-gray-200;
+
+  @apply !p-2;
+
+}
+
+.dark body .p-multiselect-header {
+
+  @apply !bg-dark-card;
+
+  @apply !border-dark-border;
+
+}
+
+
+
+/* 4. Search Input inside Multiselect */
+
+body .p-multiselect-filter-container .p-inputtext {
+
+  @apply !w-full;
+
+}
+
+/* Light Mode */
+
+body .p-multiselect-overlay .p-multiselect-header .p-inputtext {
+
+  @apply !bg-white !border-gray-300 !text-gray-900;
+
+}
+
+/* Dark Mode */
+
+.dark body .p-multiselect-overlay .p-multiselect-header .p-inputtext {
+
+  @apply !bg-dark-bg !border-dark-border !text-white;
+
+}
+
+
+
+/* Focus State */
+
+body .p-multiselect-overlay .p-multiselect-header .p-inputtext:focus {
+
+  @apply !border-primary;
+
+  @apply ring-1 ring-primary;
+
+  box-shadow: none !important;
+
+}
+
+
+
+/* Add some custom-select-like overrides */
+
+.custom-select .p-multiselect-label {
+
+  padding: 0.5rem 0.75rem;
+
+}
+
+.dark .custom-select .p-multiselect-label {
+
+  color: white !important;
+
+}
+
+/* ========================================
+   DETAIL VIEW STYLES (Standardized)
+   ======================================== */
+.detail-card {
+  @apply bg-white rounded-2xl shadow-xl p-8 border border-gray-100 transition-all duration-300;
+}
+.dark .detail-card {
+  @apply bg-dark-card border-dark-border;
+}
+
+.detail-label {
+  @apply block text-[10px] font-bold uppercase tracking-widest text-light-muted mb-2;
+}
+.dark .detail-label {
+  @apply text-dark-muted;
+}
+
+.detail-value {
+  @apply text-base font-bold text-light-text leading-tight;
+}
+.dark .detail-value {
+  @apply text-gray-100;
+}
+
+.detail-value-mono {
+  @apply detail-value font-mono tracking-tight text-primary;
+}
+
+/* Specific for reading fields (e.g. observations) */
+.detail-content-box {
+  @apply bg-light-bg p-4 rounded-xl border border-light-border text-sm leading-relaxed text-light-text shadow-inner;
+}
+.dark .detail-content-box {
+  @apply bg-dark-bg/50 border-dark-border text-gray-300;
+}
+
+.detail-section-header {
+  @apply flex items-center gap-3 mb-6 pb-4 border-b border-light-border;
+}
+.dark .detail-section-header {
+  @apply border-dark-border;
+}
+
+.detail-section-title {
+  @apply text-lg font-bold text-light-text;
+}
+.dark .detail-section-title {
+  @apply text-white;
+}
+
+.detail-section-icon {
+  @apply w-10 h-10 rounded-xl flex items-center justify-center bg-opacity-10 shadow-sm;
+}
+.dark .detail-section-icon {
+  @apply bg-opacity-20;
 }

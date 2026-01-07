@@ -91,8 +91,8 @@ const formatDate = (date) => {
             </div>
             
             <div v-if="!loading" class="flex gap-2">
-                 <Button label="Editar" icon="pi pi-pencil" @click="editCorreo" class="!bg-primary !border-none" />
-                 <Button label="Eliminar" icon="pi pi-trash" severity="danger" @click="confirmDelete" class="!bg-red-500 !border-none" />
+                 <Button label="Editar" icon="pi pi-pencil" @click="editCorreo" class="!bg-primary !border-none hover:!bg-primary-hover !font-bold !px-5 !py-2.5 !rounded-lg !text-white shadow-lg" />
+                 <Button label="Eliminar" icon="pi pi-trash" severity="danger" @click="confirmDelete" class="!bg-red-500 !border-none hover:!bg-red-600 !font-bold !px-5 !py-2.5 !rounded-lg !text-white shadow-lg" />
             </div>
         </div>
 
@@ -104,26 +104,33 @@ const formatDate = (date) => {
         <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             <!-- Info General -->
-            <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6 border border-gray-200 dark:border-dark-border">
-                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                    <i class="pi pi-envelope text-primary"></i> Información de Cuenta
-                </h3>
-                <div class="space-y-4">
-                    <div class="flex justify-between border-b pb-2 border-gray-100">
-                        <span class="text-gray-500">Usuario</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ correo.usuario_email || 'N/A' }}</span>
+            <div class="detail-card">
+                <div class="detail-section-header">
+                    <div class="detail-section-icon text-primary">
+                        <i class="pi pi-envelope text-lg"></i>
                     </div>
-                     <div class="flex justify-between border-b pb-2 border-gray-100">
-                        <span class="text-gray-500">Contraseña</span>
-                        <span class="font-mono text-gray-900 dark:text-white">{{ correo.password_data || '********' }}</span>
+                    <h2 class="detail-section-title">Información de Cuenta</h2>
+                </div>
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <span class="detail-label !mb-0">Usuario</span>
+                        <span class="detail-value">{{ correo.usuario_email || 'N/A' }}</span>
                     </div>
-                    <div class="flex justify-between items-center border-b pb-2 border-gray-100">
-                        <span class="text-gray-500">Estado</span>
-                        <Tag :value="correo.status_nombre" :severity="getSeverity(correo.status_nombre)" />
+                     <div class="flex justify-between items-center">
+                        <span class="detail-label !mb-0">Contraseña</span>
+                        <span class="detail-value-mono">{{ correo.password_data || '********' }}</span>
                     </div>
-                     <div class="pt-2">
-                        <span class="text-gray-500 block mb-1">Observaciones</span>
-                        <p class="text-gray-700 dark:text-gray-300 italic text-sm">{{ correo.observaciones || 'Sin observaciones' }}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="detail-label !mb-0">Estado</span>
+                        <Tag 
+                            :value="correo.status_nombre" 
+                            :severity="getSeverity(correo.status_nombre)"
+                            class="!text-[10px] !font-bold px-3 py-1.5 !rounded-md tracking-wide"
+                        />
+                    </div>
+                     <div class="flex flex-col gap-2">
+                        <span class="detail-label">Observaciones</span>
+                        <p class="detail-content-box">{{ correo.observaciones || 'Sin observaciones' }}</p>
                     </div>
                 </div>
             </div>
@@ -131,39 +138,46 @@ const formatDate = (date) => {
             <!-- Asignación & Fechas -->
             <div class="space-y-6">
                 <!-- Asignado A -->
-                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6 border border-gray-200 dark:border-dark-border">
-                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                        <i class="pi pi-user text-blue-500"></i> Asignado A
-                    </h3>
-                    <div v-if="correo.id_empleado_asignado" class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                <div class="detail-card">
+                    <div class="detail-section-header">
+                        <div class="detail-section-icon text-blue-500">
                             <i class="pi pi-user text-lg"></i>
                         </div>
+                        <h2 class="detail-section-title">Asignado A</h2>
+                    </div>
+                    <div v-if="correo.id_empleado_asignado" class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-sm border border-blue-500/20">
+                            <i class="pi pi-user text-xl"></i>
+                        </div>
                         <div>
-                            <span class="text-lg font-bold text-gray-900 dark:text-white block">
+                            <span class="detail-value block text-lg">
                                 {{ correo.nombre_empleado }} {{ correo.apellido_empleado }}
                             </span>
-                            <span class="text-sm text-gray-500">Empleado</span>
+                            <span class="detail-label">Empleado responsable</span>
                         </div>
                     </div>
-                    <div v-else class="text-center py-4 text-gray-500">
-                        Esta cuenta no está asignada a ningún empleado.
+                    <div v-else class="text-center py-6 bg-gray-50/50 dark:bg-dark-bg/30 rounded-xl border border-dashed border-gray-200 dark:border-dark-border">
+                        <i class="pi pi-info-circle text-gray-300 dark:text-gray-600 mb-2 text-xl"></i>
+                        <p class="text-light-muted dark:text-dark-muted font-medium text-sm">Esta cuenta no está asignada.</p>
                     </div>
                 </div>
 
                 <!-- Fechas -->
-                <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6 border border-gray-200 dark:border-dark-border">
-                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                        <i class="pi pi-calendar text-purple-500"></i> Registro
-                    </h3>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Creado</span>
-                            <span class="text-gray-900 dark:text-white font-medium">{{ formatDate(correo.fecha_creacion) }}</span>
+                <div class="detail-card">
+                    <div class="detail-section-header">
+                        <div class="detail-section-icon text-purple-500">
+                            <i class="pi pi-calendar text-lg"></i>
                         </div>
-                         <div class="flex justify-between">
-                            <span class="text-gray-500">Última Actualización</span>
-                            <span class="text-gray-900 dark:text-white font-medium">{{ formatDate(correo.fecha_actualizacion) }}</span>
+                        <h2 class="detail-section-title">Registro</h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="detail-label !mb-0">Creado</span>
+                            <span class="detail-value font-medium">{{ formatDate(correo.fecha_creacion) }}</span>
+                        </div>
+                         <div class="flex justify-between items-center">
+                            <span class="detail-label !mb-0">Actualización</span>
+                            <span class="detail-value font-medium">{{ formatDate(correo.fecha_actualizacion) }}</span>
                         </div>
                     </div>
                 </div>

@@ -17,6 +17,9 @@
  * @property {number} queueLimit - Límite de cola.
  */
 
+// * Importo la librería mysql2 con soporte para Promesas (async/await)
+const mysql = require('mysql2/promise');
+
 // * Configuración del pool de conexiones usando variables de entorno
 const dbConfig = {
   host: process.env.DB_HOST, // * Host de la base de datos (ej: localhost o IP del contenedor)

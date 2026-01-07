@@ -11,11 +11,10 @@ import EquiposService from '../services/EquiposService'
 import DireccionesIpService from '../services/DireccionesIpService'
 import EmpleadosService from '../services/EmpleadosService'
 import CatalogosService from '../services/CatalogosService'
-
+import { Check, X } from 'lucide-vue-next'
 import Select from 'primevue/select'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
-import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import RadioButton from 'primevue/radiobutton'
 import MultiSelect from 'primevue/multiselect'
@@ -182,9 +181,15 @@ const handleSubmit = async () => {
   <div class="animate-fade-in-up max-w-4xl mx-auto">
     <div class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-8 border border-gray-200 dark:border-dark-border">
         
-        <div class="mb-8 border-b pb-4">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Nueva Asignación</h2>
-            <p class="text-gray-500">Asigne equipos a empleados, sucursales o áreas.</p>
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-100 dark:border-dark-border pb-4 gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Nueva Asignación</h2>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Asigne equipos a empleados, sucursales o áreas</p>
+            </div>
+            <button @click="router.back()" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                <X :size="20" />
+                <span>Cancelar</span>
+            </button>
         </div>
 
         <div v-if="loading" class="space-y-6">
@@ -236,17 +241,16 @@ const handleSubmit = async () => {
 
                 <!-- Selector Dinámico -->
                 <div v-if="form.tipo_asignacion === 'empleado'">
-                     <Select v-model="form.id_empleado" :options="empleados" optionLabel="label" optionValue="value" filter placeholder="Seleccione Empleado" class="w-full" :invalid="!!errors.id_empleado" />
-                     <small class="text-red-500">{{ errors.id_empleado }}</small>
+                     <Select v-model="form.id_empleado" :options="empleados" optionLabel="label" optionValue="value" filter placeholder="Seleccione Empleado" class="w-full !bg-white dark:!bg-dark-card" :invalid="!!errors.id_empleado" />
+                     <small class="text-red-500" v-if="errors.id_empleado">{{ errors.id_empleado }}</small>
                 </div>
                 <div v-if="form.tipo_asignacion === 'sucursal'">
-                     <Select v-model="form.id_sucursal_asignado" :options="sucursales" optionLabel="nombre" optionValue="id" filter placeholder="Seleccione Sucursal" class="w-full" :invalid="!!errors.id_sucursal_asignado" />
-                     <small class="text-red-500">{{ errors.id_sucursal_asignado }}</small>
+                     <Select v-model="form.id_sucursal_asignado" :options="sucursales" optionLabel="nombre" optionValue="id" filter placeholder="Seleccione Sucursal" class="w-full !bg-white dark:!bg-dark-card" :invalid="!!errors.id_sucursal_asignado" />
+                     <small class="text-red-500" v-if="errors.id_sucursal_asignado">{{ errors.id_sucursal_asignado }}</small>
                 </div>
                 <div v-if="form.tipo_asignacion === 'area'">
-                     <!-- TODO: Cargar áreas correctamente si no se cargaron -->
-                     <Select v-model="form.id_area_asignado" :options="areas" optionLabel="nombre" optionValue="id" filter placeholder="Seleccione Área" class="w-full" :invalid="!!errors.id_area_asignado" />
-                     <small class="text-red-500">{{ errors.id_area_asignado }}</small>
+                     <Select v-model="form.id_area_asignado" :options="areas" optionLabel="nombre" optionValue="id" filter placeholder="Seleccione Área" class="w-full !bg-white dark:!bg-dark-card" :invalid="!!errors.id_area_asignado" />
+                     <small class="text-red-500" v-if="errors.id_area_asignado">{{ errors.id_area_asignado }}</small>
                 </div>
             </div>
 
@@ -271,9 +275,16 @@ const handleSubmit = async () => {
             </div>
 
             <!-- Botones -->
-            <div class="flex justify-end gap-3 pt-6">
-                <Button label="Cancelar" severity="secondary" text @click="router.back()" />
-                <Button type="submit" label="Registrar Asignación" icon="pi pi-check" :loading="submitting" class="!bg-primary !border-none" />
+            <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-dark-border transition-colors duration-300">
+                <button @click="router.back()" class="btn-secondary" type="button">
+                    <X :size="18" />
+                    Cancelar
+                </button>
+                <button type="submit" class="btn-primary" :disabled="submitting">
+                    <Check v-if="!submitting" :size="18" />
+                    <i v-else class="pi pi-spin pi-spinner text-lg"></i>
+                    <span>Registrar Asignación</span>
+                </button>
             </div>
 
         </form>

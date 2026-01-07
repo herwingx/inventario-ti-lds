@@ -10,10 +10,9 @@ import { useConfirm } from 'primevue/useconfirm'
 import AreasService from '../services/AreasService'
 import CatalogosService from '../services/CatalogosService'
 
-// Componentes PrimeVue
+import { Check, X } from 'lucide-vue-next'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
-import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
 import Fluid from 'primevue/fluid'
 
@@ -191,13 +190,15 @@ const goBack = () => {
     <!-- Form Container -->
     <div v-else class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 md:p-8 border border-gray-200 dark:border-dark-border transition-colors duration-300">
         
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-dark-border pb-4">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-100 dark:border-dark-border pb-4 gap-4">
             <div>
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ formTitle }}</h2>
                 <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Complete la información del área organizacional</p>
             </div>
-            <Button icon="pi pi-times" label="Cancelar" text @click="goBack" class="!text-gray-500 hover:!text-gray-700 dark:!text-gray-400 dark:hover:!text-white" />
+            <button @click="goBack" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                <X :size="20" />
+                <span>Cancelar</span>
+            </button>
         </div>
 
         <form @submit.prevent="handleSubmit">
@@ -237,8 +238,15 @@ const goBack = () => {
 
                  <!-- Footer Actions -->
                  <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100 dark:border-dark-border">
-                     <Button label="Cancelar" severity="secondary" text class="!px-6" @click="goBack" />
-                     <Button type="submit" :label="isEditing ? 'Guardar Cambios' : 'Registrar Área'" icon="pi pi-check" :loading="submitting" class="!bg-primary !border-none hover:!bg-primary-hover !px-8" />
+                     <button type="button" @click="goBack" class="btn-secondary">
+                        <X :size="18" />
+                        Cancelar
+                     </button>
+                     <button type="submit" class="btn-primary" :disabled="submitting">
+                        <Check v-if="!submitting" :size="18" />
+                        <i v-else class="pi pi-spin pi-spinner text-lg"></i>
+                        <span>{{ isEditing ? 'Guardar Cambios' : 'Registrar Área' }}</span>
+                     </button>
                  </div>
             </Fluid>
         </form>

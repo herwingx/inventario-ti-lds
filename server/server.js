@@ -23,6 +23,7 @@ const notasRoutes = require('./src/routes/notas.routes'); // * Rutas para notas
 const asignacionesRoutes = require('./src/routes/asignaciones.routes'); // * Rutas para asignaciones
 const authRoutes = require('./src/routes/auth.routes'); // * Rutas de autenticación
 const profileRoutes = require('./src/routes/profile.routes'); // * Rutas de perfil de usuario
+const dashboardRoutes = require('./src/routes/dashboard.routes'); // * Rutas de dashboard
 const { protect } = require('./src/middleware/auth.middleware'); // * Middleware de protección JWT
 
 const app = express();
@@ -132,6 +133,7 @@ app.use('/api/mantenimientos', mantenimientosRoutes); // * Mantenimientos
 app.use('/api/notas/', notasRoutes); // * Notas
 app.use('/api/asignaciones/', asignacionesRoutes); // * Asignaciones
 app.use('/api/profile', profileRoutes); // * Perfil de usuario
+app.use('/api/dashboard', dashboardRoutes); // * Dashboard y estadísticas generales
 
 // ? Middleware para rutas limpias de SPA: sirve index.html para cualquier ruta que no sea API ni archivo estático
 const path = require('path');

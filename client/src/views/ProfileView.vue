@@ -8,9 +8,9 @@ import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '../stores/auth'
 import ProfileService from '../services/ProfileService'
-
 // Componentes PrimeVue
 import InputText from 'primevue/inputtext'
+import { Check, X, Shield, Key, CreditCard, Pencil, Save } from 'lucide-vue-next'
 import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
 import Fluid from 'primevue/fluid'
@@ -214,260 +214,244 @@ const openPasswordDialog = () => {
 </script>
 
 <template>
-    <div class="animate-fade-in-up max-w-4xl mx-auto">
+    <div class="animate-fade-in-up max-w-6xl mx-auto">
 
         <!-- Loading State -->
-        <div v-if="loading" class="space-y-6">
-            <div class="bg-white dark:bg-dark-card rounded-xl shadow-lg p-8 border border-gray-200 dark:border-dark-border">
-                <div class="flex items-center gap-6">
-                    <Skeleton shape="circle" size="6rem" />
-                    <div class="flex-1 space-y-3">
-                        <Skeleton width="60%" height="2rem" />
-                        <Skeleton width="40%" height="1.5rem" />
-                    </div>
+        <div v-if="loading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Left Skeleton -->
+            <div class="md:col-span-1 space-y-6">
+                <div class="bg-light-card dark:bg-dark-card rounded-2xl shadow-card p-6 border border-light-border dark:border-dark-border h-full flex flex-col items-center">
+                    <Skeleton shape="circle" size="8rem" class="mb-4" />
+                    <Skeleton width="60%" height="2rem" class="mb-2" />
+                    <Skeleton width="40%" height="1.5rem" class="mb-6" />
+                    <Skeleton width="80%" height="3rem" class="mt-auto" />
                 </div>
             </div>
-            <div class="bg-white dark:bg-dark-card rounded-xl shadow-lg p-8 border border-gray-200 dark:border-dark-border">
-                <div class="space-y-6">
-                    <Skeleton height="3rem" />
-                    <Skeleton height="3rem" />
+            <!-- Right Skeleton -->
+            <div class="md:col-span-2">
+                <div class="bg-light-card dark:bg-dark-card rounded-2xl shadow-card p-8 border border-light-border dark:border-dark-border h-full">
+                     <div class="space-y-6">
+                        <Skeleton height="3rem" width="100%" />
+                        <Skeleton height="3rem" width="100%" />
+                        <Skeleton height="3rem" width="100%" />
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Contenido cargado -->
-        <div v-else class="space-y-6">
+        <!-- Contenido Cargado -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            <!-- Header: Avatar y datos principales -->
-            <div class="bg-white dark:bg-dark-card rounded-xl shadow-lg border border-gray-200 dark:border-dark-border overflow-hidden">
-                <div class="p-6 md:p-8">
-                    <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
-                        
-                        <!-- Avatar -->
-                        <div class="shrink-0">
-                            <Avatar 
+            <!-- Columna Izquierda: Perfil Resumido -->
+            <div class="md:col-span-1 space-y-6">
+                <div class="bg-light-card dark:bg-dark-card rounded-2xl shadow-card border border-light-border dark:border-dark-border overflow-hidden relative group">
+                    
+                    <!-- Fondo Decorativo -->
+                    <div class="h-32 bg-gradient-to-r from-primary to-primary-hover/80 absolute w-full top-0 left-0"></div>
+                    
+                    <div class="pt-20 px-6 pb-6 relative flex flex-col items-center text-center">
+                        <!-- Avatar con borde -->
+                        <div class="p-1.5 bg-white dark:bg-dark-card rounded-full shadow-lg mb-4 cursor-default border border-light-border dark:border-dark-border">
+                             <Avatar 
                                 :label="initials" 
                                 size="xlarge" 
-                                class="!w-24 !h-24 !text-3xl !bg-primary !text-white shadow-lg"
+                                shape="circle"
+                                class="!w-28 !h-28 !text-4xl !bg-gray-50 !text-primary dark:!bg-dark-bg font-bold !rounded-full flex items-center justify-center"
                             />
                         </div>
-                        
-                        <!-- Info principal -->
-                        <div class="flex-1 text-center md:text-left">
-                            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                                {{ fullName }}
-                            </h1>
-                            <p class="text-gray-500 dark:text-gray-400 mt-1 text-lg">
-                                @{{ profile.username }}
-                            </p>
-                            <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary/10 text-primary dark:bg-primary/20">
-                                    <i class="pi pi-shield text-xs"></i>
-                                    {{ profile.nombre_rol }}
-                                </span>
-                                <span v-if="profile.puesto" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 dark:bg-dark-bg dark:text-gray-300">
-                                    <i class="pi pi-briefcase text-xs"></i>
-                                    {{ profile.puesto }}
-                                </span>
+
+                        <h1 class="text-xl font-bold text-light-text dark:text-gray-100 mt-2">
+                            {{ fullName }}
+                        </h1>
+                        <p class="text-sm font-bold text-primary mt-1 uppercase tracking-tight">
+                            @{{ profile.username }}
+                        </p>
+
+                        <div class="flex flex-wrap gap-2 justify-center mt-4">
+                             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                                <Shield :size="12" /> {{ profile.nombre_rol }}
                             </div>
                         </div>
-                        
-                        <!-- Stats -->
-                        <div class="flex md:flex-col gap-6 md:gap-3 text-center md:text-right">
-                            <div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                    Miembro desde
-                                </div>
-                                <div class="font-semibold text-gray-900 dark:text-white text-sm">
-                                    {{ memberSince }}
-                                </div>
+
+                        <!-- StatsDivider -->
+                        <div class="w-full h-px bg-light-border dark:bg-dark-border my-6"></div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-2 gap-4 w-full text-sm">
+                            <div class="text-center p-2 rounded-lg hover:bg-light-bg dark:hover:bg-dark-bg transition-colors">
+                                <p class="detail-label mb-1">Miembro desde</p>
+                                <p class="detail-value text-sm">{{ memberSince }}</p>
                             </div>
-                            <div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                    Último acceso
-                                </div>
-                                <div class="font-semibold text-gray-900 dark:text-white text-sm">
-                                    {{ lastLogin }}
-                                </div>
+                            <div class="text-center p-2 rounded-lg hover:bg-light-bg dark:hover:bg-dark-bg transition-colors">
+                                <p class="detail-label mb-1">Último acceso</p>
+                                <p class="detail-value text-sm">{{ lastLogin }}</p>
                             </div>
                         </div>
+
+                        <!-- Action Button -->
+                         <div class="w-full mt-6">
+                            <button class="btn-secondary w-full" @click="openPasswordDialog">
+                                <Key :size="16" />
+                                <span>Cambiar Contraseña</span>
+                            </button>
+                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Formulario de edición -->
-            <div class="bg-white dark:bg-dark-card rounded-xl shadow-lg border border-gray-200 dark:border-dark-border overflow-hidden">
-                
-                <!-- Header del formulario -->
-                <div class="px-6 md:px-8 py-4 border-b border-gray-100 dark:border-dark-border">
-                    <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <i class="pi pi-user-edit text-primary"></i>
-                        Información de la Cuenta
-                    </h2>
-                </div>
+            <!-- Columna Derecha: Formulario Detallado -->
+             <div class="md:col-span-2">
+                <div class="bg-light-card dark:bg-dark-card rounded-2xl shadow-card border border-light-border dark:border-dark-border overflow-hidden h-full">
+                    
+                    <div class="px-8 py-6 border-b border-light-border dark:border-dark-border flex items-center justify-between bg-gray-50/50 dark:bg-dark-bg/20">
+                         <h2 class="text-lg font-bold text-light-text dark:text-white flex items-center gap-2">
+                            <CreditCard :size="20" class="text-primary" />
+                            Información Personal
+                        </h2>
+                        <span class="detail-label !mb-0 italic normal-case font-medium">
+                             * Campos de solo lectura
+                        </span>
+                    </div>
 
-                <form @submit.prevent="saveProfile" class="p-6 md:p-8">
-                    <Fluid>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <form @submit.prevent="saveProfile" class="p-8">
+                        <div class="grid grid-cols-1 gap-y-8 gap-x-8">
                             
-                            <!-- Username (solo lectura) -->
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                    Usuario
-                                </label>
-                                <InputText 
-                                    :modelValue="profile.username" 
-                                    disabled 
-                                    class="!bg-gray-100 dark:!bg-dark-bg !cursor-not-allowed"
-                                />
-                            </div>
-
-                            <!-- Email -->
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                    Correo Electrónico
-                                </label>
-                                <InputText 
-                                    v-model="form.email" 
-                                    type="email"
-                                    placeholder="tu@email.com"
-                                    class="!bg-gray-50 dark:!bg-dark-bg"
-                                />
-                            </div>
-
-                            <!-- Rol (solo lectura) -->
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                    Rol
-                                </label>
-                                <InputText 
-                                    :modelValue="profile.nombre_rol" 
-                                    disabled 
-                                    class="!bg-gray-100 dark:!bg-dark-bg !cursor-not-allowed"
-                                />
-                            </div>
-
-                            <!-- Empleado asociado (solo lectura) -->
-                            <div v-if="profile.nombre_empleado">
-                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                    Empleado Asociado
-                                </label>
-                                <InputText 
-                                    :modelValue="`${profile.nombre_empleado} ${profile.apellido_empleado}`" 
-                                    disabled 
-                                    class="!bg-gray-100 dark:!bg-dark-bg !cursor-not-allowed"
-                                />
-                            </div>
-
-                        </div>
-
-                        <!-- Sección de contraseña -->
-                        <div class="mt-8 pt-6 border-t border-gray-100 dark:border-dark-border">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div>
-                                    <h3 class="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                        <i class="pi pi-lock text-primary"></i>
-                                        Seguridad
+                            <!-- Sección 1: Datos de Cuenta -->
+                            <div class="space-y-6">
+                                    <h3 class="detail-label border-b border-light-border dark:border-dark-border pb-2">
+                                    Credenciales de Acceso
                                     </h3>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                        Actualiza tu contraseña regularmente
-                                    </p>
-                                </div>
-                                <Button 
-                                    label="Cambiar Contraseña" 
-                                    icon="pi pi-key"
-                                    severity="secondary"
-                                    outlined
-                                    @click="openPasswordDialog"
-                                    class="shrink-0"
-                                />
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="flex flex-col gap-2">
+                                        <label class="detail-label">Usuario</label>
+                                            <InputText 
+                                            :modelValue="profile.username" 
+                                            disabled 
+                                            class="w-full !bg-light-bg dark:!bg-dark-bg !text-light-muted dark:!text-dark-muted !border-light-border dark:!border-dark-border !opacity-100 font-bold"
+                                        />
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <label class="detail-label">Email Personal (Editable)</label>
+                                        <div class="relative w-full">
+                                            <InputText 
+                                                v-model="form.email" 
+                                                type="email"
+                                                placeholder="tu@email.com"
+                                                class="w-full !bg-white dark:!bg-dark-input-bg focus:!border-primary transition-colors pr-10 font-bold"
+                                            />
+                                            <Pencil :size="16" class="absolute right-3 top-1/2 -translate-y-1/2 text-light-muted dark:text-dark-muted pointer-events-none" />
+                                        </div>
+                                    </div>
+                                    </div>
                             </div>
-                        </div>
 
-                        <!-- Botón guardar -->
-                        <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100 dark:border-dark-border">
-                            <Button 
-                                type="submit" 
-                                label="Guardar Cambios" 
-                                icon="pi pi-check" 
-                                :loading="saving"
-                                class="!bg-primary !border-none hover:!bg-primary-hover !px-8"
-                            />
+                            <!-- Sección 2: Datos Profesionales -->
+                            <div class="space-y-6">
+                                    <h3 class="detail-label border-b border-light-border dark:border-dark-border pb-2">
+                                    Ficha de Empleado
+                                    </h3>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="flex flex-col gap-2">
+                                        <label class="detail-label">Nombre Completo</label>
+                                        <InputText 
+                                            :modelValue="profile.nombre_empleado ? `${profile.nombre_empleado} ${profile.apellido_empleado}` : 'N/A'" 
+                                            disabled 
+                                                class="w-full !bg-light-bg dark:!bg-dark-bg !text-light-muted dark:!text-dark-muted !border-light-border dark:!border-dark-border !opacity-100 font-bold"
+                                        />
+                                    </div>
+                                        <div class="flex flex-col gap-2">
+                                        <label class="detail-label">Puesto / Cargo</label>
+                                        <InputText 
+                                            :modelValue="profile.puesto || 'No especificado'" 
+                                            disabled 
+                                                class="w-full !bg-light-bg dark:!bg-dark-bg !text-light-muted dark:!text-dark-muted !border-light-border dark:!border-dark-border !opacity-100 font-bold"
+                                        />
+                                    </div>
+                                    </div>
+                            </div>
+
                         </div>
-                    </Fluid>
-                </form>
-            </div>
+                        
+                        <!-- Botones -->
+                        <div class="flex justify-end pt-8 mt-4 border-t border-light-border dark:border-dark-border">
+                            <button type="submit" class="btn-primary" :disabled="saving">
+                                <Save v-if="!saving" :size="18" />
+                                <i v-else class="pi pi-spin pi-spinner text-lg"></i>
+                                <span>Guardar Cambios</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+             </div>
         </div>
 
-        <!-- Dialog de cambio de contraseña -->
         <Dialog 
             v-model:visible="showPasswordDialog" 
             modal 
-            header="Cambiar Contraseña"
-            :style="{ width: '28rem' }"
-            :pt="{
-                root: { class: 'bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl overflow-hidden' },
-                header: { class: 'bg-gray-50 dark:bg-dark-bg/50 border-b border-gray-100 dark:border-dark-border px-6 py-4' },
-                content: { class: 'p-6' },
-                headerTitle: { class: 'text-lg font-bold text-gray-900 dark:text-white' }
-            }"
+            header="Seguridad: Cambiar Contraseña"
+            :style="{ width: '90%', maxWidth: '450px' }"
         >
-            <form @submit.prevent="changePassword" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                        Contraseña Actual
-                    </label>
-                    <Password 
-                        v-model="passwordForm.currentPassword" 
-                        :feedback="false"
-                        toggleMask
-                        class="w-full"
-                        inputClass="!bg-gray-50 dark:!bg-dark-bg w-full"
-                    />
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                        Nueva Contraseña
-                    </label>
-                    <Password 
-                        v-model="passwordForm.newPassword" 
-                        toggleMask
-                        class="w-full"
-                        inputClass="!bg-gray-50 dark:!bg-dark-bg w-full"
-                    />
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                        Confirmar Nueva Contraseña
-                    </label>
-                    <Password 
-                        v-model="passwordForm.confirmPassword" 
-                        :feedback="false"
-                        toggleMask
-                        class="w-full"
-                        inputClass="!bg-gray-50 dark:!bg-dark-bg w-full"
-                    />
-                </div>
+            <div class="pt-2">
+                 <p class="text-sm text-light-muted dark:text-dark-muted mb-6 leading-relaxed">
+                    Asegúrate de usar una contraseña segura de al menos <span class="text-primary font-bold">6 caracteres</span> para proteger tu cuenta.
+                </p>
 
-                <div class="flex justify-end gap-3 pt-4">
-                    <Button 
-                        type="button" 
-                        label="Cancelar" 
-                        severity="secondary" 
-                        text
-                        @click="showPasswordDialog = false"
-                    />
-                    <Button 
-                        type="submit" 
-                        label="Actualizar Contraseña" 
-                        icon="pi pi-check"
-                        :loading="saving"
-                        class="!bg-primary !border-none hover:!bg-primary-hover"
-                    />
-                </div>
-            </form>
+                <form @submit.prevent="changePassword" class="space-y-5">
+                    <div class="flex flex-col gap-2">
+                        <label class="detail-label">Contraseña Actual</label>
+                        <Password 
+                            v-model="passwordForm.currentPassword" 
+                            :feedback="false"
+                            toggleMask
+                            class="w-full"
+                            inputClass="!bg-light-bg dark:!bg-dark-bg !border-light-border dark:!border-dark-border !text-light-text dark:!text-dark-text focus:!border-primary !w-full !rounded-xl !py-3"
+                        />
+                    </div>
+                    
+                    <div class="flex flex-col gap-2">
+                        <label class="detail-label">Nueva Contraseña</label>
+                        <Password 
+                            v-model="passwordForm.newPassword" 
+                            toggleMask
+                            class="w-full"
+                            inputClass="!bg-light-bg dark:!bg-dark-bg !border-light-border dark:!border-dark-border !text-light-text dark:!text-dark-text focus:!border-primary !w-full !rounded-xl !py-3"
+                        >
+                            <template #header>
+                                <h6 class="font-bold text-xs mb-2 text-primary uppercase tracking-tight">Sugerencias</h6>
+                            </template>
+                        </Password>
+                    </div>
+                    
+                    <div class="flex flex-col gap-2">
+                        <label class="detail-label">Confirmar Contraseña</label>
+                        <Password 
+                            v-model="passwordForm.confirmPassword" 
+                            :feedback="false"
+                            toggleMask
+                            class="w-full"
+                            inputClass="!bg-light-bg dark:!bg-dark-bg !border-light-border dark:!border-dark-border !text-light-text dark:!text-dark-text focus:!border-primary !w-full !rounded-xl !py-3"
+                        />
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-6 mt-4 border-t border-light-border dark:border-dark-border">
+                        <button 
+                            type="button" 
+                            @click="showPasswordDialog = false"
+                            class="btn-secondary !px-6"
+                        >
+                            <X :size="18" />
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-primary !px-6" :disabled="saving">
+                            <Check v-if="!saving" :size="18" />
+                            <i v-else class="pi pi-spinner pi-spin"></i>
+                            <span>Actualizar Contraseña</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </Dialog>
 
     </div>

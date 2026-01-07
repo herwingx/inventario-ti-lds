@@ -9,6 +9,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import EquiposService from '../services/EquiposService'
 import CatalogosService from '../services/CatalogosService'
+import { Check, X, Lock, Save } from 'lucide-vue-next'
 
 // Componentes PrimeVue
 import InputText from 'primevue/inputtext'
@@ -214,11 +215,10 @@ const goBack = () => {
     confirm.require({
         message: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
         header: 'Confirmar Salida',
-        icon: 'pi pi-info-circle',
         rejectLabel: 'Continuar Editando',
         acceptLabel: 'Salir sin Guardar',
-        rejectClass: 'p-button-secondary p-button-text',
-        acceptClass: 'p-button-warning !bg-orange-500 !border-none hover:!bg-orange-600',
+        rejectClass: 'btn-secondary',
+        acceptClass: 'btn-warning ml-2',
         accept: () => {
             toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
             router.push({ name: 'equipos' })
@@ -252,7 +252,10 @@ const goBack = () => {
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ formTitle }}</h2>
                 <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Complete la información del activo informático</p>
             </div>
-            <Button icon="pi pi-times" label="Cancelar" text @click="goBack" class="!text-gray-500 hover:!text-gray-700 dark:!text-gray-400 dark:hover:!text-white" />
+            <button @click="goBack" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                <X :size="20" />
+                <span>Cancelar</span>
+            </button>
         </div>
 
         <form @submit.prevent="handleSubmit">
@@ -338,7 +341,7 @@ const goBack = () => {
                     <div class="md:col-span-2">
                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Estado <span class="text-red-500">*</span></label>
                         <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" placeholder="Seleccione Estado" class="!bg-gray-50 dark:!bg-dark-bg w-full" :disabled="isStatusDisabled" :invalid="!!errors.id_status" />
-                        <small v-if="isStatusDisabled" class="text-orange-500 flex items-center gap-1 mt-1 font-medium"><i class="pi pi-lock text-xs"></i> {{ statusHelpText }}</small>
+                        <small v-if="isStatusDisabled" class="text-orange-500 flex items-center gap-1 mt-1 font-medium"><Lock :size="12" /> {{ statusHelpText }}</small>
                         <small class="text-red-500" v-if="errors.id_status">{{ errors.id_status }}</small>
                     </div>
 
@@ -352,8 +355,15 @@ const goBack = () => {
 
                  <!-- Footer Actions -->
                  <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100 dark:border-dark-border">
-                     <Button label="Cancelar" severity="secondary" text class="!px-6" @click="goBack" />
-                     <Button type="submit" :label="isEditing ? 'Guardar Cambios' : 'Registrar Equipo'" icon="pi pi-check" :loading="submitting" class="!bg-primary !border-none hover:!bg-primary-hover !px-8" />
+                     <button @click="goBack" class="btn-secondary">
+                        <X :size="18" />
+                        Cancelar
+                     </button>
+                     <button type="submit" class="btn-primary" :disabled="submitting">
+                        <Check v-if="!submitting" :size="18" />
+                        <i v-else class="pi pi-spin pi-spinner text-lg"></i>
+                        <span>{{ isEditing ? 'Guardar Cambios' : 'Registrar Equipo' }}</span>
+                     </button>
                  </div>
             </Fluid>
         </form>

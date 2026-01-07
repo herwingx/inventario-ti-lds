@@ -71,7 +71,7 @@ const finalizarAsignacion = () => {
         message: '¿Está seguro de finalizar esta asignación? El equipo principal, la IP y todos los componentes asignados quedarán disponibles.',
         header: 'Confirmar Finalización',
         icon: 'pi pi-exclamation-triangle',
-        acceptClass: 'p-button-warning !bg-orange-500 !border-none',
+        acceptClass: 'p-button-warning',
         accept: async () => {
             try {
                 await AsignacionesService.finalizar(asignacion.value.id)
@@ -159,7 +159,7 @@ const formatDate = (date) => {
             </div>
             
             <div v-if="!loading && isActive" class="flex gap-2">
-                 <Button label="Finalizar Asignación" icon="pi pi-check-square" severity="warning" @click="finalizarAsignacion" class="!bg-orange-500 !border-none" />
+                 <Button label="Finalizar Asignación" icon="pi pi-check-square" severity="warning" @click="finalizarAsignacion" class="!bg-amber-500 !border-none hover:!bg-amber-600 !font-bold !px-5 !py-2.5 !rounded-lg !text-white shadow-lg" />
             </div>
         </div>
 
@@ -171,102 +171,126 @@ const formatDate = (date) => {
         <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <!-- Equipo Info -->
-            <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6 border border-gray-200 dark:border-dark-border">
-                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                    <i class="pi pi-desktop text-primary"></i> Equipo Asignado
-                </h3>
-                <div class="space-y-3">
-                    <div>
-                        <span class="text-sm text-gray-500 block">Equipo</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ asignacion.equipo_nombre }}</span>
+            <div class="detail-card">
+                <div class="detail-section-header">
+                    <div class="detail-section-icon text-primary">
+                        <i class="pi pi-desktop text-lg"></i>
                     </div>
-                    <div>
-                        <span class="text-sm text-gray-500 block">Serie</span>
-                        <span class="font-mono text-gray-900 dark:text-white">{{ asignacion.equipo_numero_serie }}</span>
+                    <h2 class="detail-section-title">Equipo Asignado</h2>
+                </div>
+                <div class="space-y-8">
+                    <div class="flex flex-col">
+                        <span class="detail-label">Equipo</span>
+                        <span class="detail-value">{{ asignacion.equipo_nombre }}</span>
                     </div>
-                     <div>
-                        <span class="text-sm text-gray-500 block">Tipo</span>
-                        <span class="text-gray-900 dark:text-white">{{ asignacion.equipo_tipo_nombre }}</span>
+                    <div class="flex flex-col">
+                        <span class="detail-label">Serie</span>
+                        <span class="detail-value-mono">{{ asignacion.equipo_numero_serie }}</span>
+                    </div>
+                     <div class="flex flex-col">
+                        <span class="detail-label">Tipo</span>
+                        <span class="detail-value">{{ asignacion.equipo_tipo_nombre }}</span>
                     </div>
                 </div>
             </div>
 
             <!-- Asignado A Info -->
-            <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6 border border-gray-200 dark:border-dark-border">
-                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                    <i class="pi pi-user text-blue-500"></i> Asignado A
-                </h3>
-                <div class="space-y-3">
-                    <div v-if="asignacion.id_empleado">
-                        <span class="text-sm text-gray-500 block">Empleado</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ asignacion.empleado_nombres }} {{ asignacion.empleado_apellidos }}</span>
-                        <div v-if="asignacion.empleado_emails_corporativos" class="mt-1 flex items-center gap-2 text-sm text-primary font-medium">
+            <div class="detail-card">
+                <div class="detail-section-header">
+                    <div class="detail-section-icon text-blue-500">
+                        <i class="pi pi-user text-lg"></i>
+                    </div>
+                    <h2 class="detail-section-title">Asignado A</h2>
+                </div>
+                <div class="space-y-8">
+                    <div v-if="asignacion.id_empleado" class="flex flex-col">
+                        <span class="detail-label">Empleado</span>
+                        <span class="detail-value text-lg">{{ asignacion.empleado_nombres }} {{ asignacion.empleado_apellidos }}</span>
+                        <div v-if="asignacion.empleado_emails_corporativos" class="mt-3 flex items-center gap-2 text-sm text-primary font-bold bg-primary/5 dark:bg-primary/10 px-3 py-2 rounded-xl w-fit border border-primary/10">
                             <i class="pi pi-envelope"></i>
                             <span>{{ asignacion.empleado_emails_corporativos }}</span>
                         </div>
-                        <div v-else-if="asignacion.empleado_email_personal" class="mt-1 flex items-center gap-2 text-sm text-gray-500">
-                             <i class="pi pi-envelope"></i>
-                             <span>{{ asignacion.empleado_email_personal }}</span>
-                        </div>
                     </div>
-                    <div v-if="asignacion.id_sucursal_asignado">
-                        <span class="text-sm text-gray-500 block">Sucursal</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ asignacion.sucursal_asignada_nombre }}</span>
+                    <div v-if="asignacion.id_sucursal_asignado" class="flex flex-col">
+                        <span class="detail-label">Sucursal</span>
+                        <span class="detail-value">{{ asignacion.sucursal_asignada_nombre }}</span>
                     </div>
-                    <div v-if="asignacion.id_area_asignado">
-                        <span class="text-sm text-gray-500 block">Área</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ asignacion.area_asignada_nombre }}</span>
+                    <div v-if="asignacion.id_area_asignado" class="flex flex-col">
+                        <span class="detail-label">Área</span>
+                        <span class="detail-value">{{ asignacion.area_asignada_nombre }}</span>
                     </div>
-                     <div>
-                        <span class="text-sm text-gray-500 block">Red (IP)</span>
-                        <span class="font-mono text-gray-900 dark:text-white">{{ asignacion.ip_direccion || 'No asignada' }}</span>
+                     <div class="flex flex-col">
+                        <span class="detail-label">Red (IP)</span>
+                        <span class="detail-value-mono">{{ asignacion.ip_direccion || 'No asignada' }}</span>
                     </div>
                 </div>
             </div>
 
             <!-- Detalles Asignación -->
-            <div class="bg-white dark:bg-dark-card rounded-lg shadow p-6 border border-gray-200 dark:border-dark-border">
-                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                    <i class="pi pi-calendar text-purple-500"></i> Detalles
-                </h3>
-                <div class="space-y-3">
-                    <div>
-                        <span class="text-sm text-gray-500 block">Fecha Inicio</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ formatDate(asignacion.fecha_asignacion) }}</span>
+            <div class="detail-card">
+                <div class="detail-section-header">
+                    <div class="detail-section-icon text-purple-500">
+                        <i class="pi pi-calendar text-lg"></i>
                     </div>
-                    <div>
-                        <span class="text-sm text-gray-500 block">Fecha Fin</span>
-                         <span :class="['font-medium', asignacion.fecha_fin_asignacion ? 'text-gray-900 dark:text-white' : 'text-green-500']">
+                    <h2 class="detail-section-title">Detalles</h2>
+                </div>
+                <div class="space-y-8">
+                    <div class="flex flex-col">
+                        <span class="detail-label">Fecha Inicio</span>
+                        <span class="detail-value">{{ formatDate(asignacion.fecha_asignacion) }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="detail-label">Fecha Fin</span>
+                         <span :class="[asignacion.fecha_fin_asignacion ? 'detail-value' : 'detail-value text-emerald-500 dark:text-emerald-400']">
                             {{ asignacion.fecha_fin_asignacion ? formatDate(asignacion.fecha_fin_asignacion) : 'En curso' }}
                          </span>
                     </div>
-                    <div>
-                        <span class="text-sm text-gray-500 block">Observaciones</span>
-                        <p class="text-sm text-gray-700 dark:text-gray-300 mt-1 italic">{{ asignacion.observacion || 'Ninguna' }}</p>
+                    <div class="flex flex-col">
+                        <span class="detail-label">Observaciones</span>
+                        <p class="detail-content-box mt-1">{{ asignacion.observacion || 'Ninguna' }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- Componentes List (Full Width) -->
-            <div class="lg:col-span-3 bg-white dark:bg-dark-card rounded-lg shadow p-6 border border-gray-200 dark:border-dark-border">
-                 <div class="flex justify-between items-center mb-4">
-                     <h3 class="text-lg font-bold flex items-center gap-2">
-                        <i class="pi pi-box text-orange-500"></i> Componentes Adicionales
+            <div class="lg:col-span-3 detail-card !p-0 overflow-hidden">
+                 <div class="px-8 py-6 border-b border-light-border dark:border-dark-border flex justify-between items-center bg-gray-50/50 dark:bg-dark-bg/20">
+                     <h3 class="detail-section-title flex items-center gap-3">
+                        <div class="detail-section-icon text-orange-500 bg-orange-500/10">
+                            <i class="pi pi-box text-lg"></i>
+                        </div>
+                        Componentes Adicionales
                      </h3>
-                     <Button v-if="isActive" label="Gestionar Componentes" icon="pi pi-cog" size="small" outlined @click="openManageComponentes" />
+                     <Button 
+                        v-if="isActive" 
+                        label="Gestionar o Añadir Componentes" 
+                        icon="pi pi-plus-circle" 
+                        size="small" 
+                        class="!bg-primary/10 !text-primary !border-primary/20 hover:!bg-primary/20 !font-bold !px-4"
+                        @click="openManageComponentes" 
+                    />
                  </div>
                  
-                 <div v-if="componentes.length === 0" class="text-center py-6 text-gray-500">
-                     No hay componentes adicionales asignados.
-                 </div>
+                 <div class="p-4">
+                    <div v-if="componentes.length === 0" class="text-center py-10">
+                        <div class="w-16 h-16 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="pi pi-box text-2xl text-gray-300"></i>
+                        </div>
+                        <p class="text-light-muted dark:text-dark-muted font-medium">No hay componentes adicionales asignados.</p>
+                    </div>
 
-                <DataTable v-else :value="componentes" size="small" class="text-sm">
-                    <Column field="equipo_nombre" header="Equipo"></Column>
-                    <Column field="equipo_numero_serie" header="Serie"></Column>
-                    <Column field="tipo_equipo_nombre" header="Tipo"></Column>
-                    <Column field="marca" header="Marca"></Column>
-                    <Column field="modelo" header="Modelo"></Column>
-                </DataTable>
+                    <DataTable v-else :value="componentes" size="small" class="custom-table">
+                        <Column field="equipo_nombre" header="Equipo" class="!font-bold"></Column>
+                        <Column field="equipo_numero_serie" header="Serie">
+                            <template #body="{ data }">
+                                <span class="detail-value-mono text-primary font-bold">{{ data.equipo_numero_serie }}</span>
+                            </template>
+                        </Column>
+                        <Column field="tipo_equipo_nombre" header="Tipo"></Column>
+                        <Column field="marca" header="Marca"></Column>
+                        <Column field="modelo" header="Modelo"></Column>
+                    </DataTable>
+                 </div>
             </div>
         </div>
 
@@ -289,7 +313,7 @@ const formatDate = (date) => {
                         filter 
                         placeholder="Buscar y seleccionar componentes..." 
                         display="chip" 
-                        class="w-full"
+                        class="w-full custom-select"
                     />
                 </div>
             </div>

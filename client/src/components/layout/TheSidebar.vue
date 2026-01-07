@@ -6,6 +6,24 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
+import { 
+  Home, 
+  Monitor, 
+  Users, 
+  Building2, 
+  Network, 
+  Link, 
+  Mail, 
+  Wrench, 
+  NotebookPen,
+  ChevronRight,
+  ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
+  X,
+  Circle
+} from 'lucide-vue-next'
+
 const router = useRouter()
 const route = useRoute()
 
@@ -22,18 +40,20 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle', 'close'])
 
+// ... (rest of script remains same until template)
+
 // Estructura del menú basada en el sidebar original
 const menuItems = ref([
   {
     id: 'home',
     label: 'Inicio',
-    icon: 'pi pi-home',
+    icon: Home,
     route: '/home'
   },
   {
     id: 'equipos',
     label: 'Equipos',
-    icon: 'pi pi-desktop',
+    icon: Monitor,
     children: [
       { id: 'equipos-list', label: 'Gestionar Equipos', route: '/equipos' },
       { id: 'equipo-form', label: 'Registrar Nuevo Equipo', route: '/equipos/nuevo' }
@@ -42,7 +62,7 @@ const menuItems = ref([
   {
     id: 'personal',
     label: 'Personal',
-    icon: 'pi pi-users',
+    icon: Users,
     children: [
       { id: 'empleados-list', label: 'Gestionar Empleados', route: '/empleados' },
       { id: 'empleado-form', label: 'Registrar Nuevo Empleado', route: '/empleados/nuevo' }
@@ -51,7 +71,7 @@ const menuItems = ref([
   {
     id: 'organizacion',
     label: 'Organización',
-    icon: 'pi pi-sitemap',
+    icon: Building2,
     children: [
       { id: 'empresas-list', label: 'Gest. Empresas', route: '/empresas' },
       { id: 'empresa-form', label: 'Registrar Empresa', route: '/empresas/nuevo' },
@@ -64,7 +84,7 @@ const menuItems = ref([
   {
     id: 'red',
     label: 'Gestión de Red',
-    icon: 'pi pi-share-alt',
+    icon: Network,
     children: [
       { id: 'direcciones-ip-list', label: 'Gestionar Direcciones IP', route: '/direcciones-ip' },
       { id: 'direccion-ip-form', label: 'Registrar Nueva IP', route: '/direcciones-ip/nuevo' }
@@ -73,7 +93,7 @@ const menuItems = ref([
   {
     id: 'asignaciones',
     label: 'Asignaciones',
-    icon: 'pi pi-link',
+    icon: Link,
     children: [
       { id: 'asignaciones-list', label: 'Gestionar Asignaciones Activas', route: '/asignaciones' },
       { id: 'asignacion-form', label: 'Crear Nueva Asignación', route: '/asignaciones/nuevo' },
@@ -83,7 +103,7 @@ const menuItems = ref([
   {
     id: 'email',
     label: 'Correo Corporativo',
-    icon: 'pi pi-envelope',
+    icon: Mail,
     children: [
       { id: 'cuentas-email-list', label: 'Gestionar Cuentas de Email', route: '/cuentas-email' },
       { id: 'cuenta-email-form', label: 'Registrar Nueva Cuenta', route: '/cuentas-email/nuevo' }
@@ -92,7 +112,7 @@ const menuItems = ref([
   {
     id: 'mantenimientos',
     label: 'Mantenimientos',
-    icon: 'pi pi-cog',
+    icon: Wrench,
     children: [
       { id: 'mantenimientos-list', label: 'Gestionar Mantenimientos', route: '/mantenimientos' },
       { id: 'mantenimiento-form', label: 'Registrar Mantenimiento', route: '/mantenimientos/nuevo' }
@@ -102,7 +122,7 @@ const menuItems = ref([
   {
     id: 'notas',
     label: 'Notas',
-    icon: 'pi pi-book',
+    icon: NotebookPen,
     children: [
       { id: 'notas-list', label: 'Gestionar Notas', route: '/notas' },
       { id: 'nota-form', label: 'Crear Nueva Nota', route: '/notas/nuevo' }
@@ -226,6 +246,7 @@ function navigateTo(routePath) {
     emit('close')
   }
 }
+
 </script>
 
 <template>
@@ -251,7 +272,7 @@ function navigateTo(routePath) {
         @click="emit('close')"
         class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-light-muted dark:text-gray-400 hover:text-primary dark:hover:text-white transition-colors"
       >
-        <i class="pi pi-times text-lg"></i>
+        <X :size="24" />
       </button>
     </div>
 
@@ -270,7 +291,7 @@ function navigateTo(routePath) {
               class="sidebar-item p-4"
               :class="{ 'active': isItemActive(item) }"
             >
-              <i :class="item.icon" class="text-lg"></i>
+              <component :is="item.icon" :size="20" stroke-width="2" />
               <span v-if="showText" class="text-sm font-semibold">{{ item.label }}</span>
             </div>
             
@@ -295,16 +316,18 @@ function navigateTo(routePath) {
               class="sidebar-item p-4"
               :class="{ 'active': isItemActive(item) }"
             >
-              <i :class="item.icon" class="text-lg"></i>
+              <component :is="item.icon" :size="20" stroke-width="2" />
               <span v-if="showText" class="text-sm font-semibold flex-1">{{ item.label }}</span>
-              <i 
+              
+              <component 
                 v-if="showText"
-                class="pi text-xs transition-transform duration-200"
-                :class="expandedMenus[item.id] ? 'pi-angle-down' : 'pi-angle-right'"
-              ></i>
+                :is="expandedMenus[item.id] ? ChevronDown : ChevronRight"
+                :size="16"
+                class="transition-transform duration-200 text-light-muted dark:text-gray-400"
+              />
             </div>
 
-            <!-- Submenu expandible (cuando sidebar expandido) -->
+            <!-- Submenu expandible -->
             <ul 
               v-if="showText"
               class="sidebar-submenu"
@@ -316,7 +339,7 @@ function navigateTo(routePath) {
                   class="sidebar-item text-sm py-2"
                   :class="{ 'active': isChildActive(child) }"
                 >
-                  <i class="pi pi-circle-fill text-[6px]"></i>
+                  <Circle :size="6" fill="currentColor" />
                   <span>{{ child.label }}</span>
                 </div>
               </li>
@@ -361,10 +384,11 @@ function navigateTo(routePath) {
         class="flex items-center w-full rounded-lg text-light-muted dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-200 group"
         :class="showText ? 'px-4 py-3 gap-3' : 'justify-center py-3'"
       >
-        <i 
-          class="pi text-xl transition-transform duration-300" 
-          :class="collapsed ? 'pi-angle-double-right' : 'pi-angle-double-left'"
-        ></i>
+        <component 
+            :is="collapsed ? ChevronsRight : ChevronsLeft" 
+            :size="20"
+            class="transition-transform duration-300" 
+        />
         <span v-if="showText" class="font-medium text-sm whitespace-nowrap opacity-100 transition-opacity duration-300">
           Colapsar menú
         </span>

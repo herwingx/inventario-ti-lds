@@ -8,24 +8,15 @@ import { useThemeStore } from '../../stores/theme'
 import { useAuthStore } from '../../stores/auth'
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
+import { Menu, Sun, Moon, ChevronDown, User, LogOut } from 'lucide-vue-next'
 
 const props = defineProps({
-  /**
-   * Indica si el sidebar está colapsado (desktop).
-   */
-  sidebarCollapsed: {
-    type: Boolean,
-    default: false
-  },
-  /**
-   * Indica si la vista actual es en dispositivo móvil.
-   */
-  isMobile: {
-    type: Boolean,
-    default: false
-  }
+  // ...
+  sidebarCollapsed: { type: Boolean, default: false },
+  isMobile: { type: Boolean, default: false }
 })
 
+// ... props and emits same ...
 const emit = defineEmits(['toggleSidebar'])
 
 const themeStore = useThemeStore()
@@ -34,7 +25,7 @@ const route = useRoute()
 
 const pageTitle = computed(() => route.meta.title || 'Panel de Control')
 
-// Computed para el margen izquierdo del header
+// ... computed same ...
 const headerStyle = computed(() => {
   if (props.isMobile) {
     return { left: '0' }
@@ -56,7 +47,7 @@ const headerStyle = computed(() => {
         @click="emit('toggleSidebar')"
         class="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
       >
-        <i class="pi pi-bars text-lg text-light-text dark:text-dark-text"></i>
+        <Menu class="text-light-text dark:text-dark-text" :size="24" />
       </button>
 
       <!-- Page title -->
@@ -73,10 +64,12 @@ const headerStyle = computed(() => {
         class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
         :title="themeStore.isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
       >
-        <i 
-          class="pi text-lg"
-          :class="themeStore.isDark ? 'pi-sun text-yellow-400' : 'pi-moon text-gray-600'"
-        ></i>
+        <component 
+          :is="themeStore.isDark ? Sun : Moon" 
+          class="transition-colors"
+          :class="themeStore.isDark ? 'text-yellow-400' : 'text-gray-600'"
+          :size="20"
+        />
       </button>
 
       <!-- User Dropdown -->
@@ -96,7 +89,7 @@ const headerStyle = computed(() => {
             </span>
           </div>
           
-          <i class="pi pi-angle-down text-xs text-gray-500 hidden sm:block"></i>
+          <ChevronDown class="text-gray-500 hidden sm:block" :size="16" />
         </button>
 
         <!-- Dropdown Menu -->
@@ -106,7 +99,7 @@ const headerStyle = computed(() => {
               :to="{ name: 'perfil' }"
               class="flex items-center gap-3 px-4 py-2 text-sm text-light-text dark:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
             >
-              <i class="pi pi-user text-primary"></i>
+              <User class="text-primary" :size="18" />
               <span>Perfil</span>
             </router-link>
             <hr class="my-2 border-light-border dark:border-dark-border" />
@@ -114,7 +107,7 @@ const headerStyle = computed(() => {
               @click="authStore.logout"
               class="flex items-center gap-3 px-4 py-2 w-full text-sm text-danger hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
             >
-              <i class="pi pi-sign-out"></i>
+              <LogOut :size="18" />
               <span>Salir</span>
             </button>
           </div>

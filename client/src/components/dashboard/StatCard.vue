@@ -5,6 +5,7 @@
  */
 import { ref, watch, onMounted } from 'vue'
 import Skeleton from 'primevue/skeleton'
+import { ArrowUp, BarChart2 } from 'lucide-vue-next'
 
 const props = defineProps({
   title: {
@@ -20,9 +21,10 @@ const props = defineProps({
     default: 0
   },
   icon: {
-    type: String,
-    default: 'pi pi-chart-bar'
+    type: [String, Object, Function],
+    default: BarChart2
   },
+  // ... rest of props
   loading: {
     type: Boolean,
     default: false
@@ -30,10 +32,18 @@ const props = defineProps({
   color: {
     type: String,
     default: 'primary' // primary, warning, success, info
+  },
+  progress: {
+    type: Number,
+    default: null
+  },
+  growth: {
+    type: [String, Number],
+    default: null
   }
 })
 
-// Animación del número
+// ... logic ...
 const displayValue = ref(0)
 const duration = 1500 // ms
 
@@ -123,7 +133,7 @@ onMounted(() => {
           :class="[colors.iconBg]"
           class="w-16 h-16 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300"
         >
-          <i :class="icon" class="text-white text-2xl"></i>
+          <component :is="icon" class="text-white" :size="28" stroke-width="2" />
         </div>
 
         <!-- Contenido -->
@@ -139,19 +149,19 @@ onMounted(() => {
           </small>
         </div>
 
-        <!-- Mini indicador -->
-        <div :class="[colors.bg]" class="hidden sm:flex items-center gap-1 px-2 py-1 rounded-full">
-          <i class="pi pi-arrow-up text-xs" :class="colors.text"></i>
-          <span class="text-xs font-medium" :class="colors.text">+12%</span>
+        <!-- Mini indicador (Opcional) -->
+        <div v-if="growth" :class="[colors.bg]" class="hidden sm:flex items-center gap-1 px-2 py-1 rounded-full">
+          <ArrowUp :size="12" :class="colors.text" stroke-width="3" />
+          <span class="text-xs font-medium" :class="colors.text">{{ growth }}</span>
         </div>
       </div>
 
-      <!-- Barra de progreso decorativa -->
-      <div class="mt-4 w-full bg-light-border dark:bg-dark-border rounded-full h-1.5 overflow-hidden">
+      <!-- Barra de progreso decorativa (Opcional) -->
+      <div v-if="progress !== null" class="mt-4 w-full bg-light-border dark:bg-dark-border rounded-full h-1.5 overflow-hidden">
         <div 
           :class="['bg-gradient-to-r', colors.gradient]"
           class="h-full rounded-full transition-all duration-1000 ease-out"
-          :style="{ width: '75%' }"
+          :style="{ width: `${progress}%` }"
         ></div>
       </div>
     </template>

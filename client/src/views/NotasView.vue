@@ -9,6 +9,7 @@ import { FilterMatchMode } from '@primevue/core/api'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import NotasService from '../services/NotasService'
+import { Search, Plus, Pencil, Trash2, StickyNote, User, Calendar, Monitor, Settings } from 'lucide-vue-next'
 
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -59,10 +60,10 @@ const editNota = (nota) => {
 
 const deleteNota = (nota) => {
     confirm.require({
-        message: '¿Está seguro de eliminar esta nota?',
-        header: 'Confirmar Eliminación',
-        icon: 'pi pi-exclamation-triangle',
-        acceptClass: 'p-button-danger !bg-red-500 !border-none hover:!bg-red-600',
+        rejectLabel: 'Cancelar',
+        acceptLabel: 'Eliminar Nota',
+        rejectClass: 'btn-secondary',
+        acceptClass: 'btn-danger ml-2',
         accept: async () => {
             try {
                 await NotasService.delete(nota.id)
@@ -94,11 +95,14 @@ const skeletonRows = new Array(5).fill({})
                 
                 <!-- Search -->
                 <div class="relative w-full md:w-96">
-                        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none"></i>
+                        <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
                         <InputText v-model="filters['global'].value" placeholder="Buscar en notas..." class="w-full !pl-10 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white !py-2.5 !rounded-lg focus:!border-primary" />
                 </div>
 
-                 <Button label="Crear Nota" icon="pi pi-plus" class="!bg-primary !border-none hover:!bg-primary-hover !font-bold !px-6 !py-2.5 !rounded-lg !text-white !text-sm shadow-lg shadow-emerald-900/20 w-full md:w-auto" @click="openNew" />
+                 <button class="btn-primary w-full md:w-auto" @click="openNew">
+                    <Plus :size="18" />
+                    <span>Crear Nota</span>
+                 </button>
             </div>
 
             <!-- Table -->
@@ -118,7 +122,7 @@ const skeletonRows = new Array(5).fill({})
                 <template #empty>
                     <div class="flex flex-col items-center justify-center p-12 text-center">
                         <div class="w-24 h-24 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mb-4 transition-colors">
-                            <i class="pi pi-book text-3xl text-gray-400 dark:text-gray-500"></i>
+                            <StickyNote class="text-gray-400 dark:text-gray-500" :size="40" />
                         </div>
                         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-300 mb-1">Sin Notas</h3>
                         <p class="text-gray-500 text-sm max-w-xs mx-auto">No hay notas registradas aún.</p>
@@ -149,8 +153,16 @@ const skeletonRows = new Array(5).fill({})
                     <template #body="{ data }">
                         <Skeleton v-if="loading" width="8rem" class="!bg-gray-200 dark:!bg-dark-border" />
                         <div v-else class="flex flex-col gap-1">
-                            <Tag v-if="data.equipo_numero_serie" icon="pi pi-desktop" :value="'Equipo: ' + data.equipo_numero_serie" severity="info" class="!text-xs w-fit" />
-                            <Tag v-if="data.mantenimiento_fecha_inicio" icon="pi pi-cog" :value="'Mto: ' + formatDate(data.mantenimiento_fecha_inicio)" severity="warn" class="!text-xs w-fit" />
+                            <Tag v-if="data.equipo_numero_serie" :value="'Equipo: ' + data.equipo_numero_serie" severity="info" class="!text-xs w-fit !font-bold">
+                                <template #icon>
+                                    <Monitor :size="10" class="mr-1" />
+                                </template>
+                            </Tag>
+                            <Tag v-if="data.mantenimiento_fecha_inicio" :value="'Mto: ' + formatDate(data.mantenimiento_fecha_inicio)" severity="warn" class="!text-xs w-fit !font-bold">
+                                <template #icon>
+                                    <Settings :size="10" class="mr-1" />
+                                </template>
+                            </Tag>
                             <span v-if="!data.equipo_numero_serie && !data.mantenimiento_fecha_inicio" class="text-gray-400 text-xs italic">General</span>
                         </div>
                     </template>
@@ -161,11 +173,11 @@ const skeletonRows = new Array(5).fill({})
                     <template #body="{ data }">
                         <Skeleton v-if="loading" width="8rem" class="!bg-gray-200 dark:!bg-dark-border" />
                         <div v-else>
-                             <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                                <i class="pi pi-user"></i> {{ data.usuario_creador || 'Sistema' }}
+                             <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                <User :size="14" class="text-primary" /> {{ data.usuario_creador || 'Sistema' }}
                              </div>
-                             <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                <i class="pi pi-calendar"></i> {{ formatDate(data.fecha_registro) }}
+                             <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mt-1.5 font-medium">
+                                <Calendar :size="14" class="text-primary" /> {{ formatDate(data.fecha_registro) }}
                              </div>
                         </div>
                     </template>
@@ -178,12 +190,12 @@ const skeletonRows = new Array(5).fill({})
                              <Skeleton size="2rem" />
                              <Skeleton size="2rem" />
                          </div>
-                         <div v-else class="flex gap-1 justify-start">
-                            <button class="w-7 h-7 rounded bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-dark-border text-primary flex items-center justify-center transition-all border border-gray-200 dark:border-transparent" @click="editNota(data)" title="Editar">
-                                <i class="pi pi-pencil text-xs"></i>
+                         <div v-else class="flex gap-1 justify-end">
+                            <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all" @click="editNota(data)" title="Editar">
+                                <Pencil :size="16" />
                             </button>
-                            <button class="w-7 h-7 rounded bg-gray-100 dark:bg-dark-bg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 flex items-center justify-center transition-all border border-gray-200 dark:border-transparent hover:border-red-500" @click="deleteNota(data)" title="Eliminar">
-                                <i class="pi pi-trash text-xs"></i>
+                            <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center transition-all" @click="deleteNota(data)" title="Eliminar">
+                                <Trash2 :size="16" />
                             </button>
                         </div>
                     </template>

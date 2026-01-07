@@ -9,9 +9,9 @@ import { useToast } from 'primevue/usetoast'
 import SucursalesService from '../services/SucursalesService'
 import CatalogosService from '../services/CatalogosService'
 
+import { Check, X } from 'lucide-vue-next'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
-import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
@@ -89,7 +89,13 @@ const handleSubmit = async () => {
   <div class="animate-fade-in-up max-w-2xl mx-auto">
     <div class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-8 border border-gray-200 dark:border-dark-border">
         
-        <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{{ isEditing ? 'Editar Sucursal' : 'Nueva Sucursal' }}</h2>
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-gray-100 dark:border-dark-border pb-4 gap-4">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ isEditing ? 'Editar Sucursal' : 'Nueva Sucursal' }}</h2>
+            <button @click="router.back()" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                <X :size="20" />
+                <span>Cancelar</span>
+            </button>
+        </div>
 
         <div v-if="loading" class="space-y-4">
             <Skeleton height="3rem" />
@@ -128,9 +134,16 @@ const handleSubmit = async () => {
                 </div>
             </div>
 
-            <div class="flex justify-end gap-3 pt-6 border-t font-semibold">
-                <Button label="Cancelar" severity="secondary" text @click="router.back()" />
-                <Button type="submit" label="Guardar" icon="pi pi-check" :loading="submitting" class="!bg-primary !border-none" />
+            <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-dark-border">
+                <button type="button" @click="router.back()" class="btn-secondary">
+                    <X :size="18" />
+                    Cancelar
+                </button>
+                <button type="submit" class="btn-primary" :disabled="submitting">
+                    <Check v-if="!submitting" :size="18" />
+                    <i v-else class="pi pi-spin pi-spinner text-lg"></i>
+                    <span>{{ isEditing ? 'Guardar Cambios' : 'Crear Sucursal' }}</span>
+                </button>
             </div>
 
         </form>

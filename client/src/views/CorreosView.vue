@@ -10,6 +10,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import CorreosService from '../services/CorreosService'
 import EmpleadosService from '../services/EmpleadosService'
+import { Search, Plus, Eye, Pencil, Trash2, Mail } from 'lucide-vue-next'
 
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -71,9 +72,9 @@ const confirmDeleteCorreo = (data) => {
         header: 'Confirmar Eliminación',
         icon: 'pi pi-exclamation-triangle',
         rejectLabel: 'Cancelar',
-        acceptLabel: 'Eliminar',
-        rejectClass: 'p-button-secondary p-button-text',
-        acceptClass: 'p-button-danger !bg-red-500 !border-none hover:!bg-red-600',
+        acceptLabel: 'Eliminar Cuenta',
+        rejectClass: 'btn-secondary',
+        acceptClass: 'btn-danger ml-2',
         accept: async () => {
             try {
                 await CorreosService.delete(data.id)
@@ -104,18 +105,20 @@ const skeletonRows = new Array(5).fill({})
   <div class="animate-fade-in-up">
     <div class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 border border-gray-200 dark:border-dark-border transition-colors duration-300">
       
-      <!-- Toolbar -->
-      <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-1">
             <div class="relative w-full sm:w-64">
-                 <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none"></i>
+                 <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
                  <InputText v-model="filters['global'].value" placeholder="Buscar email, usuario..." class="w-full !pl-10 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white !py-2.5 !rounded-lg focus:!border-primary" />
             </div>
 
             <Select v-model="filters['status_nombre'].value" :options="statuses" optionLabel="label" optionValue="value" placeholder="Estado" showClear class="w-full sm:w-40 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white custom-select" />
         </div>
 
-        <Button label="Nueva Cuenta" icon="pi pi-plus" class="!bg-primary !border-none hover:!bg-primary-hover !font-bold !px-6 !py-2.5 !rounded-lg !text-white !text-sm shadow-lg w-full md:w-auto" @click="openNew" />
+        <button class="btn-primary w-full md:w-auto" @click="openNew">
+            <Plus :size="18" />
+            <span>Nueva Cuenta</span>
+        </button>
       </div>
 
       <!-- DataTable -->
@@ -132,7 +135,9 @@ const skeletonRows = new Array(5).fill({})
       >
          <template #empty>
             <div class="flex flex-col items-center justify-center p-12 text-center">
-                <i class="pi pi-envelope text-4xl text-gray-400 mb-3"></i>
+                <div class="w-24 h-24 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mb-4 transition-colors">
+                    <Mail class="text-gray-400 dark:text-gray-500" :size="40" />
+                </div>
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-300 mb-1">No se encontraron cuentas</h3>
             </div>
         </template>
@@ -168,18 +173,23 @@ const skeletonRows = new Array(5).fill({})
 
         <Column header="Acciones" style="width: 15%; text-align: right">
             <template #body="{ data }">
-                <div v-if="loading" class="flex gap-2">
-                    <Skeleton size="2rem" />
+                <div v-if="loading" class="flex gap-2 justify-end">
+                    <Skeleton size="2rem" class="!bg-gray-200 dark:!bg-dark-border" />
+                    <Skeleton size="2rem" class="!bg-gray-200 dark:!bg-dark-border" />
+                    <Skeleton size="2rem" class="!bg-gray-200 dark:!bg-dark-border" />
                 </div>
                 <div v-else class="flex gap-1 justify-end">
-                    <button class="w-7 h-7 rounded bg-gray-100 hover:bg-blue-50 text-blue-600 flex items-center justify-center transition-all" @click="viewCorreo(data)" title="Ver Detalle">
-                        <i class="pi pi-eye text-xs"></i>
+                    <!-- View Button -->
+                    <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center transition-all" @click="viewCorreo(data)" title="Ver Detalle">
+                        <Eye :size="16" />
                     </button>
-                    <button class="w-7 h-7 rounded bg-gray-100 hover:bg-gray-200 text-primary flex items-center justify-center transition-all" @click="editCorreo(data)" title="Editar">
-                        <i class="pi pi-pencil text-xs"></i>
+                    <!-- Edit Button -->
+                    <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all" @click="editCorreo(data)" title="Editar">
+                        <Pencil :size="16" />
                     </button>
-                    <button class="w-7 h-7 rounded bg-gray-100 hover:bg-red-50 text-red-500 flex items-center justify-center transition-all" @click="confirmDeleteCorreo(data)" title="Eliminar">
-                        <i class="pi pi-trash text-xs"></i>
+                    <!-- Delete Button -->
+                    <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center transition-all" @click="confirmDeleteCorreo(data)" title="Eliminar">
+                        <Trash2 :size="16" />
                     </button>
                 </div>
             </template>

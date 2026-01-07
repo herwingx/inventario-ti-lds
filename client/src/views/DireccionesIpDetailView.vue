@@ -59,7 +59,7 @@ const confirmDeleteDireccionIp = () => {
     rejectLabel: 'Cancelar',
     acceptLabel: 'Eliminar IP',
     rejectClass: 'p-button-secondary p-button-text',
-    acceptClass: 'p-button-danger !bg-red-500 !border-none hover:!bg-red-600 !px-6',
+    acceptClass: 'p-button-danger',
     accept: async () => {
       try {
         await DireccionesIpService.delete(direccionIp.value.id)
@@ -120,14 +120,14 @@ const infoSections = computed(() => {
   <div class="animate-fade-in-up">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
       <div class="flex items-center gap-3">
-        <Button icon="pi pi-arrow-left" text rounded class="!text-gray-600 dark:!text-gray-400 hover:!bg-gray-100 dark:hover:!bg-dark-border" @click="goBack" />
+        <Button icon="pi pi-arrow-left" text rounded class="!text-gray-600 dark:!text-gray-400" @click="goBack" />
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            <Skeleton v-if="loading" width="15rem" height="2rem" class="!bg-gray-200 dark:!bg-dark-border" />
-            <span v-else class="font-mono">{{ direccionIp?.direccion_ip }}</span>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <Skeleton v-if="loading" width="15rem" height="2rem" />
+            <span v-else class="detail-value-mono !text-2xl font-bold">{{ direccionIp?.direccion_ip }}</span>
           </h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            <Skeleton v-if="loading" width="10rem" class="!bg-gray-200 dark:!bg-dark-border" />
+          <p class="detail-label mt-1 normal-case font-medium text-gray-500">
+            <Skeleton v-if="loading" width="10rem" />
             <span v-else>{{ direccionIp?.nombre_sucursal || 'Sin sucursal asignada' }}</span>
           </p>
         </div>
@@ -140,26 +140,26 @@ const infoSections = computed(() => {
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div v-for="(section, index) in infoSections" :key="index" class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 border border-gray-200 dark:border-dark-border transition-colors duration-300">
-        <div class="flex items-center gap-3 mb-5 pb-4 border-b border-gray-200 dark:border-dark-border">
-          <div :class="['w-10 h-10 rounded-lg flex items-center justify-center', section.color, 'bg-opacity-10 dark:bg-opacity-20']">
+      <div v-for="(section, index) in infoSections" :key="index" class="detail-card">
+        <div class="detail-section-header">
+          <div :class="['detail-section-icon', section.color]">
             <i :class="['pi', section.icon, section.color, 'text-lg']"></i>
           </div>
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white">{{ section.title }}</h2>
+          <h2 class="detail-section-title">{{ section.title }}</h2>
         </div>
 
-        <div v-if="loading" class="space-y-4">
+        <div v-if="loading" class="space-y-6">
           <div v-for="i in 3" :key="i" class="flex justify-between">
             <Skeleton width="6rem" class="!bg-gray-200 dark:!bg-dark-border" />
             <Skeleton width="10rem" class="!bg-gray-200 dark:!bg-dark-border" />
           </div>
         </div>
 
-        <div v-else class="space-y-4">
-          <div v-for="(field, fieldIndex) in section.fields" :key="fieldIndex" class="flex justify-between items-center py-2">
-            <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">{{ field.label }}</span>
-            <Tag v-if="field.isTag" :value="field.value" :severity="getSeverity(field.value)" class="!text-xs !font-bold px-3 py-1.5 !rounded-md text-white tracking-wide" />
-            <span v-else :class="['text-sm font-bold text-gray-900 dark:text-white', field.mono ? 'font-mono' : '']">{{ field.value }}</span>
+        <div v-else class="space-y-6">
+          <div v-for="(field, fieldIndex) in section.fields" :key="fieldIndex" class="flex justify-between items-center">
+            <span class="detail-label">{{ field.label }}</span>
+            <Tag v-if="field.isTag" :value="field.value" :severity="getSeverity(field.value)" class="!text-[10px] !font-bold px-3 py-1.5 !rounded-md tracking-wide" />
+            <span v-else :class="['detail-value', field.mono ? 'detail-value-mono' : '']">{{ field.value }}</span>
           </div>
         </div>
       </div>

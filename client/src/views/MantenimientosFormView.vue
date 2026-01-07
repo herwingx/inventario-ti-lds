@@ -11,12 +11,12 @@ import MantenimientosService from '../services/MantenimientosService'
 import EquiposService from '../services/EquiposService'
 import CatalogosService from '../services/CatalogosService'
 
-import Button from 'primevue/button'
+import { Check, X, Save, Info, List } from 'lucide-vue-next'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
-import Calendar from 'primevue/calendar'
+import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
-import Dropdown from 'primevue/dropdown' // Select
+import Select from 'primevue/select'
 import Skeleton from 'primevue/skeleton'
 import Fluid from 'primevue/fluid'
 
@@ -193,13 +193,15 @@ const goBack = () => {
         <!-- Form Container -->
         <div v-else class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 md:p-8 border border-gray-200 dark:border-dark-border transition-colors duration-300">
             
-            <!-- Header -->
-            <div class="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-dark-border pb-4">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-100 dark:border-dark-border pb-4 gap-4">
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ formTitle }}</h2>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Registre los detalles del servicio técnico o mantenimiento.</p>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Registre los detalles del servicio técnico o mantenimiento</p>
                 </div>
-                <Button icon="pi pi-times" text rounded severity="secondary" @click="goBack" class="!w-10 !h-10 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" />
+                <button @click="goBack" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                    <X :size="20" />
+                    <span>Cancelar</span>
+                </button>
             </div>
 
             <!-- Form Body -->
@@ -209,14 +211,14 @@ const goBack = () => {
                     <!-- Section: General -->
                     <div class="col-span-1 md:col-span-2">
                         <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                            <i class="pi pi-info-circle text-primary"></i> Información General
+                            <Info :size="20" class="text-primary" /> Información General
                         </h3>
                     </div>
 
                     <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="flex flex-col gap-2">
                             <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Equipo *</label>
-                            <Dropdown 
+                            <Select 
                                 v-model="mantenimiento.id_equipo" 
                                 :options="equipos" 
                                 optionLabel="label" 
@@ -228,7 +230,7 @@ const goBack = () => {
                         </div>
                         <div class="flex flex-col gap-2">
                              <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Estado del Servicio *</label>
-                             <Dropdown 
+                             <Select 
                                 v-model="mantenimiento.id_status" 
                                 :options="statusList" 
                                 optionLabel="nombre_status" 
@@ -241,12 +243,12 @@ const goBack = () => {
 
                     <div class="flex flex-col gap-2">
                         <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Fecha Inicio *</label>
-                        <Calendar v-model="mantenimiento.fecha_inicio" dateFormat="yy-mm-dd" showIcon class="!w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
+                        <DatePicker v-model="mantenimiento.fecha_inicio" dateFormat="yy-mm-dd" showIcon iconDisplay="input" class="!w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Fecha Fin</label>
-                        <Calendar v-model="mantenimiento.fecha_fin" dateFormat="yy-mm-dd" showIcon placeholder="En proceso" class="!w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
+                        <DatePicker v-model="mantenimiento.fecha_fin" dateFormat="yy-mm-dd" showIcon iconDisplay="input" placeholder="En proceso" class="!w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
                     </div>
 
                     <!-- Divider -->
@@ -255,7 +257,7 @@ const goBack = () => {
                     <!-- Section: Detalles -->
                     <div class="col-span-1 md:col-span-2">
                         <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                            <i class="pi pi-list text-primary"></i> Detalles Técnicos
+                            <List :size="20" class="text-primary" /> Detalles Técnicos
                         </h3>
                     </div>
 
@@ -283,9 +285,16 @@ const goBack = () => {
             </Fluid>
 
             <!-- Footer Actions -->
-            <div class="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-dark-border">
-                <Button label="Cancelar" icon="pi pi-times" text severity="secondary" @click="goBack" class="!px-6" />
-                <Button label="Guardar Registro" icon="pi pi-save" iconPos="right" :loading="saving" @click="save" class="!bg-primary !border-none hover:!bg-primary-hover !px-8 !py-3 !rounded-lg !font-bold shadow-lg shadow-primary/20" />
+            <div class="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-100 dark:border-dark-border">
+                <button type="button" @click="goBack" class="btn-secondary">
+                    <X :size="18" />
+                    Cancelar
+                </button>
+                <button type="button" @click="save" class="btn-primary" :disabled="saving">
+                    <Check v-if="!saving" :size="18" />
+                    <i v-else class="pi pi-spin pi-spinner text-lg"></i>
+                    <span>{{ isEditing ? 'Guardar Cambios' : 'Registrar Servicio' }}</span>
+                </button>
             </div>
 
         </div>
