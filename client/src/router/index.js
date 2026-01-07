@@ -147,6 +147,25 @@ const routes = [
         component: () => import('../views/MantenimientosFormView.vue'),
         meta: { title: 'Editar Mantenimiento' }
       },
+      // Documentación
+      {
+        path: 'documentacion',
+        name: 'documentacion',
+        component: () => import('../views/DocumentacionView.vue'),
+        meta: { title: 'Documentación' }
+      },
+      {
+        path: 'documentacion/nuevo',
+        name: 'documentacion-nuevo',
+        component: () => import('../views/DocumentacionFormView.vue'),
+        meta: { title: 'Nuevo Documento' }
+      },
+      {
+        path: 'documentacion/:id/editar',
+        name: 'documentacion-editar',
+        component: () => import('../views/DocumentacionFormView.vue'),
+        meta: { title: 'Editar Documento' }
+      },
       {
         path: 'direcciones-ip',
         name: 'direcciones-ip',
