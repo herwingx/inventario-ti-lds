@@ -111,6 +111,24 @@ const routes = [
         component: () => import('../views/DireccionesIpDetailView.vue'),
         meta: { title: 'Detalle de Dirección IP' }
       },
+      {
+        path: 'asignaciones',
+        name: 'asignaciones',
+        component: () => import('../views/AsignacionesView.vue'),
+        meta: { title: 'Asignaciones' }
+      },
+      {
+        path: 'asignaciones/nuevo',
+        name: 'asignaciones-nuevo',
+        component: () => import('../views/AsignacionesFormView.vue'),
+        meta: { title: 'Registrar Asignación' }
+      },
+      {
+        path: 'asignaciones/:id',
+        name: 'asignaciones-detalle',
+        component: () => import('../views/AsignacionesDetailView.vue'),
+        meta: { title: 'Detalle de Asignación' }
+      },
       // TODO: Agregar más rutas según se migren las vistas
     ]
   },
