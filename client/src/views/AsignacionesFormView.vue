@@ -15,6 +15,7 @@ import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import RadioButton from 'primevue/radiobutton'
 import MultiSelect from 'primevue/multiselect'
+import Skeleton from 'primevue/skeleton'
 
 const router = useRouter()
 const toast = useToast()
@@ -182,7 +183,20 @@ const handleSubmit = async () => {
             <p class="text-gray-500">Asigne equipos a empleados, sucursales o áreas.</p>
         </div>
 
-        <form @submit.prevent="handleSubmit" class="space-y-6">
+        <div v-if="loading" class="space-y-6">
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Skeleton height="3rem" />
+                <Skeleton height="3rem" />
+            </div>
+            <Skeleton height="8rem" />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Skeleton height="3rem" />
+                <Skeleton height="3rem" />
+            </div>
+            <Skeleton height="5rem" />
+        </div>
+
+        <form v-else @submit.prevent="handleSubmit" class="space-y-6">
             
             <!-- Equipo y Fecha -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
