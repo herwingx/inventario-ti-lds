@@ -130,6 +130,24 @@ const routes = [
         meta: { title: 'Detalle de Sucursal' }
       },
       {
+        path: 'mantenimientos',
+        name: 'mantenimientos',
+        component: () => import('../views/MantenimientosView.vue'),
+        meta: { title: 'Mantenimientos' }
+      },
+      {
+        path: 'mantenimientos/nuevo',
+        name: 'mantenimientos-nuevo',
+        component: () => import('../views/MantenimientosFormView.vue'),
+        meta: { title: 'Nuevo Mantenimiento' }
+      },
+      {
+        path: 'mantenimientos/:id/editar',
+        name: 'mantenimientos-editar',
+        component: () => import('../views/MantenimientosFormView.vue'),
+        meta: { title: 'Editar Mantenimiento' }
+      },
+      {
         path: 'direcciones-ip',
         name: 'direcciones-ip',
         component: () => import('../views/DireccionesIpView.vue'),
