@@ -129,6 +129,30 @@ const routes = [
         component: () => import('../views/AsignacionesDetailView.vue'),
         meta: { title: 'Detalle de Asignación' }
       },
+      {
+        path: 'correos',
+        name: 'correos',
+        component: () => import('../views/CorreosView.vue'),
+        meta: { title: 'Gestión de Correos' }
+      },
+      {
+        path: 'correos/nuevo',
+        name: 'correos-nuevo',
+        component: () => import('../views/CorreosFormView.vue'),
+        meta: { title: 'Registrar Cuenta de Correo' }
+      },
+      {
+        path: 'correos/editar/:id',
+        name: 'correos-editar',
+        component: () => import('../views/CorreosFormView.vue'),
+        meta: { title: 'Editar Cuenta de Correo' }
+      },
+      {
+        path: 'correos/:id',
+        name: 'correos-detalle',
+        component: () => import('../views/CorreosDetailView.vue'),
+        meta: { title: 'Detalle de Cuenta' }
+      },
       // TODO: Agregar más rutas según se migren las vistas
     ]
   },
