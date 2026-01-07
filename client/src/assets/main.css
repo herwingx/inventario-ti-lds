@@ -1,0 +1,516 @@
+/* PrimeVue Icons */
+@import 'primeicons/primeicons.css';
+
+/* Fonts loaded in index.html for better performance */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply font-sans antialiased font-medium;
+    @apply bg-light-bg text-light-text;
+    @apply dark:bg-dark-bg dark:text-dark-text;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Scrollbar personalizado */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-light-border dark:bg-dark-border;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/50 hover:bg-primary;
+    border-radius: 4px;
+  }
+}
+
+/* ========================================
+   COMPONENT STYLES
+   ======================================== */
+@layer components {
+
+  /* Cards base */
+  .card {
+    @apply bg-light-card dark:bg-dark-card;
+    @apply border border-light-border dark:border-dark-border;
+    @apply rounded-xl shadow-card;
+    @apply transition-all duration-300;
+  }
+
+  .card:hover {
+    @apply shadow-card-hover;
+  }
+
+  /* Quick Access Cards */
+  .quick-access-card {
+    @apply rounded-xl p-4 cursor-pointer;
+    @apply transform transition-all duration-300;
+    @apply hover:-translate-y-1 hover:shadow-card-hover;
+  }
+
+  /* Stat Widget Cards */
+  .stat-card {
+    @apply card p-4;
+    @apply flex items-center gap-4;
+  }
+
+  .stat-card-icon {
+    @apply w-14 h-14 rounded-xl flex items-center justify-center;
+    @apply text-2xl;
+  }
+
+  /* Sidebar styles */
+  .sidebar {
+    @apply fixed left-0 top-0 h-screen;
+    @apply transition-all duration-300 ease-in-out;
+    @apply z-50 shadow-sidebar;
+  }
+
+  .sidebar-expanded {
+    @apply w-64;
+  }
+
+  .sidebar-collapsed {
+    @apply w-20;
+    overflow: visible !important;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3;
+    @apply text-light-muted dark:text-gray-400;
+
+    /* Spacing & Shape updates for the "flush right" look */
+    @apply ml-3 mr-0 my-1;
+    @apply rounded-l-xl rounded-r-none;
+
+    @apply relative overflow-hidden;
+    @apply transition-all duration-200;
+    @apply cursor-pointer;
+  }
+
+  /* Expanded Gradient Effect (Right to Left) */
+  .sidebar-item:hover,
+  .sidebar-item.active {
+    @apply bg-gradient-to-l from-primary/20 to-transparent;
+    @apply text-primary dark:text-white;
+  }
+
+  /* Reset background for collapsed state to handle specific override */
+  .sidebar-collapsed .sidebar-item {
+    @apply justify-center px-0 mx-0 rounded-none;
+    background: transparent;
+    /* Reset gradient */
+  }
+
+  /* Collapsed Solid Fill Effect */
+  .sidebar-collapsed .sidebar-item:hover,
+  .sidebar-collapsed .sidebar-item.active {
+    @apply bg-primary text-white;
+    /* Solid accented color */
+  }
+
+  /* THE ACCENT BAR */
+  .sidebar-item::before {
+    content: '';
+    @apply absolute right-0 top-0 bottom-0;
+    @apply w-1 bg-primary;
+    @apply opacity-0 transition-opacity duration-200;
+  }
+
+  /* Show accent bar only on expanded state if we want solid block on collapsed? 
+     User said "collapsed is completely the color of the border". 
+     If it's solid bg, the sidebar bar might be redundant or invisible if same color. 
+     Let's keep it for expanded, maybe hide for collapsed if full fill looks better.
+  */
+  .sidebar-item:hover::before,
+  .sidebar-item.active::before {
+    @apply opacity-100;
+  }
+
+  .sidebar-collapsed .sidebar-item::before {
+    display: none;
+    /* Hide distinct accent bar in collapsed mode since the whole item is the accent color */
+  }
+
+  .sidebar-submenu {
+    @apply ml-4 overflow-hidden;
+    @apply transition-all duration-300;
+  }
+
+  /* --- SUBMENU ITEM OVERRIDES --- */
+  /* Remove background, specific text color, remove icon */
+
+  .sidebar-submenu .sidebar-item:hover,
+  .sidebar-submenu .sidebar-item.active {
+    background: transparent !important;
+    @apply text-primary dark:text-white !important;
+  }
+
+  /* Hide accent bar for submenu */
+  .sidebar-submenu .sidebar-item::before {
+    display: none !important;
+  }
+
+  /* Hide Icon in submenu as requested */
+  .sidebar-submenu .sidebar-item i {
+    display: none !important;
+  }
+
+  /* Header styles - mismo color que sidebar */
+  .header {
+    @apply fixed top-0 right-0 h-[5rem];
+    @apply bg-white dark:bg-[#2f363e];
+    @apply border-b border-light-border dark:border-dark-border;
+    @apply flex items-center justify-between px-6;
+    @apply z-40;
+    @apply transition-all duration-300;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-hover;
+    @apply text-white font-medium;
+    @apply px-4 py-2 rounded-lg;
+    @apply transition-all duration-200;
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-success/20 text-success;
+  }
+
+  .badge-warning {
+    @apply bg-warning/20 text-warning;
+  }
+
+  .badge-danger {
+    @apply bg-danger/20 text-danger;
+  }
+
+  .badge-info {
+    @apply bg-info/20 text-info;
+  }
+}
+
+/* ========================================
+   UTILITY STYLES
+   ======================================== */
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-primary-hover;
+  }
+
+  /* Glassmorphism effect */
+  .glass {
+    @apply backdrop-blur-md bg-white/10;
+    @apply border border-white/20;
+  }
+
+  .dark .glass {
+    @apply bg-dark-card/80;
+    @apply border-dark-border/50;
+  }
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.slide-enter-from {
+  transform: translateX(-10px);
+  opacity: 0;
+}
+
+.slide-leave-to {
+  transform: translateX(10px);
+  opacity: 0;
+}
+
+/* Skeleton loading */
+.skeleton {
+  @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+}
+
+/* ========================================
+   GLOBAL CUSTOM TABLE STYLES
+   ======================================== */
+
+/* --- Custom Table Variables --- */
+.custom-table {
+  /* Header Variables */
+  --p-datatable-header-background: transparent;
+  --p-datatable-header-border-color: transparent;
+  --p-datatable-header-cell-background: transparent;
+  --p-datatable-header-cell-color: #9ca3af;
+  /* text-gray-400 - más sutil */
+  --p-datatable-header-cell-border-color: rgba(229, 231, 235, 0.5);
+  /* border-gray-200 - más visible */
+
+  /* Body Variables */
+  --p-datatable-body-cell-border-color: rgba(243, 244, 246, 0.097);
+  /* border-gray-100 */
+  --p-datatable-row-hover-background: lab(65.76% -44.61 4.14 / 0.05);
+  /* Primary tint */
+  --p-datatable-row-background: transparent;
+  /* Paginator Variables */
+  --p-paginator-background: transparent;
+  --p-paginator-color: #6b7280;
+  --p-paginator-border-color: transparent;
+  --p-paginator-item-border-radius: 6px;
+  --p-paginator-item-width: 2rem;
+  --p-paginator-item-height: 2rem;
+}
+
+/* Dark Mode Variables Override */
+:global(.dark) .custom-table {
+  --p-datatable-header-cell-color: #6b7280;
+  /* text-gray-500 - más sutil en dark */
+  --p-datatable-header-cell-border-color: rgba(75, 85, 99, 0.5);
+  --p-datatable-body-cell-border-color: rgba(255, 255, 255, 0.05);
+  /* Very subtle separator */
+
+  /* Paginator Dark */
+  --p-paginator-color: #b0b3b8;
+}
+
+/* Body Styles */
+.custom-table .p-datatable-tbody>tr {
+  background-color: var(--p-datatable-row-background);
+  color: inherit;
+  transition: background-color 0.2s;
+}
+
+.custom-table .p-datatable-tbody>tr:not(:last-child)>td {
+  border-bottom: 1px solid var(--p-datatable-body-cell-border-color);
+}
+
+.custom-table .p-datatable-tbody>tr:last-child>td {
+  border-bottom: none !important;
+}
+
+/* Header Text Styles - Sutiles y discretos */
+.custom-table .p-datatable-thead>tr>th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  padding: 0.75rem 0.5rem;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--p-datatable-header-cell-border-color);
+  background: var(--p-datatable-header-cell-background);
+  color: var(--p-datatable-header-cell-color);
+  text-align: center;
+}
+
+/* Body Cell Styles - Datos destacados */
+.custom-table .p-datatable-tbody>tr>td {
+  padding: 1rem 0.5rem;
+}
+
+/* Paginator Customization specific overrides (layout) */
+.p-paginator {
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding: 0;
+}
+
+.p-paginator-page,
+.p-paginator-next,
+.p-paginator-prev,
+.p-paginator-first,
+.p-paginator-last {
+  font-size: 0.875rem;
+}
+
+/* Highlight / Active State */
+.p-paginator-page.p-highlight {
+  background-color: #f3f4f6;
+  color: #13B497;
+  border: 1px solid #13B497;
+}
+
+.dark .p-paginator-page.p-highlight {
+  background-color: #24292d;
+  color: #1ea97c;
+  border: 1px solid #1ea97c;
+}
+
+.p-datatable-paginator-bottom {
+  border: none !important;
+}
+
+/* --- Select/Dropdown Overrides --- */
+.custom-select .p-select-label {
+  padding: 0.5rem 0.75rem;
+}
+
+.dark .custom-select .p-select-label {
+  color: white !important;
+}
+
+/* Dropdown Icon color */
+.dark .custom-select .p-select-dropdown {
+  color: #9ca3af !important;
+}
+
+/* Tags Colors Overrides (Global) */
+.p-tag-success {
+  background-color: #059669 !important;
+  color: #ffffff !important;
+}
+
+.p-tag-warn {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+}
+
+.p-tag-danger {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+.p-tag-contrast {
+  background-color: #4b5563 !important;
+  color: #ffffff !important;
+}
+
+.dark .p-tag-success {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+}
+
+.dark .p-tag-warn {
+  background-color: #f59e0b !important;
+  color: #000000 !important;
+}
+
+.dark .p-tag-danger {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+.dark .p-tag-contrast {
+  background-color: #6b7280 !important;
+  color: #ffffff !important;
+}
+
+/* Global Input Focus Override */
+.p-inputtext:focus {
+  box-shadow: none !important;
+  border-color: #13B497 !important;
+}
+
+/* ========================================
+   PRIMEVUE SELECT / DROPDOWN CUSTOMIZATION
+   ======================================== */
+
+/* 1. Dropdown Overlay Panel (The floating box) */
+.p-select-overlay {
+  @apply !bg-white;
+  @apply !border !border-gray-200;
+  @apply !shadow-xl;
+}
+
+.dark .p-select-overlay {
+  @apply !bg-dark-card;
+  @apply !border-dark-border;
+}
+
+/* 2. Options List */
+.p-select-list {
+  @apply !bg-transparent;
+  @apply !py-1;
+}
+
+.p-select-option {
+  @apply !text-gray-700;
+  @apply !transition-colors !duration-150;
+}
+
+.dark .p-select-option {
+  @apply !text-gray-200;
+}
+
+/* Hover state for options */
+.p-select-option:not(.p-disabled).p-focus {
+  @apply !bg-gray-100;
+  @apply !text-primary;
+}
+
+.dark .p-select-option:not(.p-disabled).p-focus {
+  @apply !bg-white/5;
+  @apply !text-primary;
+}
+
+.p-select-option.p-select-option-selected {
+  @apply !bg-primary/10;
+  @apply !text-primary !font-bold;
+}
+
+.dark .p-select-option.p-select-option-selected {
+  @apply !bg-primary/20;
+}
+
+/* 3. Dropdown Header (Search Area) */
+.p-select-header {
+  @apply !bg-gray-50;
+  @apply !border-b !border-gray-200;
+  @apply !p-2;
+}
+
+.dark .p-select-header {
+  @apply !bg-dark-card;
+  @apply !border-dark-border;
+}
+
+/* 4. Search Input inside Dropdown */
+/* Light Mode */
+.p-select-overlay .p-select-header .p-inputtext {
+  @apply !bg-white !border-gray-300 !text-gray-900;
+}
+
+/* Dark Mode - Explicit Selector */
+.dark .p-select-overlay .p-select-header .p-inputtext {
+  @apply !bg-dark-bg !border-dark-border !text-white;
+}
+
+/* Focus State */
+.p-select-overlay .p-select-header .p-inputtext:focus {
+  @apply !border-primary;
+  @apply ring-1 ring-primary;
+  box-shadow: none !important;
+}
