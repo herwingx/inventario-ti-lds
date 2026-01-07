@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
 import MantenimientosService from '../services/MantenimientosService'
 import EquiposService from '../services/EquiposService'
 import CatalogosService from '../services/CatalogosService'
@@ -11,15 +12,17 @@ import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Calendar from 'primevue/calendar'
 import InputNumber from 'primevue/inputnumber'
-import Dropdown from 'primevue/dropdown'
+import Dropdown from 'primevue/dropdown' // Select
 import Skeleton from 'primevue/skeleton'
-import Card from 'primevue/card'
+import Fluid from 'primevue/fluid'
 
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
+const confirm = useConfirm()
 
 const isEditing = computed(() => !!route.params.id)
+const formTitle = computed(() => isEditing.value ? `Editar Servicio #${route.params.id}` : 'Registrar Nuevo Servicio')
 const loading = ref(false)
 const saving = ref(false)
 
@@ -50,8 +53,6 @@ onMounted(async () => {
         } else {
             // Predeterminar fecha inicio hoy
             mantenimiento.value.fecha_inicio = new Date()
-            // Predeterminar estado "En Proceso" si existe, o el primero
-            // Asumiremos IDs estándar o buscaremos por nombre
              const enProceso = statusList.value.find(s => s.nombre_status.toLowerCase().includes('proceso'))
              if (enProceso) mantenimiento.value.id_status = enProceso.id
         }
@@ -68,9 +69,9 @@ const loadEquipos = async () => {
         const data = await EquiposService.getAll()
         // Mapear para dropdown
         equipos.value = data.map(e => ({
-            label: `${e.nombre_equipo} - ${e.numero_serie}`,
+            label: `${e.nombre_equipo} (${e.numero_serie})`,
             value: e.id,
-            ...e // Guardar todo por si acaso
+            ...e 
         }))
     } catch (error) {
         console.error('Error loading equipos', error)
@@ -82,7 +83,6 @@ const loadStatus = async () => {
         statusList.value = await CatalogosService.getStatuses()
     } catch (error) {
         console.error('Error loading status', error)
-        // Fallback básico si falla API status
         statusList.value = [
             { id: 1, nombre_status: 'Activo' },
             { id: 2, nombre_status: 'Inactivo' }, 
@@ -93,7 +93,6 @@ const loadStatus = async () => {
 const loadMantenimiento = async (id) => {
     try {
         const data = await MantenimientosService.getById(id)
-        // Convertir fechas string a Date object para el Calendar
         mantenimiento.value = {
             ...data,
             fecha_inicio: data.fecha_inicio ? new Date(data.fecha_inicio) : null,
@@ -106,7 +105,7 @@ const loadMantenimiento = async (id) => {
 }
 
 const save = async () => {
-    // Validaciones básicas
+    // Validaciones básicas manuales (puedes usar vuelidate si lo prefieres como en Equipos)
     if (!mantenimiento.value.id_equipo) {
         toast.add({ severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un equipo', life: 3000 })
         return
@@ -116,7 +115,6 @@ const save = async () => {
         return
     }
     
-    // Validar orden fechas
     if (mantenimiento.value.fecha_fin && mantenimiento.value.fecha_inicio > mantenimiento.value.fecha_fin) {
          toast.add({ severity: 'error', summary: 'Error', detail: 'La fecha de fin no puede ser anterior al inicio', life: 3000 })
          return
@@ -124,7 +122,6 @@ const save = async () => {
 
     saving.value = true
     try {
-        // Formatear fechas a YYYY-MM-DD para el backend
         const payload = {
             ...mantenimiento.value,
             fecha_inicio: formatDateForBackend(mantenimiento.value.fecha_inicio),
@@ -138,7 +135,12 @@ const save = async () => {
             await MantenimientosService.create(payload)
             toast.add({ severity: 'success', summary: 'Éxito', detail: 'Mantenimiento registrado', life: 3000 })
         }
-        router.push({ name: 'mantenimientos' })
+        
+        // Delay para feedback visual
+        setTimeout(() => {
+             router.push({ name: 'mantenimientos' })
+        }, 1000)
+
     } catch (error) {
         console.error(error)
         toast.add({ severity: 'error', summary: 'Error', detail: 'Falló el guardado', life: 3000 })
@@ -149,101 +151,140 @@ const save = async () => {
 
 const formatDateForBackend = (date) => {
     if (!date) return null
-    // Ajustar a YYYY-MM-DD local
     const offset = date.getTimezoneOffset()
     const localDate = new Date(date.getTime() - (offset*60*1000))
     return localDate.toISOString().split('T')[0]
 }
 
 const goBack = () => {
-    router.back()
+    confirm.require({
+        message: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
+        header: 'Confirmar Salida',
+        icon: 'pi pi-info-circle',
+        rejectLabel: 'Continuar Editando',
+        acceptLabel: 'Salir sin Guardar',
+        rejectClass: 'p-button-secondary p-button-text',
+        acceptClass: 'p-button-warning !bg-orange-500 !border-none hover:!bg-orange-600',
+        accept: () => {
+            router.push({ name: 'mantenimientos' })
+        }
+    })
 }
 </script>
 
 <template>
-    <div class="max-w-4xl mx-auto animate-fade-in-up">
-        <!-- Header -->
-        <div class="flex items-center gap-3 mb-6">
-            <Button icon="pi pi-arrow-left" text rounded class="!text-gray-600 dark:!text-gray-400" @click="goBack" />
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                {{ isEditing ? 'Editar Servicio' : 'Nuevo Servicio' }}
-            </h1>
-        </div>
-
-        <div v-if="loading" class="space-y-4">
-            <Skeleton height="30rem" class="rounded-xl" />
-        </div>
-
-        <Card v-else class="!rounded-xl shadow-lg border border-gray-100 dark:border-dark-border overflow-hidden">
-            <template #content>
-                <form @submit.prevent="save" class="grid grid-cols-1 md:grid-cols-2 gap-6 p-2">
-                    
-                    <!-- Equipo -->
-                    <div class="col-span-1 md:col-span-2">
-                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Equipo *</label>
-                         <Dropdown 
-                            v-model="mantenimiento.id_equipo" 
-                            :options="equipos" 
-                            optionLabel="label" 
-                            optionValue="value" 
-                            filter 
-                            placeholder="Seleccione un equipo" 
-                            class="w-full" 
-                            :class="{ 'p-invalid': !mantenimiento.id_equipo && saving }"
-                         />
-                    </div>
-
-                    <!-- Fechas -->
-                    <div class="col-span-1">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha Inicio *</label>
-                        <Calendar v-model="mantenimiento.fecha_inicio" dateFormat="yy-mm-dd" showIcon class="w-full" :class="{ 'p-invalid': !mantenimiento.fecha_inicio && saving }" />
-                    </div>
-                    <div class="col-span-1">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha Fin</label>
-                        <Calendar v-model="mantenimiento.fecha_fin" dateFormat="yy-mm-dd" showIcon class="w-full" placeholder="En proceso..." />
-                    </div>
-
-                    <!-- Detalles -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diagnóstico</label>
-                        <Textarea v-model="mantenimiento.diagnostico" rows="4" class="w-full" placeholder="Descripción del problema..." />
-                    </div>
-                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Solución / Trabajo realizado</label>
-                        <Textarea v-model="mantenimiento.solucion" rows="4" class="w-full" placeholder="Descripción de la solución..." />
-                    </div>
-
-                    <!-- Costo y Proveedor -->
-                    <div>
-                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Costo ($)</label>
-                         <InputNumber v-model="mantenimiento.costo" mode="currency" currency="MXN" locale="es-MX" class="w-full" placeholder="$0.00" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Proveedor</label>
-                        <InputText v-model="mantenimiento.proveedor" class="w-full" placeholder="Ej. HP Enterprise, Interno..." />
-                    </div>
-
-                    <!-- Estado -->
-                    <div class="col-span-1 md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado del Servicio *</label>
-                         <Dropdown 
-                            v-model="mantenimiento.id_status" 
-                            :options="statusList" 
-                            optionLabel="nombre_status" 
-                            optionValue="id" 
-                            placeholder="Seleccione estado actual" 
-                            class="w-full" 
-                        />
-                    </div>
-                </form>
-            </template>
-            <template #footer>
-                <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <Button label="Cancelar" icon="pi pi-times" text severity="secondary" @click="goBack" />
-                    <Button label="Guardar Registro" icon="pi pi-save" :loading="saving" @click="save" />
+    <div class="animate-fade-in-up max-w-7xl mx-auto">
+        
+        <!-- Loading -->
+        <div v-if="loading" class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-8 border border-gray-200 dark:border-dark-border">
+            <div class="flex flex-col gap-6">
+                <Skeleton width="10rem" height="2rem" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Skeleton height="3rem" />
+                    <Skeleton height="3rem" />
                 </div>
-            </template>
-        </Card>
+            </div>
+        </div>
+
+        <!-- Form Container -->
+        <div v-else class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 md:p-8 border border-gray-200 dark:border-dark-border transition-colors duration-300">
+            
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-dark-border pb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ formTitle }}</h2>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Registre los detalles del servicio técnico o mantenimiento.</p>
+                </div>
+                <Button icon="pi pi-times" text rounded severity="secondary" @click="goBack" class="!w-10 !h-10 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" />
+            </div>
+
+            <!-- Form Body -->
+            <Fluid>
+                <form @submit.prevent="save" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
+                    <!-- Section: General -->
+                    <div class="col-span-1 md:col-span-2">
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                            <i class="pi pi-info-circle text-primary"></i> Información General
+                        </h3>
+                    </div>
+
+                    <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Equipo *</label>
+                            <Dropdown 
+                                v-model="mantenimiento.id_equipo" 
+                                :options="equipos" 
+                                optionLabel="label" 
+                                optionValue="value" 
+                                filter 
+                                placeholder="Seleccione equipo..." 
+                                class="!w-full"
+                            />
+                        </div>
+                        <div class="flex flex-col gap-2">
+                             <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Estado del Servicio *</label>
+                             <Dropdown 
+                                v-model="mantenimiento.id_status" 
+                                :options="statusList" 
+                                optionLabel="nombre_status" 
+                                optionValue="id" 
+                                placeholder="Estado actual" 
+                                class="!w-full"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Fecha Inicio *</label>
+                        <Calendar v-model="mantenimiento.fecha_inicio" dateFormat="yy-mm-dd" showIcon class="!w-full" />
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Fecha Fin</label>
+                        <Calendar v-model="mantenimiento.fecha_fin" dateFormat="yy-mm-dd" showIcon placeholder="En proceso" class="!w-full" />
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="col-span-1 md:col-span-2 border-t border-gray-100 dark:border-gray-700 my-2"></div>
+
+                    <!-- Section: Detalles -->
+                    <div class="col-span-1 md:col-span-2">
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                            <i class="pi pi-list text-primary"></i> Detalles Técnicos
+                        </h3>
+                    </div>
+
+                    <div class="col-span-1 md:col-span-2 flex flex-col gap-2">
+                        <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Diagnóstico / Falla Reportada</label>
+                        <Textarea v-model="mantenimiento.diagnostico" rows="3" class="!w-full" placeholder="Describa el problema o motivo del servicio..." />
+                    </div>
+
+                     <div class="col-span-1 md:col-span-2 flex flex-col gap-2">
+                        <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Solución / Trabajo Realizado</label>
+                        <Textarea v-model="mantenimiento.solucion" rows="3" class="!w-full" placeholder="Describa la solución aplicada..." />
+                    </div>
+                    
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Costo ($)</label>
+                        <InputNumber v-model="mantenimiento.costo" mode="currency" currency="MXN" locale="es-MX" class="!w-full" placeholder="$0.00" />
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Proveedor</label>
+                        <InputText v-model="mantenimiento.proveedor" class="!w-full" placeholder="Ej. Interno, HP Support..." />
+                    </div>
+
+                </form>
+            </Fluid>
+
+            <!-- Footer Actions -->
+            <div class="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-dark-border">
+                <Button label="Cancelar" icon="pi pi-times" text severity="secondary" @click="goBack" class="!px-6" />
+                <Button label="Guardar Registro" icon="pi pi-save" iconPos="right" :loading="saving" @click="save" class="!bg-primary !border-none hover:!bg-primary-hover !px-8 !py-3 !rounded-lg !font-bold shadow-lg shadow-primary/20" />
+            </div>
+
+        </div>
     </div>
 </template>
 
