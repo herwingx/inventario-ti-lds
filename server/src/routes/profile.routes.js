@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Profile
+ * @description Define las rutas para la gestión del perfil del usuario autenticado.
+ */
 // src/routes/profile.routes.js
 // ! Rutas para el perfil del usuario autenticado
 const express = require('express');

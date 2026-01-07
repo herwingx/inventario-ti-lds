@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de historial de Mantenimientos.
+ * Permite visualizar y gestionar los servicios de mantenimiento (preventivo/correctivo) de los equipos.
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'

@@ -1,5 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+/**
+ * @fileoverview Configuración del Enrutador Principal.
+ * Define la estructura de navegación, rutas públicas/privadas y lógica de guardias de navegación.
+ */
 const routes = [
   {
     path: '/',

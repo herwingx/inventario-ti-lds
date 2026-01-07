@@ -510,6 +510,13 @@ app.use((err, req, res, next) => {
 
 Ver [README principal](../README.md#-contribuir) para guías de contribución.
 
+### Estándar de Documentación
+Este proyecto utiliza **JSDoc** para documentar la API y la lógica de negocio:
+- Módulos: `@module` y `@description`
+- Controladores: Descripción de inputs/outputs
+- Middleware: Explicación de lógica de seguridad
+
+
 ---
 
 ## 📄 Licencia

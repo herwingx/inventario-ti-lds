@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Empresas
+ * @description Define las rutas para la gestión de las empresas del ecosistema.
+ */
 // ! Rutas para la entidad Empresas
 
 const express = require('express');

@@ -8,7 +8,14 @@ const { query } = require('../config/db');
 // * Funciones controladoras para cada endpoint de tipos de sucursal
 // ===============================================================
 
-// * [GET] /api/tipos-sucursal - Trae todos los tipos de sucursal
+/**
+ * Obtiene el listado de todos los tipos de sucursal.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllTiposSucursal = async (req, res, next) => {
   try {
     // * Consulta SQL para traer todos los tipos de sucursal
@@ -23,7 +30,14 @@ const getAllTiposSucursal = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/tipos-sucursal/:id - Trae un tipo de sucursal específico por su ID
+/**
+ * Busca un tipo de sucursal específico por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getTiposSucursalById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -41,8 +55,14 @@ const getTiposSucursalById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/tipos-sucursal - Crea un nuevo tipo de sucursal
-// ? Si los tipos de sucursal son fijos, esta función podría estar restringida a admins
+/**
+ * Registra un nuevo tipo de sucursal.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createTiposSucursal = async (req, res, next) => {
   try {
     const { nombre_tipo, descripcion } = req.body;
@@ -72,7 +92,14 @@ const createTiposSucursal = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/tipos-sucursal/:id - Actualiza un tipo de sucursal por su ID
+/**
+ * Actualiza la información de un tipo de sucursal.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateTiposSucursal = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -114,7 +141,15 @@ const updateTiposSucursal = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/tipos-sucursal/:id - Elimina un tipo de sucursal por su ID
+/**
+ * Elimina un tipo de sucursal del sistema.
+ * Valida integridad referencial.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteTiposSucursal = async (req, res, next) => {
   try {
     const { id } = req.params;

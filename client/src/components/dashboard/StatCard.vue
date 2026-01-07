@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Tarjeta de Estadística.
+ * Muestra un valor numérico con título, subtítulo e icono, soportando animación de conteo.
+ */
 import { ref, watch, onMounted } from 'vue'
 import Skeleton from 'primevue/skeleton'
 

@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Asignaciones
+ * @description Define las rutas para la gestión de asignaciones de equipos a empleados o áreas.
+ */
 // src/routes/asignaciones.routes.js
 // Define las rutas HTTP para la entidad 'asignaciones'.
 

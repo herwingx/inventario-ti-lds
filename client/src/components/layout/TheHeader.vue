@@ -1,14 +1,25 @@
 <script setup>
+/**
+ * @fileoverview Header principal de la aplicación.
+ * Contiene el título de la página, control de Sidebar (móvil),
+ * toggle de tema (Claro/Oscuro) y menú de usuario.
+ */
 import { useThemeStore } from '../../stores/theme'
 import { useAuthStore } from '../../stores/auth'
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
 
 const props = defineProps({
+  /**
+   * Indica si el sidebar está colapsado (desktop).
+   */
   sidebarCollapsed: {
     type: Boolean,
     default: false
   },
+  /**
+   * Indica si la vista actual es en dispositivo móvil.
+   */
   isMobile: {
     type: Boolean,
     default: false

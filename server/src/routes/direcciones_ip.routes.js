@@ -1,3 +1,7 @@
+/**
+ * @module Routes/DireccionesIP
+ * @description Define las rutas para la gestión del inventario de direcciones IP.
+ */
 // src/routes/direccionesIp.routes.js
 // Define las rutas HTTP para la entidad 'direcciones_ip'.
 

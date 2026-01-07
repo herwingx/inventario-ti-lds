@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Barra Lateral de Navegación.
+ * Contiene el menú principal de la aplicación, soportando modo colapsado y móvil.
+ */
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 

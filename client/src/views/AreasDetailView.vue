@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de Detalle de Área.
+ * Muestra la información completa de un área específica, incluyendo su relación con la empresa y su estado.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

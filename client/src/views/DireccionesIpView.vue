@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de control de Direcciones IP.
+ * Gestiona el inventario de IPs, permitiendo filtrar por segmento, estado y disponibilidad.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'

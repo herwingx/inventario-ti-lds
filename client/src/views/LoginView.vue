@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * @fileoverview Vista de Inicio de Sesión.
+ * Componente principal para la autenticación de usuarios. Provee un formulario
+ * de login con validación básica y manejo de estado de carga.
+ */
 import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useToast } from 'primevue/usetoast'
@@ -16,6 +21,13 @@ const password = ref('')
 const rememberMe = ref(false)
 const loading = ref(false)
 
+/**
+ * Maneja el envío del formulario de login.
+ * 
+ * Valida que los campos no estén vacíos, activa el estado de carga
+ * y delega la lógica de autenticación al store. Muestra notificaciones
+ * de éxito o error según el resultado.
+ */
 const handleLogin = async () => {
   if (!username.value || !password.value) {
     toast.add({ severity: 'warn', summary: 'Atención', detail: 'Por favor ingrese usuario y contraseña', life: 3000 })

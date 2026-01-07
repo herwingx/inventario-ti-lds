@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * @fileoverview Vista Principal (Dashboard).
+ * Muestra un resumen general del sistema, incluyendo estadísticas clave,
+ * tarjetas de acceso rápido y la información del usuario actual.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'

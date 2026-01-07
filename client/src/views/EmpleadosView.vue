@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista del directorio de Empleados.
+ * Muestra el listado de personal, sus puestos y ubicaciones, con opciones de gestión.
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'

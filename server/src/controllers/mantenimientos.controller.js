@@ -6,24 +6,35 @@
 const { query } = require('../config/db'); // * Utilizo la función personalizada para consultas a la base de datos.
 
 // ===============================================================
-// * Función de ayuda para validar formato de fecha (YYYY-MM-DD) de forma segura (UTC)
-// * Devuelve true si el string coincide con el formato y es una fecha real válida.
+/**
+ * Valida si un string tiene formato de fecha YYYY-MM-DD válido.
+ *
+ * @param {string} dateString - Cadena de fecha a validar.
+ * @returns {boolean} True si el formato y la fecha son válidos.
+ */
 function isValidDate(dateString) {
-    // * Permito null/vacío si el campo no es obligatorio.
-    if (!dateString) return true;
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!regex.test(dateString)) return false;
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return false;
-    const [year, month, day] = dateString.split('-').map(Number);
-    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  // * Permito null/vacío si el campo no es obligatorio.
+  if (!dateString) return true;
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(dateString)) return false;
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return false;
+  const [year, month, day] = dateString.split('-').map(Number);
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
 // ===============================================================
 // * Funciones controladoras para cada endpoint de mantenimientos
 // ===============================================================
 
-// * [GET] /api/mantenimientos - Trae todos los mantenimientos con JOINs a equipos y status
+/**
+ * Obtiene el historial completo de mantenimientos.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllMantenimientos = async (req, res, next) => {
   try {
     // * Consulta SQL con JOINs para traer toda la info relevante de cada mantenimiento
@@ -56,7 +67,14 @@ const getAllMantenimientos = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/mantenimientos/:id - Trae un mantenimiento específico por su ID (con relaciones)
+/**
+ * Busca un registro de mantenimiento específico por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getMantenimientoById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -95,13 +113,21 @@ const getMantenimientoById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/mantenimientos - Crea un nuevo mantenimiento con validaciones
+/**
+ * Registra un nuevo mantenimiento para un equipo.
+ * Valida fechas, costos y referencias a equipos y status.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createMantenimiento = async (req, res, next) => {
   try {
     // * Extraigo los datos del body. id_equipo y fecha_inicio son obligatorios
     const {
-        id_equipo, fecha_inicio, fecha_fin, diagnostico, solucion,
-        costo, proveedor, id_status
+      id_equipo, fecha_inicio, fecha_fin, diagnostico, solucion,
+      costo, proveedor, id_status
     } = req.body;
     // * Validaciones de campos obligatorios y formato de fechas
     if (id_equipo === undefined || !fecha_inicio) {
@@ -167,14 +193,21 @@ const createMantenimiento = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/mantenimientos/:id - Actualiza un mantenimiento por su ID
+/**
+ * Actualiza los datos de un registro de mantenimiento.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateMantenimiento = async (req, res, next) => {
   try {
     // * Extraigo el ID y los datos a actualizar
     const { id } = req.params;
     const {
-        id_equipo, fecha_inicio, fecha_fin, diagnostico, solucion,
-        costo, proveedor, id_status
+      id_equipo, fecha_inicio, fecha_fin, diagnostico, solucion,
+      costo, proveedor, id_status
     } = req.body;
     // * Validar que al menos un campo sea enviado
     const updateFields = Object.keys(req.body);
@@ -266,7 +299,14 @@ const updateMantenimiento = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/mantenimientos/:id - Elimina un mantenimiento por su ID
+/**
+ * Elimina un registro de mantenimiento.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteMantenimiento = async (req, res, next) => {
   try {
     const { id } = req.params;

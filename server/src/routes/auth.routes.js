@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Auth
+ * @description Define las rutas para la autenticación de usuarios en la plataforma.
+ */
 // src/routes/auth.routes.js
 // * Este archivo define las rutas para la autenticación, como el login.
 

@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de Detalle de Sucursal.
+ * Muestra la información de una sucursal, su ubicación y empresa matriz.
+ */
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Tarjeta de Acceso Rápido.
+ * Componente visual para navegar rápidamente a secciones importantes del dashboard.
+ */
 defineProps({
   title: {
     type: String,

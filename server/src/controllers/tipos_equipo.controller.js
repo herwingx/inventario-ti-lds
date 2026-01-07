@@ -10,7 +10,14 @@ const { query } = require('../config/db'); // * Utilizo la función personalizad
 // * Funciones controladoras para cada endpoint de tipos de equipo
 // ===============================================================
 
-// * [GET] /api/tipos-equipo - Trae todos los tipos de equipo
+/**
+ * Obtiene el listado de todos los tipos de equipo disponibles.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllTiposEquipo = async (req, res, next) => {
   try {
     // * Consulta SQL para traer todos los tipos de equipo
@@ -24,7 +31,14 @@ const getAllTiposEquipo = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/tipos-equipo/:id - Trae un tipo de equipo específico por su ID
+/**
+ * Busca un tipo de equipo específico por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getTiposEquipoById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -43,7 +57,14 @@ const getTiposEquipoById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/tipos-equipo - Crea un nuevo tipo de equipo
+/**
+ * Registra un nuevo tipo de equipo.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createTiposEquipo = async (req, res, next) => {
   try {
     // * Extraigo los datos del body. nombre_tipo es obligatorio.
@@ -74,7 +95,14 @@ const createTiposEquipo = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/tipos-equipo/:id - Actualiza un tipo de equipo por su ID
+/**
+ * Actualiza la información de un tipo de equipo.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateTiposEquipo = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -110,7 +138,15 @@ const updateTiposEquipo = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/tipos-equipo/:id - Elimina un tipo de equipo por su ID
+/**
+ * Elimina un tipo de equipo del sistema.
+ * Valida integridad referencial.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteTiposEquipo = async (req, res, next) => {
   try {
     const { id } = req.params;

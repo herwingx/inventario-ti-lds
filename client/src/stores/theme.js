@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
+/**
+ * @fileoverview Store de Tema (UI).
+ * Controla el modo claro/oscuro de la interfaz, sincronizando con localStorage y preferencias del sistema.
+ */
 export const useThemeStore = defineStore('theme', () => {
   const isDark = ref(false)
 

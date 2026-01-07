@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Areas
+ * @description Define las rutas para la gestión de areas administrativas.
+ */
 // ! Rutas para la entidad Áreas
 
 const express = require('express');

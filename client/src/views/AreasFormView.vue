@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Formulario de Área (Crear/Editar).
+ * Permite registrar una nueva área o modificar una existente, validando campos obbligatorios.
+ */
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

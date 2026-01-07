@@ -1,3 +1,7 @@
+/**
+ * @module Routes/TiposEquipo
+ * @description Define las rutas para la gestión de tipos de hardware.
+ */
 // src/routes/tiposEquipo.routes.js
 // Define las rutas HTTP para la entidad 'tipos_equipo'.
 

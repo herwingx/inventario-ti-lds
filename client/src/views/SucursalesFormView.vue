@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Formulario de Sucursal (Crear/Editar).
+ * Gestiona el registro y ubicación física de las sucursales operativa.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

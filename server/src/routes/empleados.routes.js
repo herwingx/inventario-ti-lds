@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Empleados
+ * @description Define las rutas para la gestión del directoria de empleados.
+ */
 // src/routes/empleados.routes.js
 // Define las rutas HTTP para la entidad 'empleados'.
 

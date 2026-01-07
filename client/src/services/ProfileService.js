@@ -1,5 +1,8 @@
 // src/services/ProfileService.js
-// * Servicio para operaciones de perfil de usuario
+/**
+ * @fileoverview Servicio de Perfil de Usuario.
+ * Gestiona la obtención y actualización de datos del usuario autenticado.
+ */
 
 import api from './api'
 

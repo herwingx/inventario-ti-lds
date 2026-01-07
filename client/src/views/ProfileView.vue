@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * @fileoverview Vista de perfil de usuario.
+ * Permite visualizar información personal y editar el correo electrónico.
+ * También gestiona el cambio de contraseña de forma segura.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '../stores/auth'

@@ -2,6 +2,12 @@
 const { query } = require('../config/db');
 
 // * FUNCIONES DE VALIDACIÓN para mantener codigo limpio
+/**
+ * Valida si una cadena de texto tiene el formato de fecha YYYY-MM-DD.
+ * 
+ * @param {string} dateString - Fecha en formato string.
+ * @returns {boolean} True si el formato es válido.
+ */
 function isValidDate(dateString) {
     if (!dateString) return true;
     const regex = /^\d{4}-\d{2}-\d{2}$/;
@@ -14,7 +20,14 @@ function isValidDate(dateString) {
 
 // * FUNCIONES CONTROLADORAS para cada endoint de equipos
 
-// * [GET] /api/equipos
+/**
+ * Obtiene la lista completa de equipos con sus relaciones.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllEquipos = async (req, res, next) => {
     try {
         const sql = `
@@ -40,7 +53,14 @@ const getAllEquipos = async (req, res, next) => {
     }
 };
 
-// * [GET] /api/equipos/:id
+/**
+ * Busca un equipo específico por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getEquipoById = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -69,7 +89,14 @@ const getEquipoById = async (req, res, next) => {
     }
 };
 
-// * [POST] /api/equipos
+/**
+ * Crea un nuevo registro de equipo.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createEquipo = async (req, res, next) => {
     try {
         const {
@@ -119,8 +146,15 @@ const createEquipo = async (req, res, next) => {
     }
 };
 
-// * [PUT] /api/equipos/:id
-// * Actualiza un equipo. AHORA incluye validación para no cambiar el estado si está asignado o en mantenimiento.
+/**
+ * Actualiza los datos de un equipo existente.
+ * Incluye validación de reglas de negocio para impedir cambios de estado en equipos asignados.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateEquipo = async (req, res, next) => {
     const { id: equipoId } = req.params;
     const updateData = req.body;
@@ -199,7 +233,14 @@ const updateEquipo = async (req, res, next) => {
     }
 };
 
-// * [DELETE] /api/equipos/:id
+/**
+ * Elimina (físicamente) un equipo de la base de datos.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteEquipo = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -218,7 +259,15 @@ const deleteEquipo = async (req, res, next) => {
     }
 };
 
-// * [GET] /api/equipos/disponibles-componentes
+/**
+ * Obtiene equipos disponibles para ser asignados como componentes (e.g., Monitores, Teclados).
+ * Filtra equipos que ya tienen asignaciones activas.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getEquiposDisponiblesParaComponentes = async (req, res, next) => {
     try {
         // Primero, verificar qué tipos de equipo existen y cuántos están realmente disponibles
@@ -237,7 +286,7 @@ const getEquiposDisponiblesParaComponentes = async (req, res, next) => {
         `;
         const tiposResult = await query(tiposQuery);
         console.log('Herwing - Análisis de componentes en BD:', tiposResult);
-        
+
         // TEMPORAL: Mostrar TODOS los componentes disponibles (incluso con asignaciones)
         const allAvailableQuery = `
           SELECT

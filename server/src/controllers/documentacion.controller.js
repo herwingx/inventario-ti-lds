@@ -4,7 +4,14 @@ const { query } = require('../config/db');
 // * Controlador para Documentación
 // ===============================================================
 
-// * [GET] /api/documentacion - Obtener todos los documentos
+/**
+ * Obtiene el listado de todos los documentos ordenados por fecha de subida.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllDocumentos = async (req, res, next) => {
   try {
     const sql = `
@@ -29,7 +36,14 @@ const getAllDocumentos = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/documentacion/:id
+/**
+ * Busca un documento específico por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getDocumentoById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -58,7 +72,14 @@ const getDocumentoById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/documentacion
+/**
+ * Registra un nuevo documento en el sistema.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createDocumento = async (req, res, next) => {
   try {
     const { titulo, descripcion, tipo_documento, url_archivo, id_status } = req.body;
@@ -85,7 +106,14 @@ const createDocumento = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/documentacion/:id
+/**
+ * Actualiza la información de un documento existente.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateDocumento = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -109,7 +137,14 @@ const updateDocumento = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/documentacion/:id
+/**
+ * Elimina un documento del sistema.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteDocumento = async (req, res, next) => {
   try {
     const { id } = req.params;

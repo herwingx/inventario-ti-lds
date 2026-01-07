@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Tarjeta de Información de Usuario.
+ * Visualiza el perfil resumido del usuario actual y sus actividades recientes.
+ */
 import { useAuthStore } from '../../stores/auth'
 import Skeleton from 'primevue/skeleton'
 

@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de Detalle de Equipo.
+ * Provee una vista exhaustiva de las especificaciones de hardware, historial de asignaciones y mantenimientos de un equipo.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

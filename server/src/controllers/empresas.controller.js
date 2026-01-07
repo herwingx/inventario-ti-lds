@@ -5,7 +5,14 @@
 // * Importo la función query para ejecutar consultas a la base de datos personalizada.
 const { query } = require('../config/db');
 
-// * [GET] /api/empresas - Trae todas las empresas con información de status legible
+/**
+ * Obtiene el listado de todas las empresas registradas.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllEmpresas = async (req, res, next) => {
   try {
     const sql = `
@@ -28,7 +35,14 @@ const getAllEmpresas = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/empresas/:id - Trae una empresa específica por su ID (con status)
+/**
+ * Busca una empresa específica por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getEmpresaById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -58,7 +72,14 @@ const getEmpresaById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/empresas - Crea una nueva empresa
+/**
+ * Registra una nueva empresa en el sistema.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createEmpresa = async (req, res, next) => {
   try {
     const { nombre, id_status } = req.body;
@@ -104,7 +125,14 @@ const createEmpresa = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/empresas/:id - Actualiza una empresa por su ID
+/**
+ * Actualiza la información de una empresa existente.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateEmpresa = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -153,7 +181,15 @@ const updateEmpresa = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/empresas/:id - Elimina una empresa por su ID
+/**
+ * Elimina una empresa del sistema.
+ * Valida integridad referencial.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteEmpresa = async (req, res, next) => {
   try {
     const { id } = req.params;

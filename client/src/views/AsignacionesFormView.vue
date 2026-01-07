@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Formulario de Asignación (Crear/Editar).
+ * Gestiona la asignación de equipos a empleados, áreas o sucursales, incluyendo validaciones de equipos disponibles.
+ */
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

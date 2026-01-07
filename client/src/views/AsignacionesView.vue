@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * @fileoverview Vista principal de gestión de Asignaciones.
+ * Permite visualizar el historial y estado actual de asignaciones de equipos.
+ * Soporta finalizar asignaciones, ver detalles y crear nuevas.
+ */
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'
