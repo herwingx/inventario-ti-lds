@@ -91,7 +91,7 @@ const createEmpleado = async (req, res, next) => {
     const {
       numero_empleado, nombres, apellidos, email_personal,
       telefono, puesto, fecha_nacimiento, fecha_ingreso,
-      id_sucursal, id_area, id_status
+      id_empresa, id_area, id_status
     } = req.body;
     // * Validación de campos obligatorios (nombres y apellidos)
     if (!nombres || !apellidos) {
@@ -119,11 +119,11 @@ const createEmpleado = async (req, res, next) => {
         return res.status(400).json({ message: 'El formato de fecha_ingreso debe ser YYYY-MM-DD.' });
       }
     }
-    // * Validar existencia de sucursal si se envía
-    if (id_sucursal !== undefined && id_sucursal !== null) {
-      const sucursalExists = await query('SELECT id FROM sucursales WHERE id = ?', [id_sucursal]);
-      if (sucursalExists.length === 0) {
-        return res.status(400).json({ message: `El ID de sucursal ${id_sucursal} no es válido.` });
+    // * Validar existencia de empresa si se envía
+    if (id_empresa !== undefined && id_empresa !== null) {
+      const empresaExists = await query('SELECT id FROM empresas WHERE id = ?', [id_empresa]);
+      if (empresaExists.length === 0) {
+        return res.status(400).json({ message: `El ID de empresa ${id_empresa} no es válido.` });
       }
     }
     // * Validar existencia de área si se envía
@@ -152,7 +152,7 @@ const createEmpleado = async (req, res, next) => {
     if (puesto !== undefined && puesto !== null) { sql += ', puesto'; placeholders.push('?'); values.push(puesto); }
     if (fecha_nacimiento !== undefined && fecha_nacimiento !== null) { sql += ', fecha_nacimiento'; placeholders.push('?'); values.push(fecha_nacimiento); }
     if (fecha_ingreso !== undefined && fecha_ingreso !== null) { sql += ', fecha_ingreso'; placeholders.push('?'); values.push(fecha_ingreso); }
-    if (id_sucursal !== undefined && id_sucursal !== null) { sql += ', id_sucursal'; placeholders.push('?'); values.push(id_sucursal); }
+    if (id_empresa !== undefined && id_empresa !== null) { sql += ', id_empresa'; placeholders.push('?'); values.push(id_empresa); }
     if (id_area !== undefined && id_area !== null) { sql += ', id_area'; placeholders.push('?'); values.push(id_area); }
     if (id_status !== undefined && id_status !== null) { sql += ', id_status'; placeholders.push('?'); values.push(id_status); }
     sql += ') VALUES (' + placeholders.join(', ') + ')';
@@ -184,22 +184,22 @@ const updateEmpleado = async (req, res, next) => {
     const {
       numero_empleado, nombres, apellidos, email_personal,
       telefono, puesto, fecha_nacimiento, fecha_ingreso,
-      id_sucursal, id_area, id_status
+      id_empresa, id_area, id_status
     } = req.body;
     // * Validación: al menos un campo a actualizar
     if (
       numero_empleado === undefined && nombres === undefined && apellidos === undefined &&
       email_personal === undefined && telefono === undefined && puesto === undefined &&
       fecha_nacimiento === undefined && fecha_ingreso === undefined &&
-      id_sucursal === undefined && id_area === undefined && id_status === undefined
+      id_empresa === undefined && id_area === undefined && id_status === undefined
     ) {
       return res.status(400).json({ message: 'Se debe proporcionar al menos un campo para actualizar.' });
     }
-    // * Validar existencia de sucursal si se envía
-    if (id_sucursal !== undefined && id_sucursal !== null) {
-      const sucursalExists = await query('SELECT id FROM sucursales WHERE id = ?', [id_sucursal]);
-      if (sucursalExists.length === 0) {
-        return res.status(400).json({ message: `El ID de sucursal ${id_sucursal} no es válido.` });
+    // * Validar existencia de empresa si se envía
+    if (id_empresa !== undefined && id_empresa !== null) {
+      const empresaExists = await query('SELECT id FROM empresas WHERE id = ?', [id_empresa]);
+      if (empresaExists.length === 0) {
+        return res.status(400).json({ message: `El ID de empresa ${id_empresa} no es válido.` });
       }
     }
     // * Validar existencia de área si se envía
@@ -228,7 +228,7 @@ const updateEmpleado = async (req, res, next) => {
     if (puesto !== undefined) { updates.push('puesto = ?'); params.push(puesto); }
     if (fecha_nacimiento !== undefined) { updates.push('fecha_nacimiento = ?'); params.push(fecha_nacimiento); }
     if (fecha_ingreso !== undefined) { updates.push('fecha_ingreso = ?'); params.push(fecha_ingreso); }
-    if (id_sucursal !== undefined) { updates.push('id_sucursal = ?'); params.push(id_sucursal); }
+    if (id_empresa !== undefined) { updates.push('id_empresa = ?'); params.push(id_empresa); }
     if (id_area !== undefined) { updates.push('id_area = ?'); params.push(id_area); }
     if (id_status !== undefined) { updates.push('id_status = ?'); params.push(id_status); }
     sql += updates.join(', ');
