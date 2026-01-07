@@ -17,6 +17,16 @@ class CatalogosService {
     const response = await api.get('/status')
     return response.data
   }
+
+  async getEmpresas() {
+    const response = await api.get('/empresas')
+    return response.data
+  }
+
+  async getAreas() {
+    const response = await api.get('/areas')
+    return response.data
+  }
 }
 
 export default new CatalogosService()

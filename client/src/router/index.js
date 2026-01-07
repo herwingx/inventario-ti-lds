@@ -39,6 +39,30 @@ const routes = [
         component: () => import('../views/EquiposDetailView.vue'),
         meta: { title: 'Detalle de Equipo' }
       },
+      {
+        path: 'empleados',
+        name: 'empleados',
+        component: () => import('../views/EmpleadosView.vue'),
+        meta: { title: 'Empleados' }
+      },
+      {
+        path: 'empleados/nuevo',
+        name: 'empleados-nuevo',
+        component: () => import('../views/EmpleadosFormView.vue'),
+        meta: { title: 'Registrar Empleado' }
+      },
+      {
+        path: 'empleados/editar/:id',
+        name: 'empleados-editar',
+        component: () => import('../views/EmpleadosFormView.vue'),
+        meta: { title: 'Editar Empleado' }
+      },
+      {
+        path: 'empleados/:id',
+        name: 'empleados-detalle',
+        component: () => import('../views/EmpleadosDetailView.vue'),
+        meta: { title: 'Detalle de Empleado' }
+      },
       // TODO: Agregar más rutas según se migren las vistas
     ]
   },
