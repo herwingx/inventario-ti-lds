@@ -165,13 +165,12 @@ function handleItemClick(item) {
   if (item.children) {
     if (props.collapsed) return // No hacemos nada en colapsado (usa hover)
 
-    if (isAlreadyActive) {
-      // Si ya estaba activo, solo alternamos su expansión (Toggle)
-      expandedMenus.value[item.id] = !expandedMenus.value[item.id]
+    if (isAlreadyActive && expandedMenus.value[item.id]) {
+      // Si ya estaba activo y expandido, lo cerramos
+      expandedMenus.value[item.id] = false
     } else {
-      // Si es nuevo, lo expandimos y (opcional) cerramos los demás
-      // Resetear otros menús para efecto acordeón (opcional, limpiar objeto)
-      // expandedMenus.value = {} 
+      // Si es nuevo, cerramos los demás (Efecto Acordeón) y expandimos este
+      expandedMenus.value = {} 
       expandedMenus.value[item.id] = true
     }
   } 
