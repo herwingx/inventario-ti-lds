@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
@@ -24,7 +24,8 @@ const submitting = ref(false)
 
 // Datos de Catálogos
 const empresas = ref([])
-const areas = ref([])
+const allAreas = ref([]) // Todas las áreas
+const areas = ref([]) // Áreas filtradas por empresa
 const statuses = ref([])
 
 // Modelo del Formulario
@@ -59,13 +60,17 @@ onMounted(async () => {
         ])
         
         empresas.value = empresasRes
-        areas.value = areasRes
+        allAreas.value = areasRes // Guardar todas las áreas
         statuses.value = statusRes
 
         // Si es edición, cargar datos del empleado
         if (isEditing.value) {
             const empleadoData = await EmpleadosService.getById(route.params.id)
             populateForm(empleadoData)
+            // Filtrar áreas según la empresa del empleado
+            if (empleadoData.id_empresa) {
+                areas.value = allAreas.value.filter(area => area.id_empresa === empleadoData.id_empresa)
+            }
         } else {
             // Predetectar estado ACTIVO si existe
             const defaultStatus = statuses.value.find(s => s.nombre_status === 'ACTIVO')
@@ -109,6 +114,24 @@ const capitalize = (field) => {
             .join(' ')
     }
 }
+
+// Watcher para filtrar áreas cuando cambia la empresa
+watch(() => form.value.id_empresa, (newEmpresa) => {
+    if (newEmpresa) {
+        // Filtrar áreas por empresa
+        areas.value = allAreas.value.filter(area => area.id_empresa === newEmpresa)
+        // Limpiar área seleccionada si ya no pertenece a la nueva empresa
+        if (form.value.id_area) {
+            const areaExists = areas.value.find(area => area.id === form.value.id_area)
+            if (!areaExists) {
+                form.value.id_area = null
+            }
+        }
+    } else {
+        // Si no hay empresa, mostrar todas las áreas
+        areas.value = allAreas.value
+    }
+})
 
 // Submit
 const handleSubmit = async () => {
