@@ -168,13 +168,13 @@ const skeletonRows = new Array(5).fill({})
                     <Skeleton size="2rem" />
                 </div>
                 <div v-else class="flex gap-1 justify-end">
-                    <button class="w-8 h-8 rounded bg-gray-100 hover:bg-blue-50 text-blue-600 flex items-center justify-center transition-all" @click="viewCorreo(data)" title="Ver Detalle">
+                    <button class="w-7 h-7 rounded bg-gray-100 hover:bg-blue-50 text-blue-600 flex items-center justify-center transition-all" @click="viewCorreo(data)" title="Ver Detalle">
                         <i class="pi pi-eye text-xs"></i>
                     </button>
-                    <button class="w-8 h-8 rounded bg-gray-100 hover:bg-gray-200 text-primary flex items-center justify-center transition-all" @click="editCorreo(data)" title="Editar">
+                    <button class="w-7 h-7 rounded bg-gray-100 hover:bg-gray-200 text-primary flex items-center justify-center transition-all" @click="editCorreo(data)" title="Editar">
                         <i class="pi pi-pencil text-xs"></i>
                     </button>
-                    <button class="w-8 h-8 rounded bg-gray-100 hover:bg-red-50 text-red-500 flex items-center justify-center transition-all" @click="confirmDeleteCorreo(data)" title="Eliminar">
+                    <button class="w-7 h-7 rounded bg-gray-100 hover:bg-red-50 text-red-500 flex items-center justify-center transition-all" @click="confirmDeleteCorreo(data)" title="Eliminar">
                         <i class="pi pi-trash text-xs"></i>
                     </button>
                 </div>
