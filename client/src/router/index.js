@@ -63,6 +63,30 @@ const routes = [
         component: () => import('../views/EmpleadosDetailView.vue'),
         meta: { title: 'Detalle de Empleado' }
       },
+      {
+        path: 'areas',
+        name: 'areas',
+        component: () => import('../views/AreasView.vue'),
+        meta: { title: 'Áreas' }
+      },
+      {
+        path: 'areas/nuevo',
+        name: 'areas-nuevo',
+        component: () => import('../views/AreasFormView.vue'),
+        meta: { title: 'Registrar Área' }
+      },
+      {
+        path: 'areas/editar/:id',
+        name: 'areas-editar',
+        component: () => import('../views/AreasFormView.vue'),
+        meta: { title: 'Editar Área' }
+      },
+      {
+        path: 'areas/:id',
+        name: 'areas-detalle',
+        component: () => import('../views/AreasDetailView.vue'),
+        meta: { title: 'Detalle de Área' }
+      },
       // TODO: Agregar más rutas según se migren las vistas
     ]
   },
