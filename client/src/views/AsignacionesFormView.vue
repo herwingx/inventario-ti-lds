@@ -62,7 +62,7 @@ onMounted(async () => {
         // Si el endpoint devuelve error, atrapamos:
         
         equiposDisponibles.value = eqRes.map(e => ({
-            label: `${e.nombre_equipo} (${e.numero_serie}) - ${e.tipo_equipo}`,
+            label: `${e.nombre_tipo_equipo || e.tipo_equipo || 'Equipo'} - ${e.nombre_equipo} ${e.modelo ? '(' + e.modelo + ')' : ''} [SN: ${e.numero_serie}]`,
             value: e.id,
             tipo: e.tipo_equipo
         }))
