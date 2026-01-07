@@ -91,7 +91,7 @@ const handleSubmit = async () => {
 
             <div>
                  <label class="block text-sm font-bold mb-2 dark:text-gray-300">Estado</label>
-                 <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" class="w-full" placeholder="Seleccionar (Opcional)" />
+                 <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" class="w-full !bg-gray-50 dark:!bg-dark-bg" placeholder="Seleccionar (Opcional)" />
             </div>
 
             <div class="flex justify-end gap-3 pt-6 border-t font-semibold">

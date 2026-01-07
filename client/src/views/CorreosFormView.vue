@@ -151,13 +151,13 @@ const handleSubmit = async () => {
             <!-- Asignación -->
             <div>
                  <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Empleado Asignado</label>
-                 <Select v-model="form.id_empleado_asignado" :options="empleados" optionLabel="label" optionValue="value" filter showClear placeholder="Seleccione Empleado" class="w-full" />
+                 <Select v-model="form.id_empleado_asignado" :options="empleados" optionLabel="label" optionValue="value" filter showClear placeholder="Seleccione Empleado" class="w-full !bg-gray-50 dark:!bg-dark-bg" />
             </div>
 
             <!-- Estado -->
             <div>
                  <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Estado <span class="text-red-500">*</span></label>
-                 <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" placeholder="Seleccione Estado" class="w-full" :invalid="!!errors.id_status" />
+                 <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" placeholder="Seleccione Estado" class="w-full !bg-gray-50 dark:!bg-dark-bg" :invalid="!!errors.id_status" />
                  <small class="text-red-500">{{ errors.id_status }}</small>
             </div>
 
