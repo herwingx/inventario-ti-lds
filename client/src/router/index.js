@@ -232,6 +232,13 @@ const routes = [
         component: () => import('../views/CorreosDetailView.vue'),
         meta: { title: 'Detalle de Cuenta' }
       },
+      // Perfil de usuario
+      {
+        path: 'perfil',
+        name: 'perfil',
+        component: () => import('../views/ProfileView.vue'),
+        meta: { title: 'Mi Perfil' }
+      },
       // TODO: Agregar más rutas según se migren las vistas
     ]
   },

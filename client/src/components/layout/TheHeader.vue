@@ -91,13 +91,13 @@ const headerStyle = computed(() => {
         <!-- Dropdown Menu -->
         <div class="absolute right-0 top-full mt-2 w-48 bg-light-card dark:bg-dark-card border border-light-border dark:border-dark-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
           <div class="py-2">
-            <a 
-              href="#"
+            <router-link 
+              :to="{ name: 'perfil' }"
               class="flex items-center gap-3 px-4 py-2 text-sm text-light-text dark:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
             >
               <i class="pi pi-user text-primary"></i>
               <span>Perfil</span>
-            </a>
+            </router-link>
             <hr class="my-2 border-light-border dark:border-dark-border" />
             <button 
               @click="authStore.logout"

@@ -10,6 +10,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => user.value?.roleId === 1) // Asumiendo rol 1 es admin
+  const username = computed(() => user.value?.username || 'Usuario')
+  const userInitial = computed(() => user.value?.username?.charAt(0).toUpperCase() || 'U')
 
   async function login(username, password) {
     try {
@@ -48,6 +50,8 @@ export const useAuthStore = defineStore('auth', () => {
     returnUrl,
     isAuthenticated,
     isAdmin,
+    username,
+    userInitial,
     login,
     logout
   }
