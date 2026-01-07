@@ -1,267 +1,517 @@
-# 📦 Inventario TI & Soporte LDS
+# 🔧 Backend - Inventario TI & Soporte LDS
 
-> **Gestión Inteligente de Activos** — Sistema integral para el control de inventario tecnológico, asignaciones y mantenimientos de soporte técnico.
-
-<!-- BADGES: Usa style=flat-square -->
-[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow?style=flat-square&logo=javascript&logoColor=white)](https://developer.mozilla.org/es/docs/Web/JavaScript)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-5.0-black?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-
-<p align="center">
-  <img src="public/images/logo.png" alt="Logo Inventario" width="200"/>
-</p>
+> API RESTful construida con Express.js y MySQL para la gestión integral de inventario tecnológico.
 
 ---
 
-## ✨ Características
+## 📋 Tabla de Contenidos
 
-| Característica           | Descripción                                                         |
-| :----------------------- | :------------------------------------------------------------------ |
-| 💻 **Gestión de Activos** | Control detallado de equipos, periféricos y direcciones IP.         |
-| 👥 **Asignaciones**       | Vinculación de activos a empleados con historial de movimientos.    |
-| 🔧 **Mantenimientos**     | Registro y seguimiento de mantenimientos preventivos y correctivos. |
-| 🔐 **Seguridad JWT**      | Autenticación robusta basada en tokens para protección de API.      |
-| 🏢 **Multisucursal**      | Soporte para múltiples empresas, sucursales y áreas.                |
-| 📊 **Dashboard**          | Visualización de estado del sistema y recursos.                     |
-
----
-
-## 🚀 Inicio Rápido
-
-### Requisitos
-- Node.js v18+
-- MySQL Server
-- NPM o Yarn
-
-### 1. Clonar el repositorio
-```bash
-git clone https://github.com/herwingxtech/inventario_soporte.git
-cd inventario-ti-lds
-```
-
-### 2. Configurar variables de entorno
-
-Crea un archivo `.env` en la raíz del proyecto basado en las variables requeridas:
-
-```bash
-cp .env.example .env
-```
-
-Variables principales:
-
-```env
-PORT=3000
-NODE_ENV=development
-APP_URL=http://localhost:3000/soporte
-API_URL=http://localhost:3000/soporte/api
-
-# Base de Datos
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=secret
-DB_NAME=inventario_soporte
-DB_PORT=3306
-
-# Seguridad
-JWT_SECRET=tu_secreto_super_seguro
-JWT_EXPIRE=24h
-```
-
-> 📘 **Tip:** Para generar un `JWT_SECRET` seguro, ejecuta:
-> ```bash
-> node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-> ```
-
-### 3. Instalar dependencias
-
-```bash
-npm install
-```
-
-### 4. Iniciar la aplicación
-
-```bash
-# Modo desarrollo
-npm run dev
-
-# Modo producción
-npm start
-```
+- [Arquitectura](#-arquitectura)
+- [Instalación](#-instalación)
+- [Configuración](#-configuración)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [API Endpoints](#-api-endpoints)
+- [Base de Datos](#-base-de-datos)
+- [Seguridad](#-seguridad)
+- [Despliegue](#-despliegue)
 
 ---
 
 ## 🏗️ Arquitectura
 
 ```mermaid
-graph TD
-    A[Cliente Web] <-->|HTTP/JSON| B(API Gateway / Express)
-    B <-->|Autenticación| C{JWT Service}
-    B <-->|Consultas SQL| D[(MySQL Database)]
-    
-    subgraph Backend
-    B
-    C
+graph TB
+    subgraph "Capa de Presentación"
+        A[Express Router]
     end
     
-    subgraph Data
-    D
+    subgraph "Capa de Lógica"
+        B[Controllers]
+        C[Middleware Auth]
+    end
+    
+    subgraph "Capa de Datos"
+        D[MySQL2 Connection Pool]
+        E[(Base de Datos MySQL)]
+    end
+    
+    A --> C
+    C --> B
+    B --> D
+    D --> E
+    
+    style A fill:#68A063
+    style B fill:#68A063
+    style C fill:#F0DB4F
+    style D fill:#00758F
+    style E fill:#00758F
+```
+
+### Flujo de una Petición
+
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant R as Router
+    participant M as Middleware
+    participant Ctrl as Controller
+    participant DB as Database
+    
+    C->>R: HTTP Request
+    R->>M: Validar JWT
+    alt Token válido
+        M->>Ctrl: Ejecutar lógica
+        Ctrl->>DB: Query SQL
+        DB-->>Ctrl: Resultados
+        Ctrl-->>R: Response JSON
+        R-->>C: 200 OK + Data
+    else Token inválido
+        M-->>R: Error 401
+        R-->>C: 401 Unauthorized
     end
 ```
 
-## 📦 Opciones de Despliegue
+---
 
-| Método     | Archivo               | Ideal para                                |
-| :--------- | :-------------------- | :---------------------------------------- |
-| **Local**  | `npm script`          | Desarrollo y Pruebas rapido               |
-| **Docker** | `Dockerfile`          | Despliegue en contenedores (Próximamente) |
-| **PM2**    | `ecosystem.config.js` | Producción en servidor Linux              |
+## 🚀 Instalación
 
-## 🗄️ Gestión de Base de Datos
+### Requisitos
 
-Comandos útiles para respaldar y restaurar la información.
+- Node.js v18 o superior
+- MySQL Server 8.0 o superior
+- NPM o Yarn
 
-```bash
-# Crear Backup
-mysqldump -h LOGIN_HOST -u usuario -p inventario_soporte > backup_$(date +%Y%m%d).sql
+### Pasos
 
-# Restaurar Backup
-mysql -h LOGIN_HOST -u usuario -p inventario_soporte < backup.sql
+1. **Navegar al directorio del servidor:**
+   ```bash
+   cd server
+   ```
+
+2. **Instalar dependencias:**
+   ```bash
+   npm install
+   ```
+
+3. **Configurar variables de entorno:**
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Iniciar el servidor:**
+   ```bash
+   # Desarrollo (con nodemon)
+   npm run dev
+   
+   # Producción
+   npm start
+   ```
+
+---
+
+## ⚙️ Configuración
+
+### Variables de Entorno (.env)
+
+```env
+# Servidor
+PORT=3000
+NODE_ENV=development
+
+# Base de Datos
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=tu_password
+DB_NAME=inventario_soporte
+DB_PORT=3306
+
+# Seguridad
+JWT_SECRET=tu_secreto_super_seguro_aqui
+JWT_EXPIRE=30d
 ```
 
-## 🔧 Comandos Útiles
+### Generar JWT_SECRET Seguro
 
 ```bash
-npm run dev      # Iniciar servidor con nodemon
-npm start        # Iniciar servidor en producción
-npm test         # Ejecutar pruebas (Pendiente)
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
-## 🌐 Endpoints de la API
+---
 
-La API base se encuentra en `/api`. Aquí los módulos principales:
+## 📁 Estructura del Proyecto
 
-| Módulo           | Endpoint Base     | Descripción                  |
-| :--------------- | :---------------- | :--------------------------- |
-| **Auth**         | `/auth`           | Login y registro de usuarios |
-| **Equipos**      | `/equipos`        | CRUD de equipos de cómputo   |
-| **Empleados**    | `/empleados`      | Gestión de personal          |
-| **Asignaciones** | `/asignaciones`   | Préstamos y devoluciones     |
-| **IPs**          | `/direcciones-ip` | Control de direccionamiento  |
-| **Soporte**      | `/mantenimientos` | Tickets y mantenimiento      |
+```
+server/
+├── src/
+│   ├── config/
+│   │   └── db.js                 # Configuración de MySQL
+│   │
+│   ├── controllers/              # Lógica de negocio
+│   │   ├── auth.controller.js
+│   │   ├── profile.controller.js
+│   │   ├── equipos.controller.js
+│   │   ├── empleados.controller.js
+│   │   ├── asignaciones.controller.js
+│   │   ├── mantenimientos.controller.js
+│   │   ├── notas.controller.js
+│   │   ├── direcciones_ip.controller.js
+│   │   ├── cuentas_email.controller.js
+│   │   ├── empresas.controller.js
+│   │   ├── areas.controller.js
+│   │   ├── sucursales.controller.js
+│   │   ├── roles.controller.js
+│   │   ├── status.controller.js
+│   │   ├── tipos_equipo.controller.js
+│   │   ├── tipos_sucursal.controller.js
+│   │   └── usuarios_sistema.controller.js
+│   │
+│   ├── middleware/
+│   │   └── auth.middleware.js    # Validación JWT
+│   │
+│   └── routes/                   # Definición de rutas
+│       ├── auth.routes.js
+│       ├── profile.routes.js
+│       ├── equipos.routes.js
+│       ├── empleados.routes.js
+│       ├── asignaciones.routes.js
+│       ├── mantenimientos.routes.js
+│       ├── notas.routes.js
+│       ├── direcciones_ip.routes.js
+│       ├── cuentas_email.routes.js
+│       ├── empresas.routes.js
+│       ├── areas.routes.js
+│       ├── sucursales.routes.js
+│       ├── roles.routes.js
+│       ├── status.routes.js
+│       ├── tipos_equipo.routes.js
+│       ├── tipos_sucursal.routes.js
+│       └── usuarios_sistema.routes.js
+│
+├── public/                       # Archivos estáticos
+├── .env.example
+├── .gitignore
+├── package.json
+├── README.md
+└── server.js                     # Punto de entrada
+```
 
-## 📚 Documentación Adicional
+---
 
-| Documento                 | Descripción                       |
-| :------------------------ | :-------------------------------- |
-| [API Routes](src/routes/) | Definición de endpoints de la API |
-| [Schemas](src/models/)    | Modelos de datos (si aplica)      |
+## 🌐 API Endpoints
 
-## 🛠️ Stack Tecnológico
+### Autenticación (Públicas)
 
-**Frontend**
-- HTML5 / CSS3 (Vanilla)
-- JavaScript (Vanilla)
-- Bootstrap Select
+| Método | Endpoint | Descripción | Body |
+|:-------|:---------|:------------|:-----|
+| POST | `/api/auth/login` | Iniciar sesión | `{ username, password }` |
 
-**Backend**
-- Node.js
-- Express.js
-- JSON Web Tokens (JWT)
-- MySQL2
+**Respuesta exitosa:**
+```json
+{
+  "message": "Inicio de sesión exitoso.",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "username": "admin",
+    "roleId": 1,
+    "roleName": "Administrador"
+  }
+}
+```
 
-## � Despliegue en Linux (Producción)
+### Perfil de Usuario (Protegidas)
 
-Guía para desplegar la aplicación en un servidor Ubuntu/Debian usando PM2 y Nginx.
+| Método | Endpoint | Descripción | Body |
+|:-------|:---------|:------------|:-----|
+| GET | `/api/profile` | Obtener perfil del usuario autenticado | - |
+| PUT | `/api/profile` | Actualizar email y/o contraseña | `{ email?, currentPassword?, newPassword? }` |
 
-### 1. Preparación del Entorno
-Asegúrate de tener instalado Git, Node.js, MySQL y Nginx:
+### Módulos CRUD (Protegidas)
 
+Todos los módulos siguen el patrón REST estándar:
+
+| Método | Endpoint | Descripción |
+|:-------|:---------|:------------|
+| GET | `/api/{modulo}` | Listar todos |
+| GET | `/api/{modulo}/:id` | Obtener por ID |
+| POST | `/api/{modulo}` | Crear nuevo |
+| PUT | `/api/{modulo}/:id` | Actualizar |
+| DELETE | `/api/{modulo}/:id` | Eliminar |
+
+**Módulos disponibles:**
+- `equipos`
+- `empleados`
+- `asignaciones`
+- `mantenimientos`
+- `notas`
+- `direcciones-ip`
+- `cuentas-email`
+- `empresas`
+- `areas`
+- `sucursales`
+- `usuarios-sistema`
+
+### Catálogos (Protegidas)
+
+| Método | Endpoint | Descripción |
+|:-------|:---------|:------------|
+| GET | `/api/roles` | Listar roles |
+| GET | `/api/status` | Listar estados |
+| GET | `/api/tipos-equipo` | Listar tipos de equipo |
+| GET | `/api/tipos-sucursal` | Listar tipos de sucursal |
+
+---
+
+## 🗄️ Base de Datos
+
+### Configuración de Conexión
+
+El sistema utiliza **MySQL2** con connection pooling para optimizar el rendimiento:
+
+```javascript
+// src/config/db.js
+const mysql = require('mysql2/promise');
+
+const pool = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT || 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
+```
+
+### Tablas Principales
+
+```mermaid
+erDiagram
+    USUARIOS_SISTEMA ||--o{ NOTAS : crea
+    USUARIOS_SISTEMA }o--|| ROLES : tiene
+    USUARIOS_SISTEMA }o--o| EMPLEADOS : asociado
+    
+    EMPLEADOS ||--o{ ASIGNACIONES : recibe
+    EMPLEADOS }o--|| EMPRESAS : pertenece
+    EMPLEADOS }o--o| AREAS : trabaja_en
+    
+    EQUIPOS ||--o{ ASIGNACIONES : asignado
+    EQUIPOS }o--|| TIPOS_EQUIPO : es_tipo
+    EQUIPOS }o--o| SUCURSALES : ubicado_en
+    
+    EQUIPOS ||--o{ MANTENIMIENTOS : recibe
+    EQUIPOS ||--o{ NOTAS : referencia
+```
+
+### Backup y Restauración
+
+**Crear backup:**
 ```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install git nodejs npm mysql-server nginx -y
+mysqldump -h localhost -u root -p inventario_soporte > backup_$(date +%Y%m%d).sql
 ```
 
-### 2. Instalación y Build
-Sigue los pasos de "Inicio Rápido" para clonar e instalar dependencias. Luego:
+**Restaurar backup:**
+```bash
+mysql -h localhost -u root -p inventario_soporte < backup.sql
+```
+
+---
+
+## 🔒 Seguridad
+
+### Autenticación JWT
+
+El sistema utiliza JSON Web Tokens para autenticación stateless:
+
+1. **Login:** El usuario envía credenciales
+2. **Verificación:** Se valida contra la base de datos
+3. **Generación:** Se crea un JWT con payload:
+   ```javascript
+   {
+     userId: 1,
+     username: "admin",
+     roleId: 1
+   }
+   ```
+4. **Respuesta:** Se envía el token al cliente
+5. **Uso:** El cliente incluye el token en cada petición:
+   ```
+   Authorization: Bearer {token}
+   ```
+
+### Middleware de Protección
+
+```javascript
+// src/middleware/auth.middleware.js
+const protect = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+        return res.status(401).json({ message: 'No autorizado' });
+    }
+    
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        return res.status(401).json({ message: 'Token inválido' });
+    }
+};
+```
+
+### Hash de Contraseñas
+
+Las contraseñas se hashean con **bcrypt** (10 rounds):
+
+```javascript
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
+// Al crear usuario
+const passwordHash = await bcrypt.hash(password, saltRounds);
+
+// Al verificar login
+const isValid = await bcrypt.compare(password, storedHash);
+```
+
+### Prevención de SQL Injection
+
+Se utilizan **prepared statements** de MySQL2:
+
+```javascript
+// ✅ Correcto
+const sql = 'SELECT * FROM equipos WHERE id = ?';
+const [rows] = await query(sql, [id]);
+
+// ❌ Incorrecto (vulnerable)
+const sql = `SELECT * FROM equipos WHERE id = ${id}`;
+```
+
+---
+
+## 🚀 Despliegue
+
+### Opción 1: PM2 (Recomendado)
 
 ```bash
 # Instalar PM2 globalmente
-sudo npm install -g pm2
-```
+npm install -g pm2
 
-### 3. Ejecución con PM2
-PM2 mantendrá la aplicación activa 24/7.
-
-```bash
 # Iniciar aplicación
-pm2 start server.js --name "inventario-lds"
+pm2 start server.js --name "inventario-api"
 
-# Guardar lista de procesos para reinicios
+# Guardar configuración
 pm2 save
 pm2 startup
 ```
 
-### 4. Configuración Nginx (Reverse Proxy)
-Configura Nginx para servir la app en el puerto 80/443.
+### Opción 2: Systemd Service
 
-Edita la configuración: `sudo nano /etc/nginx/sites-available/inventario`
+Crear archivo `/etc/systemd/system/inventario-api.service`:
+
+```ini
+[Unit]
+Description=Inventario API
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/inventario-ti-lds/server
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Activar servicio:
+```bash
+sudo systemctl enable inventario-api
+sudo systemctl start inventario-api
+```
+
+### Nginx Reverse Proxy
 
 ```nginx
 server {
     listen 80;
-    server_name inventario.tu-dominio.com;
+    server_name api.tudominio.com;
 
-    location / {
+    location /api {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
         proxy_cache_bypass $http_upgrade;
     }
 }
 ```
 
-Activa el sitio y reinicia Nginx:
+---
+
+## 🛠️ Comandos Útiles
+
 ```bash
-sudo ln -s /etc/nginx/sites-available/inventario /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
+# Desarrollo
+npm run dev          # Iniciar con nodemon
+
+# Producción
+npm start            # Iniciar servidor
+
+# Logs (con PM2)
+pm2 logs inventario-api
+
+# Reiniciar (con PM2)
+pm2 restart inventario-api
+
+# Monitoreo (con PM2)
+pm2 monit
 ```
 
 ---
 
-## �🛠️ Solución de Problemas
+## 📊 Monitoreo y Logs
 
-### Error de conexión a la base de datos
-1. Verifica que MySQL esté corriendo.
-2. Confirma las credenciales en `.env`.
-3. Asegúrate que la base de datos `inventario_soporte` exista.
+### Logs de Aplicación
 
-### Error de JWT
-Si recibes errores de token, genera un nuevo `JWT_SECRET` y reinicia el servidor.
+Los logs se muestran en consola con formato:
 
-### Puerto ocupado
-Si el puerto 3000 está en uso:
-```bash
-lsof -i :3000  # Ver proceso
-kill -9 PID    # Matar proceso (opcional)
+```
+🚀 Servidor corriendo en: http://localhost:3000
+🔧 Modo: development
+✅ Base de datos conectada exitosamente.
 ```
 
-## 🔒 Seguridad
-- ✅ Autenticación vía JWT
-- ✅ Protección de rutas middleware
-- ✅ Variables de entorno seguras
-- ✅ Sanitización de consultas SQL (MySQL2 Prepared Statements)
+### Errores
+
+Los errores se capturan con el middleware global:
+
+```javascript
+app.use((err, req, res, next) => {
+    console.error('-------- ERROR --------');
+    console.error(err.stack);
+    console.error('-----------------------');
+    
+    res.status(err.status || 500).json({
+        message: err.message || 'Error interno del servidor',
+        error: process.env.NODE_ENV === 'development' ? err.stack : {}
+    });
+});
+```
+
+---
 
 ## 🤝 Contribuir
-1. Fork del repositorio
-2. Crear rama: `git checkout -b feat/nueva-feature`
-3. Commit: `git commit -m "feat: descripción"`
-4. Push: `git push origin feat/nueva-feature`
-5. Crear Pull Request
+
+Ver [README principal](../README.md#-contribuir) para guías de contribución.
+
+---
 
 ## 📄 Licencia
-Este proyecto está bajo la licencia ISC.
+
+ISC License - Ver [LICENSE](../LICENSE) para más detalles.
