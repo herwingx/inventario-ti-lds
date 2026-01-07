@@ -196,6 +196,14 @@ const formatDate = (date) => {
                     <div v-if="asignacion.id_empleado">
                         <span class="text-sm text-gray-500 block">Empleado</span>
                         <span class="font-medium text-gray-900 dark:text-white">{{ asignacion.empleado_nombres }} {{ asignacion.empleado_apellidos }}</span>
+                        <div v-if="asignacion.empleado_emails_corporativos" class="mt-1 flex items-center gap-2 text-sm text-primary font-medium">
+                            <i class="pi pi-envelope"></i>
+                            <span>{{ asignacion.empleado_emails_corporativos }}</span>
+                        </div>
+                        <div v-else-if="asignacion.empleado_email_personal" class="mt-1 flex items-center gap-2 text-sm text-gray-500">
+                             <i class="pi pi-envelope"></i>
+                             <span>{{ asignacion.empleado_email_personal }}</span>
+                        </div>
                     </div>
                     <div v-if="asignacion.id_sucursal_asignado">
                         <span class="text-sm text-gray-500 block">Sucursal</span>
