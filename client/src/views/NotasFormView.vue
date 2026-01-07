@@ -36,7 +36,7 @@ onMounted(async () => {
     try {
         const equiposData = await EquiposService.getAll()
         equipos.value = equiposData.map(e => ({
-            label: `${e.nombre_equipo} (${e.numero_serie})`,
+            label: `${e.nombre_tipo_equipo || 'Equipo'} - ${e.nombre_equipo} ${e.modelo ? '(' + e.modelo + ')' : ''} [SN: ${e.numero_serie}]`,
             value: e.id
         }))
 
