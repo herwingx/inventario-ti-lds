@@ -103,13 +103,13 @@ const handleSubmit = async () => {
 
                 <div>
                      <label class="block text-sm font-bold mb-2 dark:text-gray-300">Empresa <span class="text-red-500">*</span></label>
-                     <Select v-model="form.id_empresa" :options="empresas" optionLabel="nombre" optionValue="id" class="w-full" :invalid="!!errors.id_empresa" />
+                     <Select v-model="form.id_empresa" :options="empresas" optionLabel="nombre" optionValue="id" class="w-full !bg-gray-50 dark:!bg-dark-bg" :invalid="!!errors.id_empresa" />
                      <small class="text-red-500">{{ errors.id_empresa }}</small>
                 </div>
 
                 <div>
                      <label class="block text-sm font-bold mb-2 dark:text-gray-300">Tipo <span class="text-red-500">*</span></label>
-                     <Select v-model="form.id_tipo_sucursal" :options="tipos" optionLabel="nombre_tipo" optionValue="id" class="w-full" :invalid="!!errors.id_tipo_sucursal" />
+                     <Select v-model="form.id_tipo_sucursal" :options="tipos" optionLabel="nombre_tipo" optionValue="id" class="w-full !bg-gray-50 dark:!bg-dark-bg" :invalid="!!errors.id_tipo_sucursal" />
                      <small class="text-red-500">{{ errors.id_tipo_sucursal }}</small>
                 </div>
 
