@@ -49,6 +49,10 @@ const menuItems = ref([
     label: 'Organización',
     icon: 'pi pi-sitemap',
     children: [
+      { id: 'empresas-list', label: 'Gest. Empresas', route: '/empresas' },
+      { id: 'empresa-form', label: 'Registrar Empresa', route: '/empresas/nuevo' },
+      { id: 'sucursales-list', label: 'Gestionar Sucursales', route: '/sucursales' },
+      { id: 'sucursal-form', label: 'Registrar Sucursal', route: '/sucursales/nuevo' },
       { id: 'areas-list', label: 'Gestionar Áreas', route: '/areas' },
       { id: 'area-form', label: 'Registrar Nueva Área', route: '/areas/nuevo' }
     ]

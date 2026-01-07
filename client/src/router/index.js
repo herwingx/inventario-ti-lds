@@ -64,6 +64,24 @@ const routes = [
         meta: { title: 'Detalle de Empleado' }
       },
       {
+        path: 'empresas',
+        name: 'empresas',
+        component: () => import('../views/EmpresasView.vue'),
+        meta: { title: 'Gestión de Empresas' }
+      },
+      {
+        path: 'empresas/nuevo',
+        name: 'empresas-nuevo',
+        component: () => import('../views/EmpresasFormView.vue'),
+        meta: { title: 'Registrar Empresa' }
+      },
+      {
+        path: 'empresas/editar/:id',
+        name: 'empresas-editar',
+        component: () => import('../views/EmpresasFormView.vue'),
+        meta: { title: 'Editar Empresa' }
+      },
+      {
         path: 'areas',
         name: 'areas',
         component: () => import('../views/AreasView.vue'),
@@ -86,6 +104,30 @@ const routes = [
         name: 'areas-detalle',
         component: () => import('../views/AreasDetailView.vue'),
         meta: { title: 'Detalle de Área' }
+      },
+      {
+        path: 'sucursales',
+        name: 'sucursales',
+        component: () => import('../views/SucursalesView.vue'),
+        meta: { title: 'Gestión de Sucursales' }
+      },
+      {
+        path: 'sucursales/nuevo',
+        name: 'sucursales-nuevo',
+        component: () => import('../views/SucursalesFormView.vue'),
+        meta: { title: 'Registrar Sucursal' }
+      },
+      {
+        path: 'sucursales/editar/:id',
+        name: 'sucursales-editar',
+        component: () => import('../views/SucursalesFormView.vue'),
+        meta: { title: 'Editar Sucursal' }
+      },
+      {
+        path: 'sucursales/:id',
+        name: 'sucursales-detalle',
+        component: () => import('../views/SucursalesDetailView.vue'),
+        meta: { title: 'Detalle de Sucursal' }
       },
       {
         path: 'direcciones-ip',
