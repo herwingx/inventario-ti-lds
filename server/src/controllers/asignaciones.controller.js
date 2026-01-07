@@ -87,7 +87,9 @@ const getAsignacionById = async (req, res, next) => {
         a.id_ip, ip.direccion_ip AS ip_direccion,
         a.fecha_asignacion, a.fecha_fin_asignacion, a.observacion,
         a.fecha_registro, a.fecha_actualizacion,
-        a.id_status_asignacion, st.nombre_status AS status_nombre
+        a.id_status_asignacion, st.nombre_status AS status_nombre,
+        emp.email_personal AS empleado_email_personal,
+        (SELECT GROUP_CONCAT(email SEPARATOR ', ') FROM cuentas_email_corporativo WHERE id_empleado_asignado = a.id_empleado AND id_status = 1) AS empleado_emails_corporativos
       FROM asignaciones AS a
       LEFT JOIN equipos AS e ON a.id_equipo = e.id
       LEFT JOIN tipos_equipo AS te ON e.id_tipo_equipo = te.id
@@ -449,19 +451,19 @@ const updateAsignacion = async (req, res, next) => {
         // * 4. Manejar componentes cuando se finaliza la asignación
         if (eraActiva && !esAhoraActiva) { // Finalizando asignación
             console.log(`Herwing - Finalizando componentes de la asignación ${asignacionId}`);
-            
+
             // Finalizar asignaciones de componentes (donde id_equipo_padre es el equipo principal)
             await connection.execute(
                 'UPDATE asignaciones SET fecha_fin_asignacion = ? WHERE id_equipo_padre = ? AND fecha_fin_asignacion IS NULL',
                 [final_fecha_fin_asignacion_str, currentAsignacion.id_equipo]
             );
-            
+
             // Obtener componentes para cambiar su estado a DISPONIBLE
             const [componentesRows] = await connection.execute(
                 'SELECT id_equipo FROM asignaciones WHERE id_equipo_padre = ? AND fecha_fin_asignacion = ?',
                 [currentAsignacion.id_equipo, final_fecha_fin_asignacion_str]
             );
-            
+
             // Cambiar estado de componentes a DISPONIBLE
             for (const comp of componentesRows) {
                 await connection.execute(
@@ -470,7 +472,7 @@ const updateAsignacion = async (req, res, next) => {
                 );
                 console.log(`Herwing - Componente ${comp.id_equipo} liberado a DISPONIBLE`);
             }
-            
+
             console.log(`Herwing - ${componentesRows.length} componentes liberados`);
         }
 
@@ -546,9 +548,9 @@ const createAsignacionConComponentes = async (req, res, next) => {
     const connection = await getConnection();
     try {
         await connection.beginTransaction();
-        
+
         const { componentes, ...asignacionData } = req.body;
-        
+
         // Crear la asignación principal
         const asignacionResult = await connection.execute(
             `INSERT INTO asignaciones (id_equipo, fecha_asignacion, id_empleado, id_sucursal_asignado, 
@@ -566,15 +568,15 @@ const createAsignacionConComponentes = async (req, res, next) => {
                 asignacionData.comentario || null
             ]
         );
-        
+
         const asignacionId = asignacionResult[0].insertId;
-        
+
         // Actualizar estado del equipo principal a ASIGNADO
         await connection.execute(
             'UPDATE equipos SET id_status = ? WHERE id = ?',
             [STATUS_ASIGNADO_EQUIPO_IP, asignacionData.id_equipo]
         );
-        
+
         // Actualizar estado de la IP si existe
         if (asignacionData.id_ip) {
             await connection.execute(
@@ -582,7 +584,7 @@ const createAsignacionConComponentes = async (req, res, next) => {
                 [STATUS_ASIGNADO_EQUIPO_IP, asignacionData.id_ip]
             );
         }
-        
+
         // Asignar componentes si existen
         let componentesAsignados = 0;
         if (componentes && componentes.length > 0) {
@@ -603,26 +605,26 @@ const createAsignacionConComponentes = async (req, res, next) => {
                         `Componente de ${asignacionData.id_equipo}`
                     ]
                 );
-                
+
                 // Actualizar estado del componente a ASIGNADO
                 await connection.execute(
                     'UPDATE equipos SET id_status = ? WHERE id = ?',
                     [STATUS_ASIGNADO_EQUIPO_IP, componenteId]
                 );
-                
+
                 componentesAsignados++;
             }
         }
-        
+
         await connection.commit();
-        
+
         res.status(201).json({
             message: 'Asignación con componentes creada exitosamente',
             id: asignacionId,
             id_equipo: asignacionData.id_equipo,
             componentes_asignados: componentesAsignados
         });
-        
+
     } catch (error) {
         await connection.rollback();
         console.error('Error al crear asignación con componentes:', error);
@@ -636,19 +638,19 @@ const createAsignacionConComponentes = async (req, res, next) => {
 const getComponentesAsignacion = async (req, res, next) => {
     try {
         const { id: asignacionId } = req.params;
-        
+
         // Obtener el equipo principal de la asignación
         const asignacionPrincipal = await query(
             'SELECT id_equipo FROM asignaciones WHERE id = ?',
             [asignacionId]
         );
-        
+
         if (!asignacionPrincipal || asignacionPrincipal.length === 0) {
             return res.status(404).json({ message: 'Asignación no encontrada' });
         }
-        
+
         const equipoPrincipalId = asignacionPrincipal[0].id_equipo;
-        
+
         // Obtener componentes (asignaciones donde id_equipo_padre es el equipo principal)
         const sql = `
             SELECT 
@@ -668,10 +670,10 @@ const getComponentesAsignacion = async (req, res, next) => {
             AND a.fecha_fin_asignacion IS NULL
             ORDER BY te.nombre_tipo, e.numero_serie
         `;
-        
+
         const componentes = await query(sql, [equipoPrincipalId]);
         res.status(200).json(componentes);
-        
+
     } catch (error) {
         console.error('Error al obtener componentes de asignación:', error);
         next(error);
@@ -683,40 +685,40 @@ const updateComponentesAsignacion = async (req, res, next) => {
     const connection = await getConnection();
     try {
         await connection.beginTransaction();
-        
+
         const { id: asignacionId } = req.params;
         const { componentes } = req.body;
-        
+
         // Obtener el equipo principal y datos de la asignación
         const asignacionPrincipal = await connection.execute(
             `SELECT id_equipo, fecha_asignacion, id_empleado, id_sucursal_asignado, 
              id_area_asignado, id_status_asignacion FROM asignaciones WHERE id = ?`,
             [asignacionId]
         );
-        
+
         if (!asignacionPrincipal[0] || asignacionPrincipal[0].length === 0) {
             await connection.rollback();
             return res.status(404).json({ message: 'Asignación no encontrada' });
         }
-        
+
         const equipoPrincipalId = asignacionPrincipal[0][0].id_equipo;
         const datosAsignacion = asignacionPrincipal[0][0];
-        
+
         // Obtener componentes actuales
         const componentesActuales = await connection.execute(
             'SELECT id_equipo FROM asignaciones WHERE id_equipo_padre = ? AND fecha_fin_asignacion IS NULL',
             [equipoPrincipalId]
         );
-        
+
         const componentesActualesIds = componentesActuales[0].map(c => c.id_equipo);
         const nuevosComponentesIds = componentes || [];
-        
+
         // Componentes a remover (estaban asignados pero ya no están en la nueva lista)
         const componentesARemover = componentesActualesIds.filter(id => !nuevosComponentesIds.includes(id));
-        
+
         // Componentes a agregar (están en la nueva lista pero no estaban asignados)
         const componentesAAgregar = nuevosComponentesIds.filter(id => !componentesActualesIds.includes(id));
-        
+
         // Remover componentes
         for (const componenteId of componentesARemover) {
             // Finalizar asignación del componente
@@ -724,14 +726,14 @@ const updateComponentesAsignacion = async (req, res, next) => {
                 'UPDATE asignaciones SET fecha_fin_asignacion = NOW() WHERE id_equipo = ? AND id_equipo_padre = ? AND fecha_fin_asignacion IS NULL',
                 [componenteId, equipoPrincipalId]
             );
-            
+
             // Cambiar estado del componente a DISPONIBLE
             await connection.execute(
                 'UPDATE equipos SET id_status = ? WHERE id = ?',
                 [STATUS_DISPONIBLE_EQUIPO_IP, componenteId]
             );
         }
-        
+
         // Agregar nuevos componentes
         for (const componenteId of componentesAAgregar) {
             // Crear nueva asignación para el componente
@@ -750,23 +752,23 @@ const updateComponentesAsignacion = async (req, res, next) => {
                     `Componente de ${equipoPrincipalId}`
                 ]
             );
-            
+
             // Cambiar estado del componente a ASIGNADO
             await connection.execute(
                 'UPDATE equipos SET id_status = ? WHERE id = ?',
                 [STATUS_ASIGNADO_EQUIPO_IP, componenteId]
             );
         }
-        
+
         await connection.commit();
-        
+
         res.status(200).json({
             message: 'Componentes actualizados exitosamente',
             componentes_removidos: componentesARemover.length,
             componentes_agregados: componentesAAgregar.length,
             total_componentes: nuevosComponentesIds.length
         });
-        
+
     } catch (error) {
         await connection.rollback();
         console.error('Error al actualizar componentes de asignación:', error);
