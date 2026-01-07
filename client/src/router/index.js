@@ -87,6 +87,30 @@ const routes = [
         component: () => import('../views/AreasDetailView.vue'),
         meta: { title: 'Detalle de Área' }
       },
+      {
+        path: 'direcciones-ip',
+        name: 'direcciones-ip',
+        component: () => import('../views/DireccionesIpView.vue'),
+        meta: { title: 'Gestión de Red' }
+      },
+      {
+        path: 'direcciones-ip/nuevo',
+        name: 'direcciones-ip-nuevo',
+        component: () => import('../views/DireccionesIpFormView.vue'),
+        meta: { title: 'Registrar Dirección IP' }
+      },
+      {
+        path: 'direcciones-ip/editar/:id',
+        name: 'direcciones-ip-editar',
+        component: () => import('../views/DireccionesIpFormView.vue'),
+        meta: { title: 'Editar Dirección IP' }
+      },
+      {
+        path: 'direcciones-ip/:id',
+        name: 'direcciones-ip-detalle',
+        component: () => import('../views/DireccionesIpDetailView.vue'),
+        meta: { title: 'Detalle de Dirección IP' }
+      },
       // TODO: Agregar más rutas según se migren las vistas
     ]
   },
