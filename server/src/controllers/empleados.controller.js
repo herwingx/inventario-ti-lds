@@ -6,7 +6,14 @@
 // * Importo la función query para ejecutar consultas a la base de datos
 const { query } = require('../config/db');
 
-// * [GET] /api/empleados - Trae todos los empleados con información de sucursal, área y status (pueden ser NULL)
+/**
+ * Obtiene el listado de todos los empleados con sus relaciones (empresa, área, sucursal, status).
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllEmpleados = async (req, res, next) => {
   try {
     const sql = `
@@ -42,7 +49,14 @@ const getAllEmpleados = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/empleados/:id - Trae un empleado específico por su ID (con relaciones)
+/**
+ * Busca un empleado específico por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getEmpleadoById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -85,7 +99,15 @@ const getEmpleadoById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/empleados - Crea un nuevo empleado
+/**
+ * Registra un nuevo empleado en el sistema.
+ * Realiza validaciones de campos obligatorios, formatos de fecha y unicidad.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createEmpleado = async (req, res, next) => {
   try {
     const {
@@ -177,7 +199,15 @@ const createEmpleado = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/empleados/:id - Actualiza un empleado por su ID
+/**
+ * Actualiza los datos de un empleado existente.
+ * Valida formatos y referencias a otras tablas.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateEmpleado = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -253,7 +283,15 @@ const updateEmpleado = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/empleados/:id - Elimina un empleado por su ID
+/**
+ * Elimina un empleado del sistema.
+ * Valida integridad referencial antes de eliminar.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteEmpleado = async (req, res, next) => {
   try {
     const { id } = req.params;

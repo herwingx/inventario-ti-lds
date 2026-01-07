@@ -13,7 +13,14 @@ const saltRounds = 10;
 // * Funciones controladoras para cada endpoint de usuarios del sistema
 // ===============================================================
 
-// * [GET] /api/usuarios-sistema - Trae todos los usuarios del sistema con JOINs a empleados, roles y status
+/**
+ * Obtiene el listado de todos los usuarios del sistema.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllUsuariosSistema = async (req, res, next) => {
   try {
     // * Consulta SQL con JOINs para traer toda la info relevante de cada usuario, sin exponer el password_hash
@@ -46,7 +53,14 @@ const getAllUsuariosSistema = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/usuarios-sistema/:id - Trae un usuario específico por su ID (con relaciones)
+/**
+ * Busca un usuario del sistema específico por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getUsuarioSistemaById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -85,13 +99,21 @@ const getUsuarioSistemaById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/usuarios-sistema - Crea un nuevo usuario con hashing seguro de contraseña
+/**
+ * Registra un nuevo usuario del sistema.
+ * Hashea la contraseña antes de guardar.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createUsuarioSistema = async (req, res, next) => {
   try {
     // * Extraigo los datos del body. username, password e id_rol son obligatorios
     // * Valido existencia de FKs y formato de email
     const {
-        username, password, email, id_empleado, id_rol, id_status
+      username, password, email, id_empleado, id_rol, id_status
     } = req.body;
 
     // * Validaciones de campos obligatorios y formato
@@ -99,40 +121,40 @@ const createUsuarioSistema = async (req, res, next) => {
       return res.status(400).json({ message: 'Los campos username, password e id_rol son obligatorios.' });
     }
     if (username.trim() === '') {
-        return res.status(400).json({ message: 'El campo username no puede estar vacío.' });
-     }
-     if (password.trim() === '') {
-        return res.status(400).json({ message: 'El campo password no puede estar vacío.' });
-     }
-     if (email !== undefined && email !== null && email.trim() !== '') {
-         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-         if (!emailRegex.test(email)) {
-             return res.status(400).json({ message: 'El formato del campo email no es válido.' });
-         }
-     }
+      return res.status(400).json({ message: 'El campo username no puede estar vacío.' });
+    }
+    if (password.trim() === '') {
+      return res.status(400).json({ message: 'El campo password no puede estar vacío.' });
+    }
+    if (email !== undefined && email !== null && email.trim() !== '') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'El formato del campo email no es válido.' });
+      }
+    }
 
     // * Validación de existencia de empleado si se proporciona
     if (id_empleado !== undefined && id_empleado !== null) {
-        const empleadoExists = await query('SELECT id FROM empleados WHERE id = ?', [id_empleado]);
-        if (empleadoExists.length === 0) {
-            return res.status(400).json({ message: `El ID de empleado ${id_empleado} no es válido.` });
-        }
+      const empleadoExists = await query('SELECT id FROM empleados WHERE id = ?', [id_empleado]);
+      if (empleadoExists.length === 0) {
+        return res.status(400).json({ message: `El ID de empleado ${id_empleado} no es válido.` });
+      }
     }
 
     // * Validación de existencia de rol
     const rolExists = await query('SELECT id FROM roles WHERE id = ?', [id_rol]);
     if (rolExists.length === 0) {
-        return res.status(400).json({ message: `El ID de rol ${id_rol} no es válido.` });
+      return res.status(400).json({ message: `El ID de rol ${id_rol} no es válido.` });
     }
 
     // * Validación de existencia de status si se proporciona
     if (id_status !== undefined && id_status !== null) {
-         const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
-         if (statusExists.length === 0) {
-             return res.status(400).json({ message: `El ID de status ${id_status} no es válido.` });
-         }
+      const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
+      if (statusExists.length === 0) {
+        return res.status(400).json({ message: `El ID de status ${id_status} no es válido.` });
+      }
     } else if (id_status === null) {
-         return res.status(400).json({ message: 'El campo id_status no puede ser nulo.' });
+      return res.status(400).json({ message: 'El campo id_status no puede ser nulo.' });
     }
 
     // * Hasheo la contraseña antes de guardar
@@ -164,75 +186,83 @@ const createUsuarioSistema = async (req, res, next) => {
     console.error('Error al crear usuario del sistema:', error);
     // * Manejo de errores específicos de duplicidad
     if (error.code === 'ER_DUP_ENTRY') {
-       res.status(409).json({
-           message: `El nombre de usuario "${req.body.username}" o el empleado asociado ya existe.`,
-           error: error.message
-       });
-     } else {
-        next(error);
-     }
+      res.status(409).json({
+        message: `El nombre de usuario "${req.body.username}" o el empleado asociado ya existe.`,
+        error: error.message
+      });
+    } else {
+      next(error);
+    }
   }
 };
 
-// * [PUT] /api/usuarios-sistema/:id - Actualiza un usuario por su ID (hashea si cambia contraseña)
+/**
+ * Actualiza los datos de un usuario del sistema.
+ * Si se proporciona password, se hashea de nuevo.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateUsuarioSistema = async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
-        username, password, email, id_empleado, id_rol, id_status
+      username, password, email, id_empleado, id_rol, id_status
     } = req.body;
 
     // * Validar que se envíe al menos un campo para actualizar
     const updateFields = Object.keys(req.body);
     if (updateFields.length === 0) {
-         return res.status(400).json({ message: 'Se debe proporcionar al menos un campo para actualizar.' });
+      return res.status(400).json({ message: 'Se debe proporcionar al menos un campo para actualizar.' });
     }
     if (username !== undefined && username !== null && username.trim() === '') {
-        return res.status(400).json({ message: 'El campo username no puede estar vacío si se proporciona.' });
-     }
-     if (password !== undefined && password !== null && password.trim() === '') {
-        return res.status(400).json({ message: 'El campo password no puede estar vacío si se proporciona (al actualizar).' });
-     }
-     if (email !== undefined && email !== null && email.trim() !== '') {
-         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-         if (!emailRegex.test(email)) {
-             return res.status(400).json({ message: 'El formato del campo email no es válido.' });
-         }
-     }
+      return res.status(400).json({ message: 'El campo username no puede estar vacío si se proporciona.' });
+    }
+    if (password !== undefined && password !== null && password.trim() === '') {
+      return res.status(400).json({ message: 'El campo password no puede estar vacío si se proporciona (al actualizar).' });
+    }
+    if (email !== undefined && email !== null && email.trim() !== '') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'El formato del campo email no es válido.' });
+      }
+    }
 
     // * Validación de existencia de empleado si se intenta actualizar
     if (id_empleado !== undefined && id_empleado !== null) {
-        const empleadoExists = await query('SELECT id FROM empleados WHERE id = ?', [id_empleado]);
-        if (empleadoExists.length === 0) {
-            return res.status(400).json({ message: `El ID de empleado ${id_empleado} no es válido.` });
-        }
+      const empleadoExists = await query('SELECT id FROM empleados WHERE id = ?', [id_empleado]);
+      if (empleadoExists.length === 0) {
+        return res.status(400).json({ message: `El ID de empleado ${id_empleado} no es válido.` });
+      }
     }
 
     // * Validación de existencia de rol si se intenta actualizar
     if (id_rol !== undefined && id_rol !== null) {
-        const rolExists = await query('SELECT id FROM roles WHERE id = ?', [id_rol]);
-        if (rolExists.length === 0) {
-            return res.status(400).json({ message: `El ID de rol ${id_rol} no es válido.` });
-        }
+      const rolExists = await query('SELECT id FROM roles WHERE id = ?', [id_rol]);
+      if (rolExists.length === 0) {
+        return res.status(400).json({ message: `El ID de rol ${id_rol} no es válido.` });
+      }
     } else if (id_rol === null) {
-         return res.status(400).json({ message: 'El campo id_rol no puede ser nulo.' });
+      return res.status(400).json({ message: 'El campo id_rol no puede ser nulo.' });
     }
 
-     // * Validación de existencia de status si se intenta actualizar
-     if (id_status !== undefined && id_status !== null) {
-          const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
-          if (statusExists.length === 0) {
-              return res.status(400).json({ message: `El ID de status ${id_status} no es válido.` });
-          }
-     } else if (id_status === null) {
-         return res.status(400).json({ message: 'El campo id_status no puede ser nulo.' });
-     }
+    // * Validación de existencia de status si se intenta actualizar
+    if (id_status !== undefined && id_status !== null) {
+      const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
+      if (statusExists.length === 0) {
+        return res.status(400).json({ message: `El ID de status ${id_status} no es válido.` });
+      }
+    } else if (id_status === null) {
+      return res.status(400).json({ message: 'El campo id_status no puede ser nulo.' });
+    }
 
     // * Si se proporciona nueva contraseña, la hasheo
     let password_hash_to_update = undefined;
     if (password !== undefined && password !== null) {
-        password_hash_to_update = await bcrypt.hash(password, saltRounds);
-        // console.log(`Nueva contraseña hasheada generada para usuario "${username || 'ID:'+id}": ${password_hash_to_update}`); // ! Solo para debug
+      password_hash_to_update = await bcrypt.hash(password, saltRounds);
+      // console.log(`Nueva contraseña hasheada generada para usuario "${username || 'ID:'+id}": ${password_hash_to_update}`); // ! Solo para debug
     }
 
     // * Construyo la consulta UPDATE dinámicamente
@@ -245,12 +275,12 @@ const updateUsuarioSistema = async (req, res, next) => {
     if (id_rol !== undefined) { updates.push('id_rol = ?'); params.push(id_rol); }
     if (id_status !== undefined) { updates.push('id_status = ?'); params.push(id_status); }
     if (password_hash_to_update !== undefined) {
-         updates.push('password_hash = ?');
-         params.push(password_hash_to_update);
+      updates.push('password_hash = ?');
+      params.push(password_hash_to_update);
     }
     if (updates.length === 0) {
-         return res.status(400).json({ message: 'No se proporcionaron campos válidos para actualizar.' });
-     }
+      return res.status(400).json({ message: 'No se proporcionaron campos válidos para actualizar.' });
+    }
     sql += updates.join(', ');
     sql += ' WHERE id = ?';
     params.push(id);
@@ -265,17 +295,25 @@ const updateUsuarioSistema = async (req, res, next) => {
     // ! Si hay error, lo paso al middleware global
     console.error(`Error al actualizar usuario del sistema con ID ${req.params.id}:`, error);
     if (error.code === 'ER_DUP_ENTRY') {
-       res.status(409).json({
-           message: `El nombre de usuario o el empleado asociado ya existe en otro usuario.`,
-           error: error.message
-       });
-     } else {
-        next(error);
-     }
+      res.status(409).json({
+        message: `El nombre de usuario o el empleado asociado ya existe en otro usuario.`,
+        error: error.message
+      });
+    } else {
+      next(error);
+    }
   }
 };
 
-// * [DELETE] /api/usuarios-sistema/:id - Elimina un usuario por su ID
+/**
+ * Elimina un usuario del sistema.
+ * Valida integridad referencial.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteUsuarioSistema = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -290,14 +328,14 @@ const deleteUsuarioSistema = async (req, res, next) => {
   } catch (error) {
     // ! Si hay error, lo paso al middleware global
     console.error(`Error al eliminar usuario del sistema con ID ${req.params.id}:`, error);
-     if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-        res.status(409).json({
-            message: `No se puede eliminar el usuario del sistema con ID ${req.params.id} porque ha creado notas u otros registros asociados.`,
-            error: error.message
-        });
-     } else {
-        next(error);
-     }
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(409).json({
+        message: `No se puede eliminar el usuario del sistema con ID ${req.params.id} porque ha creado notas u otros registros asociados.`,
+        error: error.message
+      });
+    } else {
+      next(error);
+    }
   }
 };
 

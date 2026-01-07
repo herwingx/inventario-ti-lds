@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de Detalle de Dirección IP.
+ * Muestra información técnica de la IP, su segmento y estado de asignación.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

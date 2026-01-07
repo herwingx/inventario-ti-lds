@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Formulario de Mantenimiento (Crear/Editar).
+ * Permite registrar actividades de mantenimiento preventivo o correctivo para un equipo.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

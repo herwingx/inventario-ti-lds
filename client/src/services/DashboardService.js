@@ -1,8 +1,8 @@
 import apiClient from './api'
 
 /**
- * Servicio para obtener datos del dashboard.
- * Centraliza las llamadas a la API relacionadas con estadísticas.
+ * @fileoverview Servicio de Dashboard.
+ * Centraliza la obtención de estadísticas y métricas clave para el panel de control.
  */
 export default {
   /**

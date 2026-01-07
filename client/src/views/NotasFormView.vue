@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Formulario de Nota (Crear/Editar).
+ * Permite crear notas rápidas o bitácoras, asociándolas opcionalmente a equipos.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

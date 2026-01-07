@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de catálogo de Sucursales.
+ * Muestra las ubicaciones físicas de las empresas y permite su administración.
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'

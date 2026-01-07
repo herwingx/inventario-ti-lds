@@ -9,7 +9,14 @@ const { query } = require('../config/db'); // * Utilizo la función personalizad
 // * Funciones controladoras para cada endpoint de roles
 // ===============================================================
 
-// * [GET] /api/roles - Trae todos los roles
+/**
+ * Obtiene el listado de todos los roles de usuario disponibles.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllRoles = async (req, res, next) => {
   try {
     // * Consulta SQL para traer todos los roles
@@ -23,7 +30,14 @@ const getAllRoles = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/roles/:id - Trae un rol específico por su ID
+/**
+ * Busca un rol específico por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getRoleById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -42,7 +56,14 @@ const getRoleById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/roles - Crea un nuevo rol
+/**
+ * Registra un nuevo rol en el sistema.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createRole = async (req, res, next) => {
   try {
     const { nombre_rol } = req.body;
@@ -75,7 +96,14 @@ const createRole = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/roles/:id - Actualiza un rol por su ID
+/**
+ * Actualiza el nombre de un rol existente.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateRole = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -108,7 +136,15 @@ const updateRole = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/roles/:id - Elimina un rol por su ID
+/**
+ * Elimina un rol del sistema.
+ * Valida que no tenga usuarios asignados.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteRole = async (req, res, next) => {
   try {
     const { id } = req.params;

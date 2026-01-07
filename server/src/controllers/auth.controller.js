@@ -3,8 +3,15 @@ const { query } = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-// * FUNCIÓN DE LOGIN
-
+/**
+ * Autentica un usuario y genera un token JWT.
+ * Valida credenciales contra el hash almacenado en la base de datos.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const login = async (req, res, next) => {
     // * Obtengo el username y password del cuerpo de la petición.
     const { username, password } = req.body;
@@ -77,7 +84,7 @@ const login = async (req, res, next) => {
     } catch (error) {
         // * Paso el error al manejador global.
         console.error(`Error durante el proceso de login: ${error}`);
-        next(error); 
+        next(error);
     }
 };
 

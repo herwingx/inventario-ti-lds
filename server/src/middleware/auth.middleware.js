@@ -1,8 +1,22 @@
+/**
+ * @module Middleware/Auth
+ * @description Middleware para proteger rutas mediante verificación de tokens JWT.
+ */
 // src/middleware/auth.middleware.js
 // * Este middleware se encarga de proteger las rutas verificando el token JWT.
 
 const jwt = require('jsonwebtoken');
 
+/**
+ * Middleware que verifica la presencia y validez de un token JWT en el encabezado Authorization.
+ * Si es válido, inyecta la información del usuario en `req.user`.
+ * Si no, devuelve un error 401.
+ *
+ * @param {import('express').Request} req - Solicitud Express.
+ * @param {import('express').Response} res - Respuesta Express.
+ * @param {import('express').NextFunction} next - Función next.
+ * @returns {void}
+ */
 const protect = (req, res, next) => {
     let token;
     // * Busco el token en el encabezado 'Authorization'.
@@ -23,7 +37,7 @@ const protect = (req, res, next) => {
                 username: decoded.username,
                 roleId: decoded.roleId
             };
-            
+
             console.log(`Middleware: Token válido para usuario ID ${req.user.userId}. Petición autorizada.`);
             next(); // * Permito que la petición continúe a la ruta solicitada.
 

@@ -1,8 +1,15 @@
 import api from './api';
 
+/**
+   * Servicio para la gestión de Mantenimientos.
+   *
+   * Permite administrar los registros de mantenimiento preventivo y correctivo de equipos.
+   */
 export default {
   /**
-   * Obtener todos los mantenimientos
+   * Obtiene todos los registros de mantenimiento.
+   * 
+   * @returns {Promise<Array<Object>>} Lista de mantenimientos.
    */
   async getAll() {
     try {
@@ -15,7 +22,10 @@ export default {
   },
 
   /**
-   * Obtener un mantenimiento por ID
+   * Obtiene un registro de mantenimiento por su ID.
+   * 
+   * @param {number|string} id - ID del mantenimiento.
+   * @returns {Promise<Object>} Datos del mantenimiento.
    */
   async getById(id) {
     try {
@@ -28,7 +38,10 @@ export default {
   },
 
   /**
-   * Crear un nuevo mantenimiento
+   * Crea un nuevo registro de mantenimiento.
+   * 
+   * @param {Object} data - Datos del mantenimiento.
+   * @returns {Promise<Object>} Mantenimiento creado.
    */
   async create(data) {
     try {
@@ -41,7 +54,11 @@ export default {
   },
 
   /**
-   * Actualizar una mantenimiento existente
+   * Actualiza un registro de mantenimiento existente.
+   * 
+   * @param {number|string} id - ID del mantenimiento.
+   * @param {Object} data - Nuevos datos.
+   * @returns {Promise<Object>} Resultado de la actualización.
    */
   async update(id, data) {
     try {
@@ -54,7 +71,10 @@ export default {
   },
 
   /**
-   * Eliminar un mantenimiento
+   * Elimina un registro de mantenimiento.
+   * 
+   * @param {number|string} id - ID del mantenimiento a eliminar.
+   * @returns {Promise<Object>} Confirmación de eliminación.
    */
   async delete(id) {
     try {

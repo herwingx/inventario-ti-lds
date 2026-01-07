@@ -6,8 +6,12 @@
 const { query } = require('../config/db'); // * Utilizo la función personalizada para consultas a la base de datos.
 
 // ===============================================================
-// * Función de ayuda para validar formato de fecha (YYYY-MM-DD) de forma segura (UTC)
-// * Devuelve true si el string coincide con el formato y es una fecha real válida.
+/**
+ * Valida si un string tiene formato de fecha YYYY-MM-DD válido.
+ *
+ * @param {string} dateString - Cadena de fecha a validar.
+ * @returns {boolean} True si el formato y la fecha son válidos.
+ */
 function isValidDate(dateString) {
   // * Permito null/vacío si el campo no es obligatorio.
   if (!dateString) return true;
@@ -23,7 +27,14 @@ function isValidDate(dateString) {
 // * Funciones controladoras para cada endpoint de notas
 // ===============================================================
 
-// * [GET] /api/notas - Trae todas las notas con JOINs a equipos, mantenimientos y usuarios
+/**
+ * Obtiene el listado de todas las notas registradas.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllNotas = async (req, res, next) => {
   try {
     // * Consulta SQL con JOINs para traer toda la info relevante de cada nota
@@ -54,7 +65,14 @@ const getAllNotas = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/notas/:id - Trae una nota específica por su ID (con relaciones)
+/**
+ * Busca una nota específica por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getNotaById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -91,7 +109,14 @@ const getNotaById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/notas - Crea una nueva nota con validaciones
+/**
+ * Registra una nueva nota en el sistema.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createNota = async (req, res, next) => {
   try {
     // * Extraigo los datos del body. titulo y contenido son obligatorios
@@ -149,7 +174,14 @@ const createNota = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/notas/:id - Actualiza una nota por su ID
+/**
+ * Actualiza una nota existente.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateNota = async (req, res, next) => {
   try {
     // * Extraigo el ID y los datos a actualizar
@@ -215,7 +247,14 @@ const updateNota = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/notas/:id - Elimina una nota por su ID
+/**
+ * Elimina una nota del sistema.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteNota = async (req, res, next) => {
   try {
     const { id } = req.params;

@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Formulario de Dirección IP (Crear/Editar).
+ * Permite registrar o modificar una IP en el inventario, validando duplicidad y formato.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

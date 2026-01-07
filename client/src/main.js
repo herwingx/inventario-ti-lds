@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Punto de entrada de la aplicación Vue.js.
+ * Inicializa la aplicación, configura Pinia, Router y PrimeVue con el tema Aura.
+ */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'

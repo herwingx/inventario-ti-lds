@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Formulario de Documentación (Subir/Editar).
+ * Facilita la carga de archivos o enlaces de documentación y su clasificación.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

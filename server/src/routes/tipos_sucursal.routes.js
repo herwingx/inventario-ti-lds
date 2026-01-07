@@ -1,3 +1,7 @@
+/**
+ * @module Routes/TiposSucursal
+ * @description Define las rutas para la gestión de categorías de sucursales.
+ */
 // src/routes/tiposSucursal.routes.js
 // Define las rutas HTTP para la entidad 'tipos_sucursal'.
 

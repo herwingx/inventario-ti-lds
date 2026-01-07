@@ -1,3 +1,7 @@
+/**
+ * @module Routes/CuentasEmail
+ * @description Define las rutas para la gestión de cuentas de correo corporativo.
+ */
 // src/routes/cuentasEmail.routes.js
 // Define las rutas HTTP para la entidad 'cuentas_email_corporativo'.
 

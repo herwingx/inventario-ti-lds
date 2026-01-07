@@ -9,7 +9,14 @@ const { query } = require('../config/db'); // * Utilizo la función personalizad
 // * Funciones controladoras para cada endpoint de status
 // ===============================================================
 
-// * [GET] /api/status - Trae todos los registros de la tabla 'status'
+/**
+ * Obtiene el listado de todos los status configurados en el sistema.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllStatuses = async (req, res, next) => {
   try {
     // * Consulta SQL para traer todos los estados
@@ -23,7 +30,14 @@ const getAllStatuses = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/status/:id - Trae un estado específico por su ID
+/**
+ * Busca un status específico por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getStatusById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -42,7 +56,14 @@ const getStatusById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/status - Crea un nuevo estado
+/**
+ * Registra un nuevo status en el sistema.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createStatus = async (req, res, next) => {
   try {
     const { nombre_status, descripcion } = req.body;
@@ -72,7 +93,14 @@ const createStatus = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/status/:id - Actualiza un estado por su ID
+/**
+ * Actualiza la información de un status existente.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -108,7 +136,15 @@ const updateStatus = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/status/:id - Elimina un estado por su ID
+/**
+ * Elimina un status del sistema.
+ * Valida integridad referencial.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteStatus = async (req, res, next) => {
   try {
     const { id } = req.params;

@@ -2,7 +2,11 @@
 // Define las rutas HTTP para la entidad 'equipos'.
 
 const express = require('express');
-// * Instancia del enrutador de Express
+
+/**
+ * @module routes/equipos
+ * @description Rutas API para la gestión de equipos (Hardware).
+ */
 const router = express.Router();
 
 // * Importo las funciones controladoras de equipos

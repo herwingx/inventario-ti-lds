@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Documentacion
+ * @description Define las rutas para la gestión de documentos asociados.
+ */
 const express = require('express');
 const router = express.Router();
 const documentacionController = require('../controllers/documentacion.controller');

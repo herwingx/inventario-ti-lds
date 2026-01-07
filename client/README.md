@@ -223,25 +223,25 @@ client/
 
 ### Dashboard Components
 
-#### StatsCard.vue
+#### StatCard.vue
 ```vue
-<StatsCard
+<StatCard
   title="Total Equipos"
   :value="150"
-  icon="pi-desktop"
-  trend="up"
-  :trendValue="12"
+  icon="pi pi-desktop"
+  color="primary"
 />
 ```
 
-#### RecentActivity.vue
-- Lista de actividades recientes
-- Formato de fecha relativa
-- Iconos según tipo de actividad
+#### UserInfoCard.vue
+- Visualiza el perfil resumido del usuario
+- Muestra actividad reciente
+- Estadísticas personales rápidas
 
-#### QuickActions.vue
-- Accesos rápidos a acciones comunes
-- Botones con iconos y tooltips
+#### QuickAccessCard.vue
+- Tarjetas de navegación rápida
+- Iconos grandes y descripciones
+- Temas de color personalizables (blue, green, teal, etc.)
 
 ---
 
@@ -630,6 +630,13 @@ const validate = () => {
 ## 🤝 Contribuir
 
 Ver [README principal](../README.md#-contribuir) para guías de contribución.
+
+### Estándar de Documentación
+Este proyecto utiliza **JSDoc** para documentar componentes y lógica:
+- Componentes: `@fileoverview` en `<script setup>`
+- Props: Comentarios descriptivos
+- Métodos: JSDoc estándar con `@param` y `@returns`
+
 
 ---
 

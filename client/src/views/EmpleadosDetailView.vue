@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de Detalle de Empleado.
+ * Muestra el perfil completo de un empleado, incluyendo historial de equipos asignados y datos de contacto.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

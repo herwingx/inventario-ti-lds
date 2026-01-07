@@ -4,6 +4,15 @@ const { query } = require('../config/db');
 
 // * [GET] /api/areas - Trae todas las áreas con información de empresa y status
 // * Opcionalmente filtra por sucursal usando query parameter ?id_sucursal=X
+/**
+ * Obtiene todas las áreas del sistema, incluyendo datos de empresa y estado.
+ * Soporta filtrado opcional por ID de sucursal.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllAreas = async (req, res, next) => {
   try {
     const { id_sucursal } = req.query;
@@ -56,7 +65,14 @@ const getAllAreas = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/areas/:id - Trae un área específica por su ID (con relaciones)
+/**
+ * Busca un área específica por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAreaById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -96,7 +112,15 @@ const getAreaById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/areas - Crea una nueva área (solo en sucursales de tipo 'Corporativo')
+/**
+ * Crea una nueva área.
+ * Validación: Solo permite crear áreas para sucursales de tipo 'Corporativo'.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createArea = async (req, res, next) => {
   try {
     const { nombre, id_sucursal, id_status } = req.body;
@@ -170,6 +194,15 @@ const createArea = async (req, res, next) => {
 };
 
 // * [PUT] /api/areas/:id - Actualiza un área por su ID (solo en sucursales de tipo 'Corporativo')
+/**
+ * Actualiza la información de un área existente.
+ * Mantiene la regla de negocio de solo permitir áreas en sucursales 'Corporativo'.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateArea = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -246,7 +279,14 @@ const updateArea = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/areas/:id - Elimina un área por su ID
+/**
+ * Elimina (físicamente) un área de la base de datos.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteArea = async (req, res, next) => {
   try {
     const { id } = req.params;

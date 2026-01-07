@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Notas
+ * @description Define las rutas para la gestión de notas y observaciones.
+ */
 // src/routes/notas.routes.js
 // Define las rutas HTTP para la entidad 'notas'.
 

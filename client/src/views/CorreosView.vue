@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de administración de Cuentas de Correo.
+ * Muestra el inventario de correos corporativos y su estado actual.
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'

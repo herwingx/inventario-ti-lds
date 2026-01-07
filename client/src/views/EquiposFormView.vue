@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Formulario de Equipo (Crear/Editar).
+ * Formulario complejo para registrar hardware, especificando marca, modelo, serie y características técnicas.
+ */
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

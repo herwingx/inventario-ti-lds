@@ -1,6 +1,10 @@
-# 📦 Inventario TI & Soporte LDS
+# 🚀 Inventario TI & Soporte LDS
 
 > **Gestión Inteligente de Activos** — Sistema integral para el control de inventario tecnológico, asignaciones y mantenimientos de soporte técnico.
+
+[![Tech](https://img.shields.io/badge/Stack-MEVN-green?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
+
 
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow?style=flat-square&logo=javascript&logoColor=white)](https://developer.mozilla.org/es/docs/Web/JavaScript)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
@@ -340,6 +344,23 @@ npm run preview  # Preview del build
 |:----------|:------------|
 | [Backend README](server/README.md) | Documentación detallada del backend |
 | [Frontend README](client/README.md) | Documentación detallada del frontend |
+| [Reglas de Negocio](docs/REGLAS_NEGOCIO.md) | Ciclo de vida de activos y reglas lógicas |
+| [Plan de Red](docs/PLAN_SEGMENTACION_RED.md) | Estructura de red corporativa /20 |
+| [Stack Tecnológico](docs/ARQUITECTURA_TECNOLOGIA.md) | **¿Por qué Vue? ¿Por qué MySQL?** Explicación de arquitectura. |
+
+### 📚 Documentación de Mantenimiento y Desarrollo
+Guías esenciales para la continuidad del proyecto:
+
+*   [🛠️ Guía de Desarrollo](docs/GUIA_DESARROLLO.md) - **"Receta de Cocina"** para crear nuevos módulos.
+*   [📘 Manual Técnico](docs/MANUAL_TECNICO.md) - Backups, restauración y solución de problemas.
+*   [🗂️ Diccionario de Datos](docs/DICCIONARIO_DATOS.md) - Referencia de IDs, roles y estados.
+
+
+### Estándar de Documentación
+El proyecto sigue estrictamente el estándar **JSDoc/DocBlock** para garantizar la mantenibilidad:
+- **Backend:** Rutas, Controladores y Middleware documentados con `@module` y Typedefs.
+- **Frontend:** Vistas, Componentes y Servicios documentados con `@fileoverview` y prop/method docs.
+
 
 ---
 

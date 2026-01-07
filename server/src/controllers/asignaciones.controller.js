@@ -4,6 +4,12 @@
 const { query, getConnection } = require('../config/db');
 
 // * Función de ayuda para validar formato de fecha/hora.
+/**
+ * Valida si una cadena de texto tiene formato de fecha y hora válido (YYYY-MM-DD o YYYY-MM-DD HH:MM:SS)
+ *
+ * @param {string} dateTimeString - Fecha en formato string.
+ * @returns {boolean} True si el formato es válido.
+ */
 function isValidDateTime(dateTimeString) {
     if (!dateTimeString) return true;
     const regex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
@@ -24,7 +30,14 @@ const STATUS_ASIGNACION_ACTIVA = 1;
 const STATUS_ASIGNACION_FINALIZADA = 6;
 
 
-// * [GET] /api/asignaciones
+/**
+ * Obtiene el listado de asignaciones con filtros opcionales.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllAsignaciones = async (req, res, next) => {
     try {
         const { equipoId, empleadoId, activa, sucursalId, areaId, ipId } = req.query;
@@ -71,7 +84,14 @@ const getAllAsignaciones = async (req, res, next) => {
     }
 };
 
-// * [GET] /api/asignaciones/:id
+/**
+ * Obtiene los detalles de una asignación específica por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAsignacionById = async (req, res, next) => {
     const { id } = req.params;
     console.log(`Solicitando asignación con ID: ${id}`);
@@ -118,7 +138,15 @@ const getAsignacionById = async (req, res, next) => {
     }
 };
 
-// * [POST] /api/asignaciones
+/**
+ * Crea una nueva asignación de equipo.
+ * Maneja transacciones para actualizar automáticamente el estado del equipo e IP.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createAsignacion = async (req, res, next) => {
     const {
         id_equipo, id_empleado, id_sucursal_asignado, id_area_asignado,
@@ -228,8 +256,15 @@ const createAsignacion = async (req, res, next) => {
     }
 };
 
-// * [PUT] /api/asignaciones/:id
-// * AHORA con lógica mejorada para sincronizar fecha_fin y estado_finalizado.
+/**
+ * Actualiza una asignación existente.
+ * Gestiona cambios de estado (Activo/Finalizado) y actualiza estados de equipos/IPs vinculados.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateAsignacion = async (req, res, next) => {
     const { id: asignacionId } = req.params;
     const updateData = req.body;
@@ -502,7 +537,14 @@ const updateAsignacion = async (req, res, next) => {
 };
 
 
-// * [DELETE] /api/asignaciones/:id
+/**
+ * Elimina una asignación y libera los recursos asociados (Equipo, IP) si la asignación estaba activa.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteAsignacion = async (req, res, next) => {
     const { id: asignacionId } = req.params;
     let connection;
@@ -543,7 +585,15 @@ const deleteAsignacion = async (req, res, next) => {
     }
 };
 
-// * [POST] /api/asignaciones/con-componentes - Crear asignación con componentes
+/**
+ * Crea una asignación compleja que incluye un equipo principal y múltiples componentes.
+ * Ejecuta todo dentro de una transacción.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createAsignacionConComponentes = async (req, res, next) => {
     const connection = await getConnection();
     try {
@@ -634,7 +684,14 @@ const createAsignacionConComponentes = async (req, res, next) => {
     }
 };
 
-// * [GET] /api/asignaciones/:id/componentes - Obtener componentes de una asignación
+/**
+ * Obtiene los componentes asociados a una asignación principal.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getComponentesAsignacion = async (req, res, next) => {
     try {
         const { id: asignacionId } = req.params;
@@ -680,7 +737,15 @@ const getComponentesAsignacion = async (req, res, next) => {
     }
 };
 
-// * [PUT] /api/asignaciones/:id/componentes - Actualizar componentes de una asignación
+/**
+ * Actualiza la lista de componentes de una asignación.
+ * Agrega nuevos componentes y remueve (finaliza) los que ya no están en la lista.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateComponentesAsignacion = async (req, res, next) => {
     const connection = await getConnection();
     try {

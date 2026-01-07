@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de listado de Áreas.
+ * Muestra una tabla con todas las áreas administrativas y permite filtrar, crear, editar o eliminar.
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'

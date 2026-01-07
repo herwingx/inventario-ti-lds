@@ -1,4 +1,16 @@
 <script setup>
+/**
+ * @fileoverview Vista principal del módulo de Equipos.
+ * 
+ * Esta vista proporciona una interfaz completa para la gestión del inventario de hardware.
+ * Características principales:
+ * - Listado paginado de equipos con DataTable.
+ * - Filtrado avanzado por texto global, estado y tipo de dispositivo.
+ * - Acciones directas para crear, ver detalles, editar y eliminar equipos.
+ * - Feedback visual mediante Skeleton loading y Toasts.
+ * 
+ * @module User Interface/Views/Equipos
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'
@@ -47,7 +59,13 @@ const deviceTypes = ref([
     { label: 'Tablet', value: 'TABLET' }
 ]);
 
-// Cargar datos
+/**
+ * Carga asíncrona de equipos desde el backend.
+ * 
+ * Se ejecuta al montar el componente. Incluye un delay artificial mínimo (600ms)
+ * para evitar parpadeos (flickering) en la UI si la respuesta es demasiado rápida,
+ * asegurando que el skeleton loader se vea fluido.
+ */
 const loadEquipos = async () => {
   loading.value = true
   await new Promise(resolve => setTimeout(resolve, 600)) // Pequeño delay para suavidad
@@ -68,6 +86,12 @@ onMounted(() => {
 // Helpers UI
 const router = useRouter()
 
+/**
+ * Determina el color (severidad) del tag de estado según el valor recibido.
+ * 
+ * @param {string} status - Estado del equipo (ej. 'DISPONIBLE').
+ * @returns {string} Clase de severidad de PrimeVue ('success', 'warn', etc.).
+ */
 const getSeverity = (status) => {
   if (!status) return 'secondary'
   const s = status.toUpperCase()
@@ -78,15 +102,17 @@ const getSeverity = (status) => {
   return 'secondary'
 }
 
-
+/** Redirige a la vista de creación de nuevo equipo. */
 const openNew = () => {
     router.push({ name: 'equipos-nuevo' })
 }
 
+/** Redirige a la vista de detalles de un equipo. */
 const viewEquipo = (equipo) => {
     router.push({ name: 'equipos-detalle', params: { id: equipo.id } })
 }
 
+/** Redirige a la vista de edición de un equipo. */
 const editEquipo = (equipo) => {
     router.push({ name: 'equipos-editar', params: { id: equipo.id } })
 }
@@ -94,7 +120,14 @@ const editEquipo = (equipo) => {
 
 const confirm = useConfirm()
 
-// Lógica de Eliminación
+/**
+ * Inicia el flujo de confirmación para eliminar un equipo.
+ * 
+ * Muestra un diálogo modal de confirmación. Si el usuario acepta,
+ * procede con la eliminación física del registro y recarga la lista.
+ * 
+ * @param {Object} equipo - Objeto del equipo a eliminar.
+ */
 const confirmDeleteEquipo = (equipo) => {
     confirm.require({
         message: `¿Estás seguro de que deseas eliminar permanentemente ${equipo.nombre_equipo}? Esta acción no se puede deshacer.`,

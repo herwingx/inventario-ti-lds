@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de catálogo de Empresas.
+ * Gestiona las entidades corporativas del grupo.
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'

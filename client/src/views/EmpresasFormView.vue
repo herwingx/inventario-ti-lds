@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Formulario de Empresa (Crear/Editar).
+ * Permite la gestión de entidades corporativas del grupo.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

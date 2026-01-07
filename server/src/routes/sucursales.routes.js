@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Sucursales
+ * @description Define las rutas para la gestión de sucursales.
+ */
 // ! Rutas para la entidad Sucursales
 
 const express = require('express');

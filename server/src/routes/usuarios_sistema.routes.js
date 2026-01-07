@@ -1,3 +1,7 @@
+/**
+ * @module Routes/UsuariosSistema
+ * @description Define las rutas para la gestión de usuarios del sistema.
+ */
 // src/routes/usuariosSistema.routes.js
 // Define las rutas HTTP para la entidad 'usuarios_sistema'.
 

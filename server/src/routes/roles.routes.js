@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Roles
+ * @description Define las rutas para la gestión de roles y permisos.
+ */
 // src/routes/roles.routes.js
 // Define las rutas HTTP para la entidad 'roles'.
 

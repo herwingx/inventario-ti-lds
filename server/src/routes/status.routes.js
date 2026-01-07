@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Status
+ * @description Define las rutas para la gestión de estados de entidades.
+ */
 // ! Rutas para la entidad Status (estados del sistema)
 
 const express = require('express');

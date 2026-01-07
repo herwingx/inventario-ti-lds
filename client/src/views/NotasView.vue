@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de Notas y Observaciones.
+ * Muestra bitácoras o notas rápidas asociadas a equipos o procesos generales.
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'

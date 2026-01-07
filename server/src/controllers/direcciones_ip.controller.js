@@ -8,6 +8,12 @@ const { query } = require('../config/db');
 // ===============================================================
 // * Función de ayuda para validar formato de IPv4/IPv6 (simplificado)
 // * Nota: Solo valida el formato, no garantiza que la IP sea asignable o ruteable.
+/**
+ * Valida si una cadena tiene formato válido de dirección IPv4 o IPv6.
+ *
+ * @param {string} ip - Dirección IP a validar.
+ * @returns {boolean} True si el formato es válido.
+ */
 function isValidIpAddress(ip) {
   // * Permito null o vacío si el campo no es obligatorio.
   if (!ip || typeof ip !== 'string') return false;
@@ -17,11 +23,15 @@ function isValidIpAddress(ip) {
   return ipv4Regex.test(ip) || ipv6Regex.test(ip);
 }
 
-// * [GET] /api/direcciones-ip - Trae direcciones IP con filtros opcionales para supernetting /20
-// * Query Params opcionales:
-// *   - segmento: número 0-15 (tercer octeto de la IP 192.168.X.x)
-// *   - status: ID del status (ej: 4=ASIGNADO, 5=DISPONIBLE)
-// *   - disponibles: "true" para obtener solo IPs disponibles (status=5 y sin asignación activa)
+/**
+ * Obtiene el listado de direcciones IP.
+ * Permite filtrar por segmento, status, y disponibilidad.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllDireccionesIp = async (req, res, next) => {
   try {
     // * Extraer parámetros de filtro del query string
@@ -94,7 +104,14 @@ const getAllDireccionesIp = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/direcciones-ip/segmentos - Obtiene resumen de IPs por segmento para el dashboard
+/**
+ * Obtiene un resumen estadístico de IPs agrupadas por segmento de red (/24).
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getSegmentosResumen = async (req, res, next) => {
   try {
     const sql = `
@@ -145,7 +162,14 @@ const getSegmentosResumen = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/direcciones-ip/:id - Trae una dirección IP específica por su ID (con relaciones)
+/**
+ * Busca una dirección IP por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getDireccionIpById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -188,7 +212,15 @@ const getDireccionIpById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/direcciones-ip - Crea una nueva dirección IP con validaciones
+/**
+ * Registra una nueva dirección IP en el sistema.
+ * Valida formato y unicidad.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createDireccionIp = async (req, res, next) => {
   try {
     // * Extraigo los datos del body. direccion_ip es obligatorio
@@ -245,7 +277,14 @@ const createDireccionIp = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/direcciones-ip/:id - Actualiza una dirección IP por su ID
+/**
+ * Actualiza los datos de una dirección IP.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateDireccionIp = async (req, res, next) => {
   try {
     // * Extraigo el ID y los datos a actualizar
@@ -315,7 +354,15 @@ const updateDireccionIp = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/direcciones-ip/:id - Elimina una dirección IP por su ID
+/**
+ * Elimina una dirección IP.
+ * Valida que no esté siendo usada en asignaciones activas.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteDireccionIp = async (req, res, next) => {
   try {
     // * Extraigo el ID de la IP a eliminar

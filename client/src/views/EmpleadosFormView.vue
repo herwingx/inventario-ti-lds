@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Formulario de Empleado (Crear/Editar).
+ * Gestiona el alta y modificación de empleados, vinculándolos a empresas y áreas.
+ */
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

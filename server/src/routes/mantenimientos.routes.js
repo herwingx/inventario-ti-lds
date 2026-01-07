@@ -1,3 +1,7 @@
+/**
+ * @module Routes/Mantenimientos
+ * @description Define las rutas para la gestión de los mantenimientos de equipos.
+ */
 // src/routes/mantenimientos.routes.js
 // Define las rutas HTTP para la entidad 'mantenimientos'.
 

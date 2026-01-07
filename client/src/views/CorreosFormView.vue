@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Formulario de Cuenta de Correo (Crear/Editar).
+ * Permite registrar cuentas de correo y asignarlas a empleados activos.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'

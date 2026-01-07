@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Punto de entrada principal del servidor Express.
+ * Configura middleware, rutas, conexión a BD y manejo de errores.
+ */
 // ! Archivo principal del servidor Express para el sistema de inventario
 const express = require('express');
 require('dotenv').config(); // * Cargo las variables de entorno desde .env

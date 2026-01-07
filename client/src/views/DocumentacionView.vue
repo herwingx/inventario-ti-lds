@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de galería de Documentación.
+ * Permite subir, visualizar y gestionar documentos (manuales, facturas, guías) asociados al inventario.
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'

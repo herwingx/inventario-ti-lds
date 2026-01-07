@@ -9,7 +9,14 @@ const { query } = require('../config/db');
 // * Funciones controladoras para cada endpoint de sucursales
 // ===============================================================
 
-// * [GET] /api/sucursales - Trae todas las sucursales con información de empresa, tipo y status
+/**
+ * Obtiene el listado de todas las sucursales con sus relaciones (empresa, tipo, status).
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllSucursales = async (req, res, next) => {
   try {
     // * Consulta SQL con JOIN para traer sucursales y sus relaciones
@@ -41,7 +48,14 @@ const getAllSucursales = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/sucursales/:id - Trae una sucursal específica por su ID (con relaciones)
+/**
+ * Busca una sucursal específica por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getSucursalById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -79,7 +93,14 @@ const getSucursalById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/sucursales - Crea una nueva sucursal
+/**
+ * Registra una nueva sucursal en el sistema.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createSucursal = async (req, res, next) => {
   try {
     const { nombre, direccion, numero_telefono, id_empresa, id_tipo_sucursal, id_status } = req.body;
@@ -147,7 +168,14 @@ const createSucursal = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/sucursales/:id - Actualiza una sucursal por su ID
+/**
+ * Actualiza los datos de una sucursal existente.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateSucursal = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -224,7 +252,15 @@ const updateSucursal = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/sucursales/:id - Elimina una sucursal por su ID
+/**
+ * Elimina una sucursal del sistema.
+ * Valida integridad referencial.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteSucursal = async (req, res, next) => {
   try {
     const { id } = req.params;

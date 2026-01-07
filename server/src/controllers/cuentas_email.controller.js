@@ -5,6 +5,14 @@
 const { query } = require('../config/db');
 
 // * [GET] /api/cuentas-email - Trae todas las cuentas de email con JOINs a empleados y status
+/**
+ * Obtiene el listado de todas las cuentas de correo corporativo.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getAllCuentasEmail = async (req, res, next) => {
   try {
     const sql = `
@@ -34,7 +42,14 @@ const getAllCuentasEmail = async (req, res, next) => {
   }
 };
 
-// * [GET] /api/cuentas-email/:id - Trae una cuenta de email específica por su ID (con relaciones)
+/**
+ * Busca una cuenta de correo específica por su ID.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const getCuentaEmailById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -71,12 +86,19 @@ const getCuentaEmailById = async (req, res, next) => {
   }
 };
 
-// * [POST] /api/cuentas-email - Crea una nueva cuenta de email con validaciones y advertencias de seguridad
+/**
+ * Registra una nueva cuenta de correo corporativo.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const createCuentaEmail = async (req, res, next) => {
   try {
     const {
-        email, usuario_email, password_data,
-        id_empleado_asignado, id_status, observaciones
+      email, usuario_email, password_data,
+      id_empleado_asignado, id_status, observaciones
     } = req.body;
     // * Validaciones de campos obligatorios y formato
     if (!email) {
@@ -138,13 +160,20 @@ const createCuentaEmail = async (req, res, next) => {
   }
 };
 
-// * [PUT] /api/cuentas-email/:id - Actualiza una cuenta de email por su ID
+/**
+ * Actualiza la información de una cuenta de correo existente.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const updateCuentaEmail = async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
-        email, usuario_email, password_data,
-        id_empleado_asignado, id_status, observaciones
+      email, usuario_email, password_data,
+      id_empleado_asignado, id_status, observaciones
     } = req.body;
     // * Validar que al menos un campo sea enviado
     const updateFields = Object.keys(req.body);
@@ -217,7 +246,14 @@ const updateCuentaEmail = async (req, res, next) => {
   }
 };
 
-// * [DELETE] /api/cuentas-email/:id - Elimina una cuenta de email por su ID
+/**
+ * Elimina una cuenta de correo del sistema.
+ *
+ * @param {import('express').Request} req - Objeto de solicitud Express.
+ * @param {import('express').Response} res - Objeto de respuesta Express.
+ * @param {import('express').NextFunction} next - Función middleware next.
+ * @returns {Promise<void>}
+ */
 const deleteCuentaEmail = async (req, res, next) => {
   try {
     const { id } = req.params;

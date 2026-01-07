@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * @fileoverview Vista de Detalle de Asignación.
+ * Muestra los detalles de una asignación de equipo (empleado responsable, fecha, ubicación) y sus componentes asociados.
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
