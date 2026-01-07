@@ -1,0 +1,203 @@
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
+import DireccionesIpService from '../services/DireccionesIpService'
+import CatalogosService from '../services/CatalogosService'
+
+import InputText from 'primevue/inputtext'
+import Select from 'primevue/select'
+import Textarea from 'primevue/textarea'
+import Button from 'primevue/button'
+import Skeleton from 'primevue/skeleton'
+import Fluid from 'primevue/fluid'
+
+const route = useRoute()
+const router = useRouter()
+const toast = useToast()
+
+const loading = ref(false)
+const submitting = ref(false)
+
+const sucursales = ref([])
+const statuses = ref([])
+
+const form = ref({
+    direccion_ip: '',
+    id_sucursal: null,
+    comentario: '',
+    id_status: null
+})
+
+const isEditing = computed(() => !!route.params.id)
+const formTitle = computed(() => isEditing.value ? `Editar Dirección IP #${route.params.id}` : 'Registrar Nueva Dirección IP')
+
+const errors = ref({})
+
+onMounted(async () => {
+    loading.value = true
+    try {
+        const [sucursalesRes, statusRes] = await Promise.all([
+            CatalogosService.getSucursales(),
+            CatalogosService.getStatuses()
+        ])
+        
+        sucursales.value = sucursalesRes
+        statuses.value = statusRes
+
+        if (isEditing.value) {
+            const ipData = await DireccionesIpService.getById(route.params.id)
+            populateForm(ipData)
+        } else {
+            const defaultStatus = statuses.value.find(s => s.nombre_status === 'DISPONIBLE')
+            if (defaultStatus) form.value.id_status = defaultStatus.id
+        }
+    } catch (error) {
+        console.error('Error cargando datos:', error)
+        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos necesarios.', life: 3000 })
+    } finally {
+        loading.value = false
+    }
+})
+
+const populateForm = (data) => {
+    form.value.direccion_ip = data.direccion_ip
+    form.value.id_sucursal = data.id_sucursal
+    form.value.comentario = data.comentario
+    form.value.id_status = data.id_status
+}
+
+// Validación de formato IP
+const validateIpFormat = (ip) => {
+    if (!ip) return false
+    const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+    const ipv6Regex = /^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$/i
+    return ipv4Regex.test(ip) || ipv6Regex.test(ip)
+}
+
+const handleSubmit = async () => {
+    errors.value = {}
+    if (!form.value.direccion_ip) errors.value.direccion_ip = 'La dirección IP es obligatoria'
+    else if (!validateIpFormat(form.value.direccion_ip)) errors.value.direccion_ip = 'Formato de IP inválido (IPv4 o IPv6)'
+    if (!form.value.id_status) errors.value.id_status = 'El estado es obligatorio'
+
+    if (Object.keys(errors.value).length > 0) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Por favor complete los campos obligatorios correctamente.', life: 3000 })
+        return
+    }
+
+    submitting.value = true
+    try {
+        const payload = { ...form.value }
+
+        if (isEditing.value) {
+            await DireccionesIpService.update(route.params.id, payload)
+            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Dirección IP actualizada correctamente', life: 3000 })
+        } else {
+            await DireccionesIpService.create(payload)
+            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Dirección IP registrada correctamente', life: 3000 })
+        }
+
+        setTimeout(() => router.push({ name: 'direcciones-ip' }), 1000)
+    } catch (error) {
+        console.error('Error submit:', error)
+        const msg = error.response?.data?.message || 'Error al guardar la dirección IP'
+        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+    } finally {
+        submitting.value = false
+    }
+}
+
+const confirm = useConfirm()
+
+const goBack = () => {
+    confirm.require({
+        message: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
+        header: 'Confirmar Salida',
+        icon: 'pi pi-info-circle',
+        rejectLabel: 'Continuar Editando',
+        acceptLabel: 'Salir sin Guardar',
+        rejectClass: 'p-button-secondary p-button-text',
+        acceptClass: 'p-button-warning !bg-orange-500 !border-none hover:!bg-orange-600',
+        accept: () => {
+            toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
+            router.push({ name: 'direcciones-ip' })
+        }
+    })
+}
+</script>
+
+<template>
+  <div class="animate-fade-in-up max-w-4xl mx-auto">
+    
+    <div v-if="loading" class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-8 border border-gray-200 dark:border-dark-border">
+        <div class="flex flex-col gap-6">
+            <Skeleton width="10rem" height="2rem" />
+            <div class="grid grid-cols-1 gap-6">
+                <Skeleton height="3rem" />
+                <Skeleton height="3rem" />
+                <Skeleton height="3rem" />
+            </div>
+        </div>
+    </div>
+
+    <div v-else class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 md:p-8 border border-gray-200 dark:border-dark-border transition-colors duration-300">
+        
+        <div class="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-dark-border pb-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ formTitle }}</h2>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Configure la dirección IP de red</p>
+            </div>
+            <Button icon="pi pi-times" label="Cancelar" text @click="goBack" class="!text-gray-500 hover:!text-gray-700 dark:!text-gray-400 dark:hover:!text-white" />
+        </div>
+
+        <form @submit.prevent="handleSubmit">
+            <Fluid>
+                 <div class="grid grid-cols-1 gap-6 gap-y-8">
+                     
+                     <div>
+                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Dirección IP <span class="text-red-500">*</span></label>
+                         <InputText v-model="form.direccion_ip" placeholder="Ej: 192.168.0.1" :invalid="!!errors.direccion_ip" class="!bg-gray-50 dark:!bg-dark-bg w-full font-mono" />
+                         <small class="text-red-500" v-if="errors.direccion_ip">{{ errors.direccion_ip }}</small>
+                         <small class="text-gray-500 text-xs mt-1 block">Formato IPv4 (192.168.0.1) o IPv6</small>
+                     </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Sucursal</label>
+                        <Select v-model="form.id_sucursal" :options="sucursales" optionLabel="nombre" optionValue="id" placeholder="Seleccione sucursal" filter class="!bg-gray-50 dark:!bg-dark-bg w-full" showClear />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Estado <span class="text-red-500">*</span></label>
+                        <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" placeholder="Seleccione Estado" class="!bg-gray-50 dark:!bg-dark-bg w-full" :invalid="!!errors.id_status" />
+                        <small class="text-red-500" v-if="errors.id_status">{{ errors.id_status }}</small>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Comentario</label>
+                        <Textarea v-model="form.comentario" rows="4" placeholder="Descripción o notas sobre esta IP..." class="!bg-gray-50 dark:!bg-dark-bg w-full" />
+                    </div>
+
+                 </div>
+
+                 <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100 dark:border-dark-border">
+                     <Button label="Cancelar" severity="secondary" text class="!px-6" @click="goBack" />
+                     <Button type="submit" :label="isEditing ? 'Guardar Cambios' : 'Registrar IP'" icon="pi pi-check" :loading="submitting" class="!bg-primary !border-none hover:!bg-primary-hover !px-8" />
+                 </div>
+            </Fluid>
+        </form>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
