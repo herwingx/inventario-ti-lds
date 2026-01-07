@@ -15,7 +15,6 @@ const rolesRoutes = require('./src/routes/roles.routes'); // * Rutas para roles
 const usuariosSistemaRoutes = require('./src/routes/usuarios_sistema.routes'); // * Rutas para usuarios del sistema
 const cuentasEmailRoutes = require('./src/routes/cuentas_email.routes'); // * Rutas para cuentas de email
 const mantenimientosRoutes = require('./src/routes/mantenimientos.routes'); // * Rutas para mantenimientos
-const documentacionRoutes = require('./src/routes/documentacion.routes'); // * Rutas para documentación
 const notasRoutes = require('./src/routes/notas.routes'); // * Rutas para notas
 const asignacionesRoutes = require('./src/routes/asignaciones.routes'); // * Rutas para asignaciones
 const authRoutes = require('./src/routes/auth.routes'); // * Rutas de autenticación
@@ -125,7 +124,6 @@ app.use('/api/roles', rolesRoutes); // * Roles
 app.use('/api/usuarios-sistema', usuariosSistemaRoutes); // * Usuarios del sistema
 app.use('/api/cuentas-email', cuentasEmailRoutes); // * Cuentas de email
 app.use('/api/mantenimientos', mantenimientosRoutes); // * Mantenimientos
-app.use('/api/documentacion', documentacionRoutes); // * Rutas para documentación
 app.use('/api/notas/', notasRoutes); // * Notas
 app.use('/api/asignaciones/', asignacionesRoutes); // * Asignaciones
 

@@ -147,24 +147,24 @@ const routes = [
         component: () => import('../views/MantenimientosFormView.vue'),
         meta: { title: 'Editar Mantenimiento' }
       },
-      // Documentación
+      // Notas
       {
-        path: 'documentacion',
-        name: 'documentacion',
-        component: () => import('../views/DocumentacionView.vue'),
-        meta: { title: 'Documentación' }
+        path: 'notas',
+        name: 'notas',
+        component: () => import('../views/NotasView.vue'),
+        meta: { title: 'Gestión de Notas' }
       },
       {
-        path: 'documentacion/nuevo',
-        name: 'documentacion-nuevo',
-        component: () => import('../views/DocumentacionFormView.vue'),
-        meta: { title: 'Nuevo Documento' }
+        path: 'notas/nuevo',
+        name: 'notas-nuevo',
+        component: () => import('../views/NotasFormView.vue'),
+        meta: { title: 'Nueva Nota' }
       },
       {
-        path: 'documentacion/:id/editar',
-        name: 'documentacion-editar',
-        component: () => import('../views/DocumentacionFormView.vue'),
-        meta: { title: 'Editar Documento' }
+        path: 'notas/:id/editar',
+        name: 'notas-editar',
+        component: () => import('../views/NotasFormView.vue'),
+        meta: { title: 'Editar Nota' }
       },
       {
         path: 'direcciones-ip',

@@ -94,15 +94,7 @@ const menuItems = ref([
       { id: 'mantenimiento-form', label: 'Registrar Mantenimiento', route: '/mantenimientos/nuevo' }
     ]
   },
-  {
-    id: 'documentacion',
-    label: 'Documentación',
-    icon: 'pi pi-file',
-    children: [
-      { id: 'documentacion-list', label: 'Ver Documentos', route: '/documentacion' },
-      { id: 'documentacion-form', label: 'Subir Documento', route: '/documentacion/nuevo' }
-    ]
-  },
+
   {
     id: 'notas',
     label: 'Notas',
