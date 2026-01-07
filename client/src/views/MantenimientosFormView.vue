@@ -69,7 +69,7 @@ const loadEquipos = async () => {
         const data = await EquiposService.getAll()
         // Mapear para dropdown
         equipos.value = data.map(e => ({
-            label: `${e.nombre_equipo} (${e.numero_serie})`,
+            label: `${e.nombre_tipo_equipo} - ${e.nombre_equipo} ${e.modelo ? '(' + e.modelo + ')' : ''} [SN: ${e.numero_serie}]`,
             value: e.id,
             ...e 
         }))
@@ -219,7 +219,7 @@ const goBack = () => {
                                 optionValue="value" 
                                 filter 
                                 placeholder="Seleccione equipo..." 
-                                class="!w-full"
+                                class="!w-full !bg-gray-50 dark:!bg-dark-bg"
                             />
                         </div>
                         <div class="flex flex-col gap-2">
@@ -230,19 +230,19 @@ const goBack = () => {
                                 optionLabel="nombre_status" 
                                 optionValue="id" 
                                 placeholder="Estado actual" 
-                                class="!w-full"
+                                class="!w-full !bg-gray-50 dark:!bg-dark-bg"
                             />
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Fecha Inicio *</label>
-                        <Calendar v-model="mantenimiento.fecha_inicio" dateFormat="yy-mm-dd" showIcon class="!w-full" />
+                        <Calendar v-model="mantenimiento.fecha_inicio" dateFormat="yy-mm-dd" showIcon class="!w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Fecha Fin</label>
-                        <Calendar v-model="mantenimiento.fecha_fin" dateFormat="yy-mm-dd" showIcon placeholder="En proceso" class="!w-full" />
+                        <Calendar v-model="mantenimiento.fecha_fin" dateFormat="yy-mm-dd" showIcon placeholder="En proceso" class="!w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
                     </div>
 
                     <!-- Divider -->
@@ -257,22 +257,22 @@ const goBack = () => {
 
                     <div class="col-span-1 md:col-span-2 flex flex-col gap-2">
                         <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Diagnóstico / Falla Reportada</label>
-                        <Textarea v-model="mantenimiento.diagnostico" rows="3" class="!w-full" placeholder="Describa el problema o motivo del servicio..." />
+                        <Textarea v-model="mantenimiento.diagnostico" rows="3" class="!w-full !bg-gray-50 dark:!bg-dark-bg" placeholder="Describa el problema o motivo del servicio..." />
                     </div>
 
                      <div class="col-span-1 md:col-span-2 flex flex-col gap-2">
                         <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Solución / Trabajo Realizado</label>
-                        <Textarea v-model="mantenimiento.solucion" rows="3" class="!w-full" placeholder="Describa la solución aplicada..." />
+                        <Textarea v-model="mantenimiento.solucion" rows="3" class="!w-full !bg-gray-50 dark:!bg-dark-bg" placeholder="Describa la solución aplicada..." />
                     </div>
                     
                     <div class="flex flex-col gap-2">
                         <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Costo ($)</label>
-                        <InputNumber v-model="mantenimiento.costo" mode="currency" currency="MXN" locale="es-MX" class="!w-full" placeholder="$0.00" />
+                        <InputNumber v-model="mantenimiento.costo" mode="currency" currency="MXN" locale="es-MX" class="!w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" placeholder="$0.00" />
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Proveedor</label>
-                        <InputText v-model="mantenimiento.proveedor" class="!w-full" placeholder="Ej. Interno, HP Support..." />
+                        <InputText v-model="mantenimiento.proveedor" class="!w-full !bg-gray-50 dark:!bg-dark-bg" placeholder="Ej. Interno, HP Support..." />
                     </div>
 
                 </form>
