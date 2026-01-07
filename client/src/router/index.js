@@ -130,25 +130,25 @@ const routes = [
         meta: { title: 'Detalle de Asignación' }
       },
       {
-        path: 'correos',
-        name: 'correos',
+        path: 'cuentas-email',
+        name: 'correos', // Mantengo el name interno si quiero, o lo cambio. Cambiémoslo para consistencia.
         component: () => import('../views/CorreosView.vue'),
         meta: { title: 'Gestión de Correos' }
       },
       {
-        path: 'correos/nuevo',
+        path: 'cuentas-email/nuevo',
         name: 'correos-nuevo',
         component: () => import('../views/CorreosFormView.vue'),
         meta: { title: 'Registrar Cuenta de Correo' }
       },
       {
-        path: 'correos/editar/:id',
+        path: 'cuentas-email/editar/:id',
         name: 'correos-editar',
         component: () => import('../views/CorreosFormView.vue'),
         meta: { title: 'Editar Cuenta de Correo' }
       },
       {
-        path: 'correos/:id',
+        path: 'cuentas-email/:id',
         name: 'correos-detalle',
         component: () => import('../views/CorreosDetailView.vue'),
         meta: { title: 'Detalle de Cuenta' }
