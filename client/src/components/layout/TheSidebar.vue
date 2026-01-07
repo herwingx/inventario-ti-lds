@@ -196,12 +196,20 @@ function isItemActive(item) {
  */
 function isActiveRoute(item) {
   if (item.route) {
+    if (item.route.includes('?')) return route.fullPath === item.route
     return route.path === item.route
   }
   if (item.children) {
-    return item.children.some(child => route.path === child.route)
+    return item.children.some(child => isChildActive(child))
   }
   return false
+}
+
+function isChildActive(child) {
+    if (child.route && child.route.includes('?')) {
+        return route.fullPath === child.route
+    }
+    return route.path === child.route
 }
 
 /**
@@ -302,7 +310,7 @@ function navigateTo(routePath) {
                 <div 
                   @click="navigateTo(child.route)"
                   class="sidebar-item text-sm py-2"
-                  :class="{ 'active': route.path === child.route }"
+                  :class="{ 'active': isChildActive(child) }"
                 >
                   <i class="pi pi-circle-fill text-[6px]"></i>
                   <span>{{ child.label }}</span>
@@ -329,7 +337,7 @@ function navigateTo(routePath) {
                 :key="child.id"
                 @click.stop="navigateTo(child.route)"
                 class="px-4 py-2 text-sm text-light-muted dark:text-dark-muted hover:bg-primary/20 hover:text-primary cursor-pointer transition-colors"
-                :class="{ '!text-primary !bg-primary/10': route.path === child.route }"
+                :class="{ '!text-primary !bg-primary/10': isChildActive(child) }"
               >
                 {{ child.label }}
               </div>
