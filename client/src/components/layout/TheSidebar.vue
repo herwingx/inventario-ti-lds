@@ -97,6 +97,15 @@ const menuItems = ref([
   {
     id: 'documentacion',
     label: 'Documentación',
+    icon: 'pi pi-file',
+    children: [
+      { id: 'documentacion-list', label: 'Ver Documentos', route: '/documentacion' },
+      { id: 'documentacion-form', label: 'Subir Documento', route: '/documentacion/nuevo' }
+    ]
+  },
+  {
+    id: 'notas',
+    label: 'Notas',
     icon: 'pi pi-book',
     children: [
       { id: 'notas-list', label: 'Gestionar Notas', route: '/notas' },
