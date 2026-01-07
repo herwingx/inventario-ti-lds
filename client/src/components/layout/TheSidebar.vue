@@ -73,7 +73,7 @@ const menuItems = ref([
     children: [
       { id: 'asignaciones-list', label: 'Gestionar Asignaciones Activas', route: '/asignaciones' },
       { id: 'asignacion-form', label: 'Crear Nueva Asignación', route: '/asignaciones/nuevo' },
-      { id: 'asignaciones-historicas', label: 'Asignaciones Históricas', route: '/asignaciones/historico' }
+      { id: 'asignaciones-historicas', label: 'Asignaciones Históricas', route: '/asignaciones?view=history' }
     ]
   },
   {

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
@@ -19,6 +19,7 @@ import DatePicker from 'primevue/datepicker'
 const toast = useToast()
 const confirm = useConfirm()
 const router = useRouter()
+const route = useRoute()
 
 const asignaciones = ref([])
 const loading = ref(true)
@@ -39,7 +40,9 @@ const loadAsignaciones = async () => {
         if (viewMode.value === 'active') params.activa = 'true'
         else if (viewMode.value === 'history') params.activa = 'false'
         
-        asignaciones.value = await AsignacionesService.getAll(params)
+        const payload = await AsignacionesService.getAll(params)
+        // Filter out component assignments (sub-assignments) to show only main equipment
+        asignaciones.value = payload.filter(a => !a.id_equipo_padre)
     } catch (error) {
         console.error('Error al cargar asignaciones:', error)
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las asignaciones', life: 3000 })
@@ -49,7 +52,17 @@ const loadAsignaciones = async () => {
 }
 
 onMounted(() => {
+    if (route.query.view === 'history') {
+        viewMode.value = 'history'
+    }
     loadAsignaciones()
+})
+
+// Watch route changes
+import { watch } from 'vue'
+watch(() => route.query.view, (newVal) => {
+    if (newVal === 'history') viewMode.value = 'history'
+    else if (newVal === 'active' || !newVal) viewMode.value = 'active'
 })
 
 // Watch viewMode change
@@ -231,11 +244,11 @@ const skeletonRows = new Array(5).fill({})
                     <Skeleton size="2rem" />
                 </div>
                 <div v-else class="flex gap-1 justify-end">
-                    <button class="w-8 h-8 rounded bg-gray-100 hover:bg-blue-50 text-blue-600 flex items-center justify-center transition-all" @click="viewAsignacion(data)" title="Ver Detalle">
+                    <button class="w-7 h-7 rounded bg-gray-100 hover:bg-blue-50 text-blue-600 flex items-center justify-center transition-all" @click="viewAsignacion(data)" title="Ver Detalle">
                         <i class="pi pi-eye text-xs"></i>
                     </button>
                     <!-- Mostrar botón finalizar solo si está activa -->
-                    <button v-if="!data.fecha_fin_asignacion" class="w-8 h-8 rounded bg-gray-100 hover:bg-orange-50 text-orange-500 flex items-center justify-center transition-all" @click="finalizarAsignacion(data)" title="Finalizar Asignación">
+                    <button v-if="!data.fecha_fin_asignacion" class="w-7 h-7 rounded bg-gray-100 hover:bg-orange-50 text-orange-500 flex items-center justify-center transition-all" @click="finalizarAsignacion(data)" title="Finalizar Asignación">
                         <i class="pi pi-check-square text-xs"></i>
                     </button>
                 </div>
