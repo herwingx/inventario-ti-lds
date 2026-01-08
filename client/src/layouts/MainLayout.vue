@@ -115,14 +115,15 @@ onUnmounted(() => {
   <Toast />
   <ConfirmDialog 
     :pt="{
-      root: { class: 'bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-2xl rounded-2xl w-full max-w-lg' },
-      header: { class: 'p-6 pb-2 border-b-0 flex items-center justify-between' },
-      headerTitle: { class: 'text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300' },
+      mask: { class: 'bg-black/40 backdrop-blur-sm fixed inset-0 z-50 flex items-center justify-center' },
+      root: { class: 'bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-2xl rounded-2xl w-full max-w-md m-4 scale-100 transition-transform' },
+      header: { class: 'px-6 pt-6 pb-2 border-b-0 flex items-center justify-between' },
+      headerTitle: { class: 'text-xl font-bold text-gray-900 dark:text-white' },
       headerIcon: { class: 'hidden' }, 
-      content: { class: 'p-6 flex items-start gap-4' },
-      icon: { class: '!text-3xl text-primary flex-shrink-0' },
-      message: { class: 'text-gray-600 dark:text-gray-300 leading-relaxed mt-1' },
-      footer: { class: 'p-6 pt-2 border-t-0 flex justify-end gap-3' }
+      content: { class: 'px-6 py-4 flex items-start gap-4' },
+      icon: { class: '!text-3xl text-primary flex-shrink-0 mt-0.5' },
+      message: { class: 'text-gray-600 dark:text-gray-300 leading-relaxed text-sm' },
+      footer: { class: 'px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 rounded-b-2xl flex justify-end gap-3' }
     }"
   />
 </template>
