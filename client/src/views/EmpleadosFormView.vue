@@ -9,7 +9,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import EmpleadosService from '../services/EmpleadosService'
 import CatalogosService from '../services/CatalogosService'
-import { Check, X, Info } from 'lucide-vue-next'
+import { Check, X, Info, Calendar as CalendarIcon } from 'lucide-vue-next'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
@@ -331,11 +331,17 @@ const goBack = () => {
                     <!-- FECHAS -->
                     <div class="md:col-span-1">
                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Fecha de Nacimiento</label>
-                        <DatePicker v-model="form.fecha_nacimiento" dateFormat="yy-mm-dd" showIcon placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
+                        <div class="relative">
+                            <CalendarIcon class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
+                            <DatePicker v-model="form.fecha_nacimiento" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg !pr-10 w-full'" />
+                        </div>
                     </div>
                     <div class="md:col-span-1">
                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Fecha de Ingreso</label>
-                        <DatePicker v-model="form.fecha_ingreso" dateFormat="yy-mm-dd" showIcon placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
+                        <div class="relative">
+                            <CalendarIcon class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
+                            <DatePicker v-model="form.fecha_ingreso" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg !pr-10 w-full'" />
+                        </div>
                     </div>
 
                     <!-- STATUS -->
