@@ -88,6 +88,113 @@ const login = async (req, res, next) => {
     }
 };
 
+const crypto = require('crypto');
+const sendEmail = require('../utils/email');
+
+// ... (login existente) ...
+
+/**
+ * Inicia el proceso de recuperación de contraseña.
+ * Verifica el email, genera un token y envía el correo.
+ */
+const forgotPassword = async (req, res, next) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ message: 'El correo electrónico es obligatorio.' });
+    }
+
+    try {
+        const [user] = await query('SELECT * FROM usuarios_sistema WHERE email = ?', [email]);
+
+        if (!user) {
+            // Por seguridad, no decimos si el usuario existe o no
+            return res.status(200).json({ message: 'Si el correo existe, se enviarán las instrucciones.' });
+        }
+
+        // Generar token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const hash = await bcrypt.hash(resetToken, 10); // Opcional: hashear token en BD
+
+        // Expiración en 1 hora
+        const expires = new Date(Date.now() + 3600000); // 1 hora
+        // Formato MySQL YYYY-MM-DD HH:MM:SS
+        const expiresFormatted = expires.toISOString().slice(0, 19).replace('T', ' ');
+
+        // Guardar en BD (Guardamos token plano para este ejemplo simple, idealmente hash)
+        // Como la columna es VARCHAR(255), guardaremos el token tal cual para enviarlo en URL y comprobar igualdad
+        await query('UPDATE usuarios_sistema SET reset_password_token = ?, reset_password_expires = ? WHERE id = ?',
+            [resetToken, expiresFormatted, user.id]);
+
+        // URL de reset en Frontend
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+        const message = `
+            <h1>Recuperación de Contraseña</h1>
+            <p>Has solicitado restablecer tu contraseña.</p>
+            <p>Haz clic en el siguiente enlace para continuar:</p>
+            <a href="${resetUrl}" clicktracking=off>${resetUrl}</a>
+            <p>Este enlace expirará en 1 hora.</p>
+            <p>Si no solicitaste este cambio, ignora este correo.</p>
+        `;
+
+        await sendEmail({
+            to: user.email,
+            subject: 'Solicitud de Restablecimiento de Contraseña - Inventario TI',
+            html: message
+        });
+
+        res.status(200).json({ message: 'Si el correo existe, se enviarán las instrucciones.' });
+
+    } catch (error) {
+        console.error('Forgot Password Error:', error);
+        next(error);
+    }
+};
+
+/**
+ * Restablece la contraseña usando un token válido.
+ */
+const resetPassword = async (req, res, next) => {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+        return res.status(400).json({ message: 'Token y nueva contraseña requeridos.' });
+    }
+
+    try {
+        // Buscar usuario por token y validar expiración
+        // NOW() en MySQL vs Date.now JS -> Usaremos JS para comparar o query directa
+        // Hacemos query directa
+        const [user] = await query(
+            'SELECT * FROM usuarios_sistema WHERE reset_password_token = ? AND reset_password_expires > NOW()',
+            [token]
+        );
+
+        if (!user) {
+            return res.status(400).json({ message: 'Token inválido o expirado.' });
+        }
+
+        // Hashear nueva contraseña
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Actualizar contraseña y limpiar token
+        await query(
+            'UPDATE usuarios_sistema SET password_hash = ?, reset_password_token = NULL, reset_password_expires = NULL WHERE id = ?',
+            [hashedPassword, user.id]
+        );
+
+        res.status(200).json({ message: 'Contraseña actualizada correctamente. Inicia sesión.' });
+
+    } catch (error) {
+        console.error('Reset Password Error:', error);
+        next(error);
+    }
+};
+
 module.exports = {
-    login
+    login,
+    forgotPassword,
+    resetPassword
 }; 

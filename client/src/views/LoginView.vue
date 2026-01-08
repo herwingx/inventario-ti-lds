@@ -74,6 +74,9 @@ const handleLogin = async () => {
         <div class="flex flex-col gap-2">
           <label for="password" class="text-xs font-bold text-gray-300">Contraseña</label>
           <Password id="password" v-model="password" :feedback="false" toggleMask class="w-full" inputClass="w-full !rounded-md !py-2.5" placeholder="Contraseña" :disabled="loading" />
+          <div class="flex justify-end mt-1">
+             <router-link :to="{ name: 'forgot-password' }" class="text-xs text-[#1ea97c] hover:underline">¿Olvidaste tu contraseña?</router-link>
+          </div>
         </div>
 
         <Button type="submit" label="Iniciar Sesión" :loading="loading" class="w-full !mt-2 !bg-[#1ea97c] !border-none hover:!bg-[#158763] !font-bold !py-2.5 !rounded-md !text-white" />
