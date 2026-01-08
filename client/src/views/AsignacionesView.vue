@@ -121,15 +121,10 @@ const finalizarAsignacion = (data) => {
   })
 }
 
+import { getStatusSeverity } from '../utils/status'
+
 // Helpers
-const getSeverity = (status) => {
-  if (!status) return 'secondary'
-  const s = status.toUpperCase()
-  if (s.includes('ACTIVA')) return 'success'
-  if (s.includes('FINALIZADA')) return 'info'
-  if (s.includes('CANCELADA')) return 'danger'
-  return 'secondary'
-}
+const getSeverity = getStatusSeverity
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'

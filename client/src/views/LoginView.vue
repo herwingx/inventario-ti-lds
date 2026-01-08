@@ -48,7 +48,7 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#24292d] flex items-center justify-center p-4">
+  <div class="dark min-h-screen bg-[#24292d] flex items-center justify-center p-4">
     <Toast />
     
     <!-- Login Card -->
@@ -91,21 +91,4 @@ const handleLogin = async () => {
 :deep(.p-password-input) {
   width: 100%;
 }
-
-/* Custom styles to match the specific dark theme requested */
-:deep(.p-inputtext) {
-    background-color: #24292d !important;
-    border-color: #3e454d !important;
-    color: #e4e6eb !important;
-}
-
-:deep(.p-inputtext::placeholder) {
-    color: #8b949e !important;
-}
-
-:deep(.p-inputtext:focus) {
-    border-color: var(--p-primary-color) !important;
-    box-shadow: 0 0 0 1px var(--p-primary-color) !important;
-}
-
 </style>

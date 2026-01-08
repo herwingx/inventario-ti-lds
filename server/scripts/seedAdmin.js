@@ -5,7 +5,8 @@
 
 const bcrypt = require('bcrypt'); // Necesito bcrypt para hashear la contraseña.
 const mysql = require('mysql2/promise'); // Necesito el cliente de MySQL.
-require('dotenv').config(); // Necesito las variables de entorno para la conexión.
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') }); // Necesito las variables de entorno para la conexión.
 
 // * Defino los datos del usuario administrador que quiero crear.
 const adminUser = {

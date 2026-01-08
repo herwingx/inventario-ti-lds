@@ -14,6 +14,8 @@ import Tag from 'primevue/tag'
 import Skeleton from 'primevue/skeleton'
 import Dialog from 'primevue/dialog'
 import MultiSelect from 'primevue/multiselect'
+import Toast from 'primevue/toast'
+import ConfirmDialog from 'primevue/confirmdialog'
 import { ArrowLeft, CheckSquare } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -139,10 +141,14 @@ const formatDate = (date) => {
     if (!date) return 'N/A'
     return new Date(date).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
+
+import { getStatusSeverity } from '../utils/status'
 </script>
 
 <template>
     <div class="animate-fade-in-up">
+        <Toast />
+        <ConfirmDialog />
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div class="flex items-center gap-3">
@@ -153,7 +159,7 @@ const formatDate = (date) => {
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                         <Skeleton v-if="loading" width="15rem" />
                         <span v-else>Asignación #{{ asignacion?.id }}</span>
-                        <Tag v-if="!loading" :value="isActive ? 'ACTIVA' : 'FINALIZADA'" :severity="isActive ? 'success' : 'secondary'" />
+                        <Tag v-if="!loading" :value="isActive ? 'ACTIVA' : 'FINALIZADA'" :severity="getStatusSeverity(isActive ? 'ACTIVA' : 'FINALIZADA')" />
                     </h1>
                 </div>
             </div>
@@ -325,7 +331,10 @@ const formatDate = (date) => {
                         optionValue="value" 
                         filter 
                         placeholder="Buscar y seleccionar componentes..." 
-                        display="chip" 
+                        :maxSelectedLabels="0"
+                        selectedItemsLabel="{0} Componentes Seleccionados"
+                        :showSelectAll="false"
+                        :selectAll="false"
                         class="w-full custom-select"
                     />
                 </div>
@@ -341,6 +350,16 @@ const formatDate = (date) => {
     </div>
 </template>
 
+<!-- Estilos Globales para afectar al Overlay que se renderiza en el body -->
+<style>
+/* Ocultar checkbox "Select All" en el encabezado del MultiSelect */
+[data-pc-name="multiselect"] [data-pc-section="headercheckboxcontainer"],
+[data-pc-name="multiselect"] [data-pc-section="headercheckbox"],
+.p-multiselect-header .p-checkbox {
+    display: none !important;
+}
+</style>
+
 <style scoped>
 .animate-fade-in-up {
   animation: fadeInUp 0.4s ease-out forwards;
@@ -348,5 +367,11 @@ const formatDate = (date) => {
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Force hide the header checkbox in MultiSelect using PrimeVue internal attributes */
+:deep([data-pc-section="headercheckboxcontainer"]),
+:deep([data-pc-name="pcheadercheckbox"]) {
+    display: none !important;
 }
 </style>

@@ -126,20 +126,13 @@ onMounted(() => {
   loadEquipos()
 })
 
+import { getStatusSeverity } from '../utils/status'
+
 /**
  * Determina el color (severidad) del tag de estado.
- * @param {string} status - Estado del equipo.
- * @returns {string} Clase de severidad de PrimeVue.
+ * Usa la utilidad centralizada.
  */
-const getSeverity = (status) => {
-  if (!status) return 'secondary'
-  const s = status.toUpperCase()
-  if (s.includes('DISPONIBLE')) return 'success'
-  if (s.includes('ASIGNADO')) return 'warn'
-  if (s.includes('MANTENIMIENTO')) return 'contrast'
-  if (s.includes('BAJA') || s.includes('DAÑADO')) return 'danger'
-  return 'secondary'
-}
+const getSeverity = getStatusSeverity
 
 /** Redirige a la vista de creación de nuevo equipo. */
 const openNew = () => {
