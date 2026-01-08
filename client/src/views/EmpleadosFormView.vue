@@ -213,7 +213,7 @@ const goBack = () => {
         rejectLabel: 'Continuar Editando',
         acceptLabel: 'Salir sin Guardar',
         rejectClass: 'btn-secondary',
-        acceptClass: 'btn-warning ml-2',
+        acceptClass: 'btn-primary ml-2',
         accept: () => {
             toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
             router.push({ name: 'empleados' })
