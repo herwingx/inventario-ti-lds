@@ -14,7 +14,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import EquiposService from '../services/EquiposService'
 import DataTable from '../components/ui/DataTable.vue'
 import { 
@@ -32,7 +32,7 @@ import Select from 'primevue/select'
 
 const toast = useToast()
 const router = useRouter()
-const confirm = useConfirm()
+const { confirmDelete } = useSwal()
 
 // Data
 const equipos = ref([])
@@ -153,25 +153,24 @@ const editEquipo = (equipo) => {
  * Inicia el flujo de confirmación para eliminar un equipo.
  * @param {Object} equipo - Objeto del equipo a eliminar.
  */
-const confirmDeleteEquipo = (equipo) => {
-  confirm.require({
-    message: `¿Estás seguro de que deseas eliminar permanentemente ${equipo.nombre_equipo}? Esta acción no se puede deshacer.`,
-    header: 'Confirmar Eliminación',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Eliminar Equipo',
-    rejectClass: 'btn-secondary',
-    acceptClass: 'btn-danger ml-2',
-    accept: async () => {
-      try {
-        await EquiposService.delete(equipo.id)
-        toast.add({ severity: 'success', summary: 'Eliminado', detail: `Equipo ${equipo.nombre_equipo} eliminado correctamente`, life: 3000 })
-        loadEquipos()
-      } catch (error) {
-        console.error('Error al eliminar equipo:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el equipo', life: 3000 })
-      }
-    }
+const confirmDeleteEquipo = async (equipo) => {
+  const result = await confirmDelete({
+    title: 'Confirmar Eliminación',
+    text: `¿Estás seguro de que deseas eliminar permanentemente ${equipo.nombre_equipo}? Esta acción no se puede deshacer.`,
+    confirmButtonText: 'Eliminar Equipo',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await EquiposService.delete(equipo.id)
+      toast.add({ severity: 'success', summary: 'Eliminado', detail: `Equipo ${equipo.nombre_equipo} eliminado correctamente`, life: 3000 })
+      loadEquipos()
+    } catch (error) {
+      console.error('Error al eliminar equipo:', error)
+      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el equipo', life: 3000 })
+    }
+  }
 }
 
 /** Limpiar todos los filtros */

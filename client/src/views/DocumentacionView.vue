@@ -6,7 +6,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import DocumentacionService from '../services/DocumentacionService'
 import DataTable from '../components/ui/DataTable.vue'
 import { Search, Plus, Eye, Pencil, Trash2, FileText, ExternalLink } from 'lucide-vue-next'
@@ -17,7 +17,7 @@ import Select from 'primevue/select'
 
 const router = useRouter()
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmDelete } = useSwal()
 
 // Data
 const documentos = ref([])
@@ -91,24 +91,23 @@ const editDocumento = (doc) => {
   router.push({ name: 'documentacion-editar', params: { id: doc.id } })
 }
 
-const deleteDocumento = (doc) => {
-  confirm.require({
-    message: '¿Estás seguro de eliminar este documento?',
-    header: 'Confirmar Eliminación',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Eliminar Documento',
-    rejectClass: 'btn-secondary',
-    acceptClass: 'btn-danger ml-2',
-    accept: async () => {
-      try {
-        await DocumentacionService.delete(doc.id)
-        toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Documento eliminado', life: 3000 })
-        loadDocumentos()
-      } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el documento', life: 3000 })
-      }
-    }
+const deleteDocumento = async (doc) => {
+  const result = await confirmDelete({
+    title: 'Confirmar Eliminación',
+    text: '¿Estás seguro de eliminar este documento?',
+    confirmButtonText: 'Eliminar Documento',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await DocumentacionService.delete(doc.id)
+      toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Documento eliminado', life: 3000 })
+      loadDocumentos()
+    } catch (error) {
+      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el documento', life: 3000 })
+    }
+  }
 }
 
 const openLink = (url) => {

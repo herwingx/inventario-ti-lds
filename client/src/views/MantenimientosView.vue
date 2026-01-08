@@ -6,7 +6,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import MantenimientosService from '../services/MantenimientosService'
 import DataTable from '../components/ui/DataTable.vue'
 import { getStatusSeverity } from '../utils/status'
@@ -18,7 +18,7 @@ import Select from 'primevue/select'
 
 const router = useRouter()
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmDelete } = useSwal()
 
 // Data
 const mantenimientos = ref([])
@@ -95,24 +95,23 @@ const editMantenimiento = (mantenimiento) => {
   router.push({ name: 'mantenimientos-editar', params: { id: mantenimiento.id } })
 }
 
-const deleteMantenimiento = (mantenimiento) => {
-  confirm.require({
-    message: `¿Estás seguro de eliminar este registro de mantenimiento?`,
-    header: 'Confirmar Eliminación',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Eliminar Registro',
-    rejectClass: 'btn-secondary',
-    acceptClass: 'btn-danger ml-2',
-    accept: async () => {
-      try {
-        await MantenimientosService.delete(mantenimiento.id)
-        toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Registro eliminado', life: 3000 })
-        loadMantenimientos()
-      } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el registro', life: 3000 })
-      }
-    }
+const deleteMantenimiento = async (mantenimiento) => {
+  const result = await confirmDelete({
+    title: 'Confirmar Eliminación',
+    text: '¿Estás seguro de eliminar este registro de mantenimiento?',
+    confirmButtonText: 'Eliminar Registro',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await MantenimientosService.delete(mantenimiento.id)
+      toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Registro eliminado', life: 3000 })
+      loadMantenimientos()
+    } catch (error) {
+      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el registro', life: 3000 })
+    }
+  }
 }
 
 const clearFilters = () => {

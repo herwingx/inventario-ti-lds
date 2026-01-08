@@ -7,7 +7,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import AsignacionesService from '../services/AsignacionesService'
 import DataTable from '../components/ui/DataTable.vue'
 import { 
@@ -27,7 +27,7 @@ import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmWarning } = useSwal()
 const router = useRouter()
 const route = useRoute()
 
@@ -100,25 +100,24 @@ const viewAsignacion = (data) => {
   router.push({ name: 'asignaciones-detalle', params: { id: data.id } })
 }
 
-const finalizarAsignacion = (data) => {
-  confirm.require({
-    message: `¿Desea finalizar la asignación del equipo ${data.equipo_nombre}?`,
-    header: 'Finalizar Asignación',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Finalizar',
-    rejectClass: 'btn-secondary',
-    acceptClass: 'btn-warning ml-2',
-    accept: async () => {
-      try {
-        await AsignacionesService.finalizar(data.id)
-        toast.add({ severity: 'success', summary: 'Finalizado', detail: 'Asignación finalizada correctamente', life: 3000 })
-        loadAsignaciones()
-      } catch (error) {
-        console.error('Error al finalizar:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo finalizar la asignación', life: 3000 })
-      }
-    }
+const finalizarAsignacion = async (data) => {
+  const result = await confirmWarning({
+    title: 'Finalizar Asignación',
+    text: `¿Desea finalizar la asignación del equipo ${data.equipo_nombre}?`,
+    confirmButtonText: 'Finalizar',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await AsignacionesService.finalizar(data.id)
+      toast.add({ severity: 'success', summary: 'Finalizado', detail: 'Asignación finalizada correctamente', life: 3000 })
+      loadAsignaciones()
+    } catch (error) {
+      console.error('Error al finalizar:', error)
+      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo finalizar la asignación', life: 3000 })
+    }
+  }
 }
 
 import { getStatusSeverity } from '../utils/status'

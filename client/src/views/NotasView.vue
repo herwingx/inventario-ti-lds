@@ -6,7 +6,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import NotasService from '../services/NotasService'
 import DataTable from '../components/ui/DataTable.vue'
 import { Search, Plus, Pencil, Trash2, StickyNote, User, Calendar, Monitor, Settings } from 'lucide-vue-next'
@@ -16,7 +16,7 @@ import Tag from 'primevue/tag'
 
 const router = useRouter()
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmDelete } = useSwal()
 
 // Data
 const notas = ref([])
@@ -72,24 +72,23 @@ const editNota = (nota) => {
   router.push({ name: 'notas-editar', params: { id: nota.id } })
 }
 
-const deleteNota = (nota) => {
-  confirm.require({
-    message: '¿Estás seguro de eliminar esta nota?',
-    header: 'Confirmar Eliminación',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Eliminar Nota',
-    rejectClass: 'btn-secondary',
-    acceptClass: 'btn-danger ml-2',
-    accept: async () => {
-      try {
-        await NotasService.delete(nota.id)
-        toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Nota eliminada', life: 3000 })
-        loadNotas()
-      } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la nota', life: 3000 })
-      }
-    }
+const deleteNota = async (nota) => {
+  const result = await confirmDelete({
+    title: 'Confirmar Eliminación',
+    text: '¿Estás seguro de eliminar esta nota?',
+    confirmButtonText: 'Eliminar Nota',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await NotasService.delete(nota.id)
+      toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Nota eliminada', life: 3000 })
+      loadNotas()
+    } catch (error) {
+      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la nota', life: 3000 })
+    }
+  }
 }
 
 const truncate = (text, length) => {
