@@ -15,6 +15,7 @@ import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
 import Skeleton from 'primevue/skeleton'
 import Fluid from 'primevue/fluid'
+import CorreosService from '../services/CorreosService' // Import CorreosService
 
 const route = useRoute()
 const router = useRouter()
@@ -29,6 +30,7 @@ const empresas = ref([])
 const allAreas = ref([]) // Todas las áreas
 const areas = ref([]) // Áreas filtradas por empresa
 const statuses = ref([])
+const allCorreos = ref([]) // Todos los correos
 
 // Modelo del Formulario
 const form = ref({
@@ -42,11 +44,20 @@ const form = ref({
     fecha_ingreso: null,
     id_empresa: null,
     id_area: null,
-    id_status: null
+    id_status: null,
+    asignar_id_correo: null // Nuevo campo para asignación
 })
 
 const isEditing = computed(() => !!route.params.id)
 const formTitle = computed(() => isEditing.value ? `Editar Empleado #${route.params.id}` : 'Registrar Nuevo Empleado')
+
+// Computed para filtrar correos disponibles
+const availableEmails = computed(() => {
+    return allCorreos.value.filter(correo => {
+        // Mostrar si NO tiene asignado a nadie O si está asignado al empleado actual que estamos editando
+        return !correo.id_empleado_asignado || (isEditing.value && correo.id_empleado_asignado == route.params.id)
+    })
+})
 
 // Validaciones simples
 const errors = ref({})
@@ -55,15 +66,17 @@ onMounted(async () => {
     loading.value = true
     try {
         // Cargar catálogos en paralelo
-        const [empresasRes, areasRes, statusRes] = await Promise.all([
+        const [empresasRes, areasRes, statusRes, correosRes] = await Promise.all([
             CatalogosService.getEmpresas(),
             CatalogosService.getAreas(),
-            CatalogosService.getStatuses()
+            CatalogosService.getStatuses(),
+            CorreosService.getAll() // Obtener todos los correos
         ])
         
         empresas.value = empresasRes
         allAreas.value = areasRes // Guardar todas las áreas
         statuses.value = statusRes
+        allCorreos.value = correosRes
 
         // Si es edición, cargar datos del empleado
         if (isEditing.value) {
@@ -73,6 +86,13 @@ onMounted(async () => {
             if (empleadoData.id_empresa) {
                 areas.value = allAreas.value.filter(area => area.id_empresa === empleadoData.id_empresa)
             }
+            
+            // Buscar si este empleado ya tiene un correo asignado para preseleccionar
+            const currentEmail = allCorreos.value.find(c => c.id_empleado_asignado == route.params.id)
+            if (currentEmail) {
+                form.value.asignar_id_correo = currentEmail.id
+            }
+
         } else {
             // Predetectar estado ACTIVO si existe
             const defaultStatus = statuses.value.find(s => s.nombre_status === 'ACTIVO')
@@ -256,6 +276,36 @@ const goBack = () => {
                     <div class="md:col-span-1">
                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email Personal</label>
                         <InputText v-model="form.email_personal" type="email" placeholder="ejemplo@correo.com" class="!bg-gray-50 dark:!bg-dark-bg" />
+                    </div>
+
+                    <!-- ASIGNACIÓN DE CORREO CORPORATIVO -->
+                    <div class="md:col-span-2 border-t border-gray-100 dark:border-dark-border pt-6 mt-2">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                            <div class="flex items-center gap-2">
+                                <Info :size="16" class="text-blue-500" />
+                                Asignar Correo Corporativo
+                            </div>
+                        </label>
+                        <Select 
+                            v-model="form.asignar_id_correo" 
+                            :options="availableEmails" 
+                            optionLabel="email" 
+                            optionValue="id" 
+                            placeholder="Seleccione un correo disponible (Opcional)" 
+                            filter 
+                            showClear
+                            class="!bg-gray-50 dark:!bg-dark-bg w-full" 
+                        >
+                            <template #option="slotProps">
+                                <div class="flex flex-col">
+                                    <span class="font-medium">{{ slotProps.option.email }}</span>
+                                    <span v-if="slotProps.option.usuario_email" class="text-xs text-gray-500">Usuario: {{ slotProps.option.usuario_email }}</span>
+                                </div>
+                            </template>
+                        </Select>
+                         <small class="text-gray-500 dark:text-gray-400 mt-1 block">
+                            Seleccione una cuenta de correo corporativo existente para vincularla a este empleado.
+                        </small>
                     </div>
 
                     <!-- TELEFONO & PUESTO -->

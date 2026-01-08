@@ -34,7 +34,8 @@ const getAllEmpleados = async (req, res, next) => {
         e.fecha_registro,
         e.fecha_actualizacion,
         e.id_status,
-        st.nombre_status AS status_nombre
+        st.nombre_status AS status_nombre,
+        (SELECT email FROM cuentas_email_corporativo WHERE id_empleado_asignado = e.id LIMIT 1) AS email_corporativo
       FROM empleados AS e
       LEFT JOIN empresas AS em ON e.id_empresa = em.id
       LEFT JOIN areas AS a ON e.id_area = a.id
@@ -78,7 +79,8 @@ const getEmpleadoById = async (req, res, next) => {
         e.fecha_registro,
         e.fecha_actualizacion,
         e.id_status,
-        st.nombre_status AS status_nombre
+        st.nombre_status AS status_nombre,
+        (SELECT email FROM cuentas_email_corporativo WHERE id_empleado_asignado = e.id LIMIT 1) AS email_corporativo
       FROM empleados AS e
       LEFT JOIN sucursales AS s ON e.id_sucursal = s.id
       LEFT JOIN areas AS a ON e.id_area = a.id
@@ -180,6 +182,12 @@ const createEmpleado = async (req, res, next) => {
     sql += ') VALUES (' + placeholders.join(', ') + ')';
     const result = await query(sql, values);
     const newEmpleadoId = result.insertId;
+
+    // * Asignación de correo si se envía
+    if (req.body.asignar_id_correo) {
+      await query('UPDATE cuentas_email_corporativo SET id_empleado_asignado = ? WHERE id = ?', [newEmpleadoId, req.body.asignar_id_correo]);
+    }
+
     res.status(201).json({
       message: 'Empleado creado exitosamente',
       id: newEmpleadoId,
@@ -214,14 +222,15 @@ const updateEmpleado = async (req, res, next) => {
     const {
       numero_empleado, nombres, apellidos, email_personal,
       telefono, puesto, fecha_nacimiento, fecha_ingreso,
-      id_empresa, id_area, id_status
+      id_empresa, id_area, id_status, asignar_id_correo
     } = req.body;
-    // * Validación: al menos un campo a actualizar
+    // * Validación: al menos un campo a actualizar (incluyendo asignar_id_correo)
     if (
       numero_empleado === undefined && nombres === undefined && apellidos === undefined &&
       email_personal === undefined && telefono === undefined && puesto === undefined &&
       fecha_nacimiento === undefined && fecha_ingreso === undefined &&
-      id_empresa === undefined && id_area === undefined && id_status === undefined
+      id_empresa === undefined && id_area === undefined && id_status === undefined &&
+      asignar_id_correo === undefined
     ) {
       return res.status(400).json({ message: 'Se debe proporcionar al menos un campo para actualizar.' });
     }
@@ -261,15 +270,39 @@ const updateEmpleado = async (req, res, next) => {
     if (id_empresa !== undefined) { updates.push('id_empresa = ?'); params.push(id_empresa); }
     if (id_area !== undefined) { updates.push('id_area = ?'); params.push(id_area); }
     if (id_status !== undefined) { updates.push('id_status = ?'); params.push(id_status); }
-    sql += updates.join(', ');
-    sql += ' WHERE id = ?';
-    params.push(id);
-    const result = await query(sql, params);
-    if (result.affectedRows === 0) {
-      res.status(404).json({ message: `Empleado con ID ${id} no encontrado.` });
+
+    // Solo ejecutar update de empleado si hay campos para actualizar
+    if (updates.length > 0) {
+      sql += updates.join(', ');
+      sql += ' WHERE id = ?';
+      params.push(id);
+      const result = await query(sql, params);
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: `Empleado con ID ${id} no encontrado.` });
+      }
     } else {
-      res.status(200).json({ message: `Empleado con ID ${id} actualizado exitosamente.` });
+      // Verificar si existe el empleado si solo estamos actualizando correo
+      const empExists = await query('SELECT id FROM empleados WHERE id = ?', [id]);
+      if (empExists.length === 0) {
+        return res.status(404).json({ message: `Empleado con ID ${id} no encontrado.` });
+      }
     }
+
+    // * Actualización de Correo Corporativo
+    if (asignar_id_correo !== undefined) {
+      // 1. Desasignar cualquier correo que tenga este empleado actualmente
+      await query('UPDATE cuentas_email_corporativo SET id_empleado_asignado = NULL WHERE id_empleado_asignado = ?', [id]);
+
+      // 2. Si se seleccionó un correo (no es null/0), asignarlo
+      if (asignar_id_correo) {
+        // Verificar si el correo ya está asignado a otro (opcional, pero buena práctica)
+        // En este caso confiamos en que el frontend filtre, pero un UPDATE sobrescribirá si ya tenía otro asignado, lo cual es correcto.
+        await query('UPDATE cuentas_email_corporativo SET id_empleado_asignado = ? WHERE id = ?', [id, asignar_id_correo]);
+      }
+    }
+
+    res.status(200).json({ message: `Empleado con ID ${id} actualizado exitosamente.` });
+
   } catch (error) {
     console.error(`Error al actualizar empleado con ID ${req.params.id}:`, error);
     if (error.code === 'ER_DUP_ENTRY') {
