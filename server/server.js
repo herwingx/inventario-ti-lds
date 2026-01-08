@@ -4,7 +4,8 @@
  */
 // ! Archivo principal del servidor Express para el sistema de inventario
 const express = require('express');
-require('dotenv').config(); // * Cargo las variables de entorno desde .env
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') }); // * Cargo las variables de entorno desde .env
 const { pool } = require('./src/config/db'); // * Importo el pool de conexiones a la base de datos
 const statusRoutes = require('./src/routes/status.routes'); // * Rutas para el estado del sistema
 const empresasRoutes = require('./src/routes/empresas.routes'); // * Rutas para empresas
@@ -136,7 +137,6 @@ app.use('/api/profile', profileRoutes); // * Perfil de usuario
 app.use('/api/dashboard', dashboardRoutes); // * Dashboard y estadísticas generales
 
 // ? Middleware para rutas limpias de SPA: sirve index.html para cualquier ruta que no sea API ni archivo estático
-const path = require('path');
 app.get(/^\/(?!api\/|.*\..*$).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

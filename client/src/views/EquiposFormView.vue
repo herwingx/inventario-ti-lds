@@ -19,6 +19,7 @@ import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import Skeleton from 'primevue/skeleton'
 import Fluid from 'primevue/fluid'
+import Tag from 'primevue/tag'
 
 const route = useRoute()
 const router = useRouter()
@@ -148,6 +149,21 @@ const toUpperCase = (field) => {
     if (form.value[field]) {
         form.value[field] = form.value[field].toUpperCase()
     }
+}
+
+// Helper Severidad Estado
+const getSeverity = (status) => {
+    if (!status) return 'secondary'
+    // Si viene objeto complete, usar nombre. Si es string, usar directo.
+    const nombre = typeof status === 'object' ? status.nombre_status : status
+    if (!nombre) return 'secondary'
+    
+    const s = nombre.toUpperCase()
+    if (s.includes('DISPONIBLE')) return 'success'
+    if (s.includes('ASIGNADO')) return 'warn' // Or info
+    if (s.includes('MANTENIMIENTO')) return 'warn'
+    if (s.includes('BAJA') || s.includes('DAÑADO')) return 'danger'
+    return 'secondary'
 }
 
 // Submit
@@ -340,7 +356,21 @@ const goBack = () => {
                     <!-- STATUS -->
                     <div class="md:col-span-2">
                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Estado <span class="text-red-500">*</span></label>
-                        <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" placeholder="Seleccione Estado" class="!bg-gray-50 dark:!bg-dark-bg w-full" :disabled="isStatusDisabled" :invalid="!!errors.id_status" />
+                        <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" placeholder="Seleccione Estado" class="!bg-gray-50 dark:!bg-dark-bg w-full" :disabled="isStatusDisabled" :invalid="!!errors.id_status">
+                            <template #value="slotProps">
+                                <div v-if="slotProps.value" class="flex items-center">
+                                    <Tag :value="statuses.find(s => s.id === slotProps.value)?.nombre_status || 'Estado'" :severity="getSeverity(statuses.find(s => s.id === slotProps.value))" class="!text-xs !font-bold px-2 py-0.5" />
+                                </div>
+                                <span v-else>
+                                    {{ slotProps.placeholder }}
+                                </span>
+                            </template>
+                            <template #option="slotProps">
+                                <div class="flex items-center">
+                                    <Tag :value="slotProps.option.nombre_status" :severity="getSeverity(slotProps.option)" class="!text-xs !font-bold px-2 py-0.5" />
+                                </div>
+                            </template>
+                        </Select>
                         <small v-if="isStatusDisabled" class="text-orange-500 flex items-center gap-1 mt-1 font-medium"><Lock :size="12" /> {{ statusHelpText }}</small>
                         <small class="text-red-500" v-if="errors.id_status">{{ errors.id_status }}</small>
                     </div>
