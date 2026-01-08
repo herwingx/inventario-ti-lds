@@ -39,12 +39,13 @@ const statuses = ref([
 // Columnas
 const columns = [
   { field: 'id', header: 'ID', sortable: true, width: '5%' },
-  { field: 'numero_empleado', header: 'No. Empleado', sortable: true, width: '10%' },
-  { field: 'nombres', header: 'Nombre Completo', sortable: true, width: '25%' },
-  { field: 'nombre_empresa', header: 'Empresa/Área', sortable: true, width: '20%' },
+  { field: 'numero_empleado', header: 'No. Empleado', sortable: true, width: '8%' },
+  { field: 'nombres', header: 'Nombre Completo', sortable: true, width: '22%' },
+  { field: 'email_corporativo', header: 'Email Corp.', sortable: true, width: '20%' },
+  { field: 'nombre_empresa', header: 'Empresa/Área', sortable: true, width: '15%' },
   { field: 'puesto', header: 'Puesto', sortable: true, width: '15%' },
-  { field: 'status_nombre', header: 'Estado', sortable: true, width: '10%' },
-  { field: 'actions', header: 'Acciones', sortable: false, width: '15%', align: 'right' }
+  { field: 'status_nombre', header: 'Estado', sortable: true, width: '5%' },
+  { field: 'actions', header: 'Acciones', sortable: false, width: '10%', align: 'right' }
 ]
 
 const filteredEmpleados = computed(() => {
@@ -199,6 +200,17 @@ const clearFilters = () => {
             <div class="skeleton h-4 w-32"></div>
             <div class="skeleton h-3 w-24"></div>
           </div>
+        </template>
+
+        <template #email_corporativo="{ data }">
+          <span v-if="data.email_corporativo" class="text-gray-600 dark:text-gray-300 text-sm flex items-center gap-1.5 truncate max-w-[200px]" :title="data.email_corporativo">
+            {{ data.email_corporativo }}
+          </span>
+          <span v-else class="text-gray-400 dark:text-gray-600 text-xs italic">No asignado</span>
+        </template>
+
+        <template #skeleton-email_corporativo>
+          <div class="skeleton h-4 w-32"></div>
         </template>
 
         <template #nombre_empresa="{ data }">
