@@ -170,10 +170,14 @@ const clearFilters = () => {
         </template>
 
         <template #nombre_empleado="{ data }">
-          <div v-if="data.nombre_empleado" class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
-            {{ data.nombre_empleado }} {{ data.apellido_empleado }}
+          <div v-if="data.nombre_empleado" class="flex flex-col justify-center h-full">
+             <span class="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight">
+               {{ data.nombre_empleado }} {{ data.apellido_empleado }}
+             </span>
           </div>
-          <span v-else class="text-gray-400 text-sm italic">Sin asignar</span>
+          <div v-else class="flex items-center h-full">
+             <span class="text-gray-400 dark:text-gray-500 text-sm italic">Sin asignar</span>
+          </div>
         </template>
 
         <template #skeleton-nombre_empleado>
