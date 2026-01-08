@@ -429,6 +429,42 @@ Se utiliza **PrimeVue 4** con personalización mediante `pt` (passthrough):
 }
 ```
 
+### Paleta de Estados (Status Colors)
+
+Se utiliza una función centralizada `getStatusSeverity` en `utils/status.js` para mantener la consistencia visual en estados:
+
+| Severidad | Color (Tailwind) | Estados Representados |
+|:----------|:-----------------|:----------------------|
+| `success` | 🟢 Green - 500  | ACTIVO, DISPONIBLE, HABILITADO, EN LÍNEA |
+| `info`    | 🔵 Blue - 500   | ASIGNADO, EN USO, OCUPADO |
+| `warn`    | 🟡 Orange - 500 | MANTENIMIENTO, PENDIENTE, REVISIÓN |
+| `danger`  | 🔴 Red - 500    | BAJA, INACTIVO, DAÑADO, ELIMINADO |
+| `purple`  | 🟣 Purple - 500 | FINALIZADA, COMPLETADO, CERRADO |
+| `cyan`    | 💠 Cyan - 500   | RESERVADA, PRÉSTAMO |
+| `indigo`  | 🌌 Indigo - 500 | ARCHIVADO, HISTÓRICO |
+| `slate`   | 🌑 Slate - 500  | NUEVO, GARANTÍA |
+
+### Patrones de UX
+
+#### Confirmación de Salida (ConfirmDialog)
+Se utiliza un **único componente global** `<ConfirmDialog />` en `MainLayout.vue` para gestionar confirmaciones de navegación.
+
+**Para implementar confirmación al salir sin guardar:**
+1. Importar `useConfirm` (NO importar `ConfirmDialog` ni añadirlo al template).
+2. Usar el composable:
+
+```javascript
+import { useConfirm } from 'primevue/useconfirm'
+const confirm = useConfirm()
+
+const goBack = () => {
+    confirm.require({
+        message: '¿Salir sin guardar?',
+        accept: () => router.push('/home')
+    })
+}
+```
+
 ---
 
 ## 🔌 Servicios de API
