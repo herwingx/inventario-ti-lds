@@ -19,13 +19,14 @@ import {
   Briefcase, 
   HelpCircle, 
   Eye, 
-  CheckSquare 
+  CheckSquare,
+  Pencil
 } from 'lucide-vue-next'
 
 import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 
-const { confirmWarning, success: toastSuccess, error: toastError } = useSwal()
+const { confirmWarning, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 const router = useRouter()
 const route = useRoute()
 
@@ -98,6 +99,10 @@ const viewAsignacion = (data) => {
   router.push({ name: 'asignaciones-detalle', params: { id: data.id } })
 }
 
+const editAsignacion = (data) => {
+  router.push({ name: 'asignaciones-editar', params: { id: data.id } })
+}
+
 const finalizarAsignacion = async (data) => {
   const result = await confirmWarning({
     title: 'Finalizar Asignación',
@@ -115,6 +120,8 @@ const finalizarAsignacion = async (data) => {
       console.error('Error al finalizar:', error)
       toastError('No se pudo finalizar la asignación')
     }
+  } else {
+    toastInfo('Operación cancelada')
   }
 }
 
@@ -271,6 +278,9 @@ const clearFilters = () => {
           <div class="flex gap-1 justify-end">
             <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center transition-all" @click="viewAsignacion(data)" title="Ver Detalle">
               <Eye :size="16" />
+            </button>
+            <button v-if="!data.fecha_fin_asignacion" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all" @click="editAsignacion(data)" title="Editar Asignación">
+              <Pencil :size="16" />
             </button>
             <button v-if="!data.fecha_fin_asignacion" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 text-orange-500 dark:text-orange-400 flex items-center justify-center transition-all" @click="finalizarAsignacion(data)" title="Finalizar Asignación">
               <CheckSquare :size="16" />

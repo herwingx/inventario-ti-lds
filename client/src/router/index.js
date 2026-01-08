@@ -213,6 +213,12 @@ const routes = [
         meta: { title: 'Detalle de Asignación' }
       },
       {
+        path: 'asignaciones/editar/:id',
+        name: 'asignaciones-editar',
+        component: () => import('../views/AsignacionesFormView.vue'),
+        meta: { title: 'Editar Asignación' }
+      },
+      {
         path: 'cuentas-email',
         name: 'correos', // Mantengo el name interno si quiero, o lo cambio. Cambiémoslo para consistencia.
         component: () => import('../views/CorreosView.vue'),
