@@ -85,11 +85,5 @@ app.use(PrimeVue, {
   }
 })
 
-// Services
-import ToastService from 'primevue/toastservice';
-import ConfirmationService from 'primevue/confirmationservice';
-
-app.use(ToastService);
-app.use(ConfirmationService);
 
 app.mount('#app')

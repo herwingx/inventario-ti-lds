@@ -5,7 +5,7 @@
  */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
+import { useSwal } from '../composables/useSwal'
 import SucursalesService from '../services/SucursalesService'
 import CatalogosService from '../services/CatalogosService'
 
@@ -16,7 +16,7 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const { success: toastSuccess, error: toastError } = useSwal()
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -53,7 +53,7 @@ onMounted(async () => {
         }
     } catch (error) {
         console.error('Error cargando datos:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Fallo al cargar datos', life: 3000 })
+        toastError('Fallo al cargar datos')
     } finally {
         loading.value = false
     }
@@ -71,14 +71,14 @@ const handleSubmit = async () => {
     try {
         if (isEditing.value) {
             await SucursalesService.update(route.params.id, form.value)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Sucursal actualizada', life: 3000 })
+            toastSuccess('Sucursal actualizada')
         } else {
             await SucursalesService.create(form.value)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Sucursal creada', life: 3000 })
+            toastSuccess('Sucursal creada')
         }
         router.push({ name: 'sucursales' })
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al guardar', life: 3000 })
+        toastError('Error al guardar')
     } finally {
         submitting.value = false
     }

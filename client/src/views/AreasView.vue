@@ -5,7 +5,6 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import AreasService from '../services/AreasService'
 import DataTable from '../components/ui/DataTable.vue'
@@ -17,9 +16,8 @@ import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
-const toast = useToast()
 const router = useRouter()
-const { confirmDelete } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
 
 // Data
 const areas = ref([])
@@ -73,7 +71,7 @@ const loadAreas = async () => {
     areas.value = await AreasService.getAll()
   } catch (error) {
     console.error('Error al cargar áreas:', error)
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las áreas', life: 3000 })
+    toastError('No se pudieron cargar las áreas')
   } finally {
     loading.value = false
   }
@@ -109,11 +107,11 @@ const confirmDeleteArea = async (area) => {
   if (result.isConfirmed) {
     try {
       await AreasService.delete(area.id)
-      toast.add({ severity: 'success', summary: 'Eliminado', detail: `Área ${area.nombre} eliminada correctamente`, life: 3000 })
+      toastSuccess(`Área ${area.nombre} eliminada correctamente`)
       loadAreas()
     } catch (error) {
       console.error('Error al eliminar área:', error)
-      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el área', life: 3000 })
+      toastError('No se pudo eliminar el área')
     }
   }
 }

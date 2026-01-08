@@ -5,7 +5,6 @@
  */
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import MantenimientosService from '../services/MantenimientosService'
 import EquiposService from '../services/EquiposService'
@@ -22,8 +21,7 @@ import Fluid from 'primevue/fluid'
 
 const router = useRouter()
 const route = useRoute()
-const toast = useToast()
-const { confirmWarning } = useSwal()
+const { confirmWarning, success: toastSuccess, error: toastError, warning: toastWarning } = useSwal()
 
 const isEditing = computed(() => !!route.params.id)
 const formTitle = computed(() => isEditing.value ? `Editar Servicio #${route.params.id}` : 'Registrar Nuevo Servicio')
@@ -62,7 +60,7 @@ onMounted(async () => {
         }
     } catch (error) {
         console.error(error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar datos iniciales', life: 3000 })
+        toastError('Error al cargar datos iniciales')
     } finally {
         loading.value = false
     }
@@ -103,7 +101,7 @@ const loadMantenimiento = async (id) => {
             fecha_fin: data.fecha_fin ? new Date(data.fecha_fin) : null
         }
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el mantenimiento', life: 3000 })
+        toastError('No se pudo cargar el mantenimiento')
         router.push({ name: 'mantenimientos' })
     }
 }
@@ -111,16 +109,16 @@ const loadMantenimiento = async (id) => {
 const save = async () => {
     // Validaciones básicas manuales (puedes usar vuelidate si lo prefieres como en Equipos)
     if (!mantenimiento.value.id_equipo) {
-        toast.add({ severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un equipo', life: 3000 })
+        toastWarning('Debe seleccionar un equipo')
         return
     }
     if (!mantenimiento.value.fecha_inicio) {
-        toast.add({ severity: 'warn', summary: 'Atención', detail: 'La fecha de inicio es obligatoria', life: 3000 })
+        toastWarning('La fecha de inicio es obligatoria')
         return
     }
     
     if (mantenimiento.value.fecha_fin && mantenimiento.value.fecha_inicio > mantenimiento.value.fecha_fin) {
-         toast.add({ severity: 'error', summary: 'Error', detail: 'La fecha de fin no puede ser anterior al inicio', life: 3000 })
+         toastError('La fecha de fin no puede ser anterior al inicio')
          return
     }
 
@@ -134,10 +132,10 @@ const save = async () => {
 
         if (isEditing.value) {
             await MantenimientosService.update(route.params.id, payload)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Mantenimiento actualizado', life: 3000 })
+            toastSuccess('Mantenimiento actualizado')
         } else {
             await MantenimientosService.create(payload)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Mantenimiento registrado', life: 3000 })
+            toastSuccess('Mantenimiento registrado')
         }
         
         // Delay para feedback visual
@@ -147,7 +145,7 @@ const save = async () => {
 
     } catch (error) {
         console.error(error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Falló el guardado', life: 3000 })
+        toastError('Falló el guardado')
     } finally {
         saving.value = false
     }

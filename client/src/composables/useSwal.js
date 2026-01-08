@@ -158,11 +158,22 @@ export function useSwal() {
     })
   }
 
+  // Métodos de conveniencia para toasts
+  const success = (message) => toast({ icon: 'success', title: message })
+  const error = (message) => toast({ icon: 'error', title: message })
+  const warning = (message) => toast({ icon: 'warning', title: message })
+  const info = (message) => toast({ icon: 'info', title: message })
+
   return {
     confirmWarning,
     confirmDelete,
     confirmSuccess,
     toast,
+    // Métodos de conveniencia para toasts
+    success,
+    error,
+    warning,
+    info,
     // Exponer Swal directamente para casos personalizados
     Swal
   }

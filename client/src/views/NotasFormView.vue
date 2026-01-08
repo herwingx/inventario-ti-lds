@@ -5,7 +5,6 @@
  */
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import NotasService from '../services/NotasService'
 import EquiposService from '../services/EquiposService'
@@ -19,8 +18,7 @@ import Fluid from 'primevue/fluid'
 
 const router = useRouter()
 const route = useRoute()
-const toast = useToast()
-const { confirmWarning } = useSwal()
+const { confirmWarning, success: toastSuccess, error: toastError, warning: toastWarning } = useSwal()
 
 const isEditing = computed(() => !!route.params.id)
 const formTitle = computed(() => isEditing.value ? `Editar Nota #${route.params.id}` : 'Crear Nueva Nota')
@@ -48,7 +46,7 @@ onMounted(async () => {
             await loadNota(route.params.id)
         }
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar datos', life: 3000 })
+        toastError('Error al cargar datos')
     } finally {
         loading.value = false
     }
@@ -63,14 +61,14 @@ const loadNota = async (id) => {
             id_equipo: data.id_equipo
         }
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Nota no encontrada', life: 3000 })
+        toastError('Nota no encontrada')
         router.push({ name: 'notas' })
     }
 }
 
 const save = async () => {
     if (!form.value.titulo || !form.value.contenido) {
-        toast.add({ severity: 'warn', summary: 'Atención', detail: 'Título y contenido son obligatorios', life: 3000 })
+        toastWarning('Título y contenido son obligatorios')
         return
     }
 
@@ -81,16 +79,16 @@ const save = async () => {
 
         if (isEditing.value) {
             await NotasService.update(route.params.id, payload)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Nota actualizada', life: 3000 })
+            toastSuccess('Nota actualizada')
         } else {
             await NotasService.create(payload)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Nota creada', life: 3000 })
+            toastSuccess('Nota creada')
         }
         
         setTimeout(() => router.push({ name: 'notas' }), 1000)
     } catch (error) {
         console.error(error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al guardar', life: 3000 })
+        toastError('Error al guardar')
     } finally {
         saving.value = false
     }

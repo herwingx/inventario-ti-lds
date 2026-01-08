@@ -5,7 +5,6 @@
  */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import EmpleadosService from '../services/EmpleadosService'
 import { getStatusSeverity } from '../utils/status'
@@ -17,8 +16,7 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
-const { confirmDelete } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
 
 const empleado = ref(null)
 const loading = ref(true)
@@ -31,12 +29,7 @@ const loadEmpleado = async () => {
     empleado.value = await EmpleadosService.getById(id)
   } catch (error) {
     console.error('Error al cargar empleado:', error)
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Error', 
-      detail: 'No se pudo cargar el empleado', 
-      life: 3000 
-    })
+    toastError('No se pudo cargar el empleado')
     router.push({ name: 'empleados' })
   } finally {
     loading.value = false
@@ -72,21 +65,11 @@ const confirmDeleteEmpleado = async () => {
   if (result.isConfirmed) {
     try {
       await EmpleadosService.delete(empleado.value.id)
-      toast.add({ 
-        severity: 'success', 
-        summary: 'Eliminado', 
-        detail: `Empleado ${nombreCompleto} eliminado correctamente`, 
-        life: 3000 
-      })
+      toastSuccess(`Empleado ${nombreCompleto} eliminado correctamente`)
       router.push({ name: 'empleados' })
     } catch (error) {
       console.error('Error al eliminar empleado:', error)
-      toast.add({ 
-        severity: 'error', 
-        summary: 'Error', 
-        detail: 'No se pudo eliminar el empleado', 
-        life: 3000 
-      })
+      toastError('No se pudo eliminar el empleado')
     }
   }
 }

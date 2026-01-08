@@ -5,7 +5,7 @@
  */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
+import { useSwal } from '../composables/useSwal'
 import EmpresasService from '../services/EmpresasService'
 import CatalogosService from '../services/CatalogosService'
 
@@ -16,7 +16,7 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const { success: toastSuccess, error: toastError } = useSwal()
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -44,7 +44,7 @@ onMounted(async () => {
             }
         }
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Fallo al cargar datos', life: 3000 })
+        toastError('Fallo al cargar datos')
     } finally {
         loading.value = false
     }
@@ -60,14 +60,14 @@ const handleSubmit = async () => {
     try {
         if (isEditing.value) {
             await EmpresasService.update(route.params.id, form.value)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Empresa actualizada', life: 3000 })
+            toastSuccess('Empresa actualizada')
         } else {
             await EmpresasService.create(form.value)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Empresa creada', life: 3000 })
+            toastSuccess('Empresa creada')
         }
         router.push({ name: 'empresas' })
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al conectar o nombre duplicado', life: 3000 })
+        toastError('Error al conectar o nombre duplicado')
     } finally {
         submitting.value = false
     }

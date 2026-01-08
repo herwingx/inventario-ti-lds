@@ -6,13 +6,12 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AuthService from '../services/AuthService'
-import { useToast } from 'primevue/usetoast'
+import { useSwal } from '../composables/useSwal'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
-import Toast from 'primevue/toast'
 import { Layers } from 'lucide-vue-next'
 
-const toast = useToast()
+const { success: toastSuccess, error: toastError, warning: toastWarning } = useSwal()
 const router = useRouter()
 const route = useRoute()
 
@@ -25,26 +24,26 @@ onMounted(() => {
     // Obtener token de la URL
     token.value = route.params.token
     if (!token.value) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Token inválido', life: 3000 })
+        toastError('Token inválido')
         router.push({ name: 'login' })
     }
 })
 
 const handleResetPassword = async () => {
   if (!password.value || !confirmPassword.value) {
-     toast.add({ severity: 'warn', summary: 'Atención', detail: 'Ambos campos son obligatorios', life: 3000 })
+     toastWarning('Ambos campos son obligatorios')
      return
   }
 
   if (password.value !== confirmPassword.value) {
-     toast.add({ severity: 'error', summary: 'Error', detail: 'Las contraseñas no coinciden', life: 3000 })
+     toastError('Las contraseñas no coinciden')
      return
   }
 
   loading.value = true
   try {
     const res = await AuthService.resetPassword(token.value, password.value)
-    toast.add({ severity: 'success', summary: 'Éxito', detail: res.message, life: 5000 })
+    toastSuccess(res.message)
     
     setTimeout(() => {
         router.push({ name: 'login' })
@@ -52,7 +51,7 @@ const handleResetPassword = async () => {
   } catch (error) {
     console.error(error)
     const msg = error.response?.data?.message || 'Error al restablecer contraseña.'
-    toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
+    toastError(msg)
   } finally {
     loading.value = false
   }
@@ -61,7 +60,6 @@ const handleResetPassword = async () => {
 
 <template>
   <div class="dark min-h-screen bg-[#24292d] flex items-center justify-center p-4">
-    <Toast />
     
     <div class="relative w-full max-w-[400px] bg-[#2f363e] rounded-lg shadow-2xl overflow-hidden p-8">
       

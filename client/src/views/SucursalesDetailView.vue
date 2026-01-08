@@ -5,7 +5,6 @@
  */
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import SucursalesService from '../services/SucursalesService'
 
@@ -15,8 +14,7 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
-const { confirmDelete } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
 
 const sucursal = ref(null)
 const loading = ref(true)
@@ -26,7 +24,7 @@ const load = async () => {
     try {
         sucursal.value = await SucursalesService.getById(route.params.id)
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la sucursal', life: 3000 })
+        toastError('No se pudo cargar la sucursal')
         router.push({ name: 'sucursales' })
     } finally {
         loading.value = false
@@ -51,10 +49,10 @@ const remove = async () => {
     if (result.isConfirmed) {
         try {
             await SucursalesService.delete(sucursal.value.id)
-            toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Sucursal eliminada', life: 3000 })
+            toastSuccess('Sucursal eliminada')
             router.push({ name: 'sucursales' })
         } catch (error) {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar (probablemente tenga dependencias)', life: 3000 })
+            toastError('No se pudo eliminar (probablemente tenga dependencias)')
         }
     }
 }

@@ -5,7 +5,7 @@
  */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
+import { useSwal } from '../composables/useSwal'
 import CorreosService from '../services/CorreosService'
 import EmpleadosService from '../services/EmpleadosService'
 import CatalogosService from '../services/CatalogosService'
@@ -19,7 +19,7 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const { success: toastSuccess, error: toastError } = useSwal()
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -68,7 +68,7 @@ onMounted(async () => {
 
     } catch (error) {
         console.error('Error cargando datos:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar datos', life: 3000 })
+        toastError('Error al cargar datos')
     } finally {
         loading.value = false
     }
@@ -88,7 +88,7 @@ const handleSubmit = async () => {
     if (!form.value.id_status) errors.value.id_status = 'El estado es obligatorio'
 
     if (Object.keys(errors.value).length > 0) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Corrija los errores', life: 3000 })
+        toastError('Corrija los errores')
         return
     }
 
@@ -96,16 +96,16 @@ const handleSubmit = async () => {
     try {
         if (isEditing.value) {
             await CorreosService.update(route.params.id, form.value)
-            toast.add({ severity: 'success', summary: 'Actualizado', detail: 'Cuenta actualizada correctamente', life: 3000 })
+            toastSuccess('Cuenta actualizada correctamente')
         } else {
             await CorreosService.create(form.value)
-            toast.add({ severity: 'success', summary: 'Creado', detail: 'Cuenta creada correctamente', life: 3000 })
+            toastSuccess('Cuenta creada correctamente')
         }
         router.push({ name: 'correos' })
     } catch (error) {
         console.error('Error submit:', error)
         const msg = error.response?.data?.message || 'Error al guardar'
-        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 })
+        toastError(msg)
     } finally {
         submitting.value = false
     }

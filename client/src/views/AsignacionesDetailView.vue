@@ -5,7 +5,6 @@
  */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import AsignacionesService from '../services/AsignacionesService'
 import EquiposService from '../services/EquiposService'
@@ -18,8 +17,7 @@ import { ArrowLeft, CheckSquare } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
-const { confirmWarning } = useSwal()
+const { confirmWarning, success: toastSuccess, error: toastError } = useSwal()
 
 const asignacion = ref(null)
 const componentes = ref([])
@@ -42,7 +40,7 @@ const loadAsignacion = async () => {
 
     } catch (error) {
         console.error('Error al cargar asignación:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la asignación', life: 3000 })
+        toastError('No se pudo cargar la asignación')
         router.push({ name: 'asignaciones' })
     } finally {
         loading.value = false
@@ -75,10 +73,10 @@ const finalizarAsignacion = async () => {
     if (result.isConfirmed) {
         try {
             await AsignacionesService.finalizar(asignacion.value.id)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Asignación finalizada', life: 3000 })
+            toastSuccess('Asignación finalizada')
             loadAsignacion() 
         } catch (error) {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo finalizar', life: 3000 })
+            toastError('No se pudo finalizar')
         }
     }
 }
@@ -113,7 +111,7 @@ const openManageComponentes = async () => {
         showComponentesDialog.value = true
     } catch (error) {
         console.error('Error loading options', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los equipos disponibles', life: 3000 })
+        toastError('No se pudieron cargar los equipos disponibles')
     }
 }
 
@@ -121,13 +119,13 @@ const saveComponentes = async () => {
     savingComponentes.value = true
     try {
         await AsignacionesService.updateComponentes(asignacion.value.id, selectedComponentesIds.value)
-        toast.add({ severity: 'success', summary: 'Actualizado', detail: 'Componentes actualizados correctamente', life: 3000 })
+        toastSuccess('Componentes actualizados correctamente')
         showComponentesDialog.value = false
         // Recargar lista de componentes
         await loadComponentes(asignacion.value.id)
     } catch (error) {
         console.error('Error saving componentes', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Falló la actualización de componentes', life: 3000 })
+        toastError('Falló la actualización de componentes')
     } finally {
         savingComponentes.value = false
     }

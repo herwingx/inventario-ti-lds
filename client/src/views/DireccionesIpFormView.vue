@@ -5,7 +5,6 @@
  */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import DireccionesIpService from '../services/DireccionesIpService'
 import CatalogosService from '../services/CatalogosService'
@@ -19,7 +18,7 @@ import Fluid from 'primevue/fluid'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const { confirmWarning, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -59,7 +58,7 @@ onMounted(async () => {
         }
     } catch (error) {
         console.error('Error cargando datos:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos necesarios.', life: 3000 })
+        toastError('No se pudieron cargar los datos necesarios.')
     } finally {
         loading.value = false
     }
@@ -87,7 +86,7 @@ const handleSubmit = async () => {
     if (!form.value.id_status) errors.value.id_status = 'El estado es obligatorio'
 
     if (Object.keys(errors.value).length > 0) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Por favor complete los campos obligatorios correctamente.', life: 3000 })
+        toastError('Por favor complete los campos obligatorios correctamente.')
         return
     }
 
@@ -97,23 +96,23 @@ const handleSubmit = async () => {
 
         if (isEditing.value) {
             await DireccionesIpService.update(route.params.id, payload)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Dirección IP actualizada correctamente', life: 3000 })
+            toastSuccess('Dirección IP actualizada correctamente')
         } else {
             await DireccionesIpService.create(payload)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Dirección IP registrada correctamente', life: 3000 })
+            toastSuccess('Dirección IP registrada correctamente')
         }
 
         setTimeout(() => router.push({ name: 'direcciones-ip' }), 1000)
     } catch (error) {
         console.error('Error submit:', error)
         const msg = error.response?.data?.message || 'Error al guardar la dirección IP'
-        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+        toastError(msg)
     } finally {
         submitting.value = false
     }
 }
 
-const { confirmWarning } = useSwal()
+
 
 const goBack = async () => {
     const result = await confirmWarning({
@@ -124,7 +123,7 @@ const goBack = async () => {
     })
     
     if (result.isConfirmed) {
-        toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
+        toastInfo('Operación cancelada')
         router.push({ name: 'direcciones-ip' })
     }
 }

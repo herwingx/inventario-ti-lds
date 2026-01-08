@@ -6,7 +6,6 @@
  */
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import AsignacionesService from '../services/AsignacionesService'
 import DataTable from '../components/ui/DataTable.vue'
@@ -26,8 +25,7 @@ import {
 import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 
-const toast = useToast()
-const { confirmWarning } = useSwal()
+const { confirmWarning, success: toastSuccess, error: toastError } = useSwal()
 const router = useRouter()
 const route = useRoute()
 
@@ -70,7 +68,7 @@ const loadAsignaciones = async () => {
     asignaciones.value = payload.filter(a => !a.id_equipo_padre)
   } catch (error) {
     console.error('Error al cargar asignaciones:', error)
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las asignaciones', life: 3000 })
+    toastError('No se pudieron cargar las asignaciones')
   } finally {
     loading.value = false
   }
@@ -111,11 +109,11 @@ const finalizarAsignacion = async (data) => {
   if (result.isConfirmed) {
     try {
       await AsignacionesService.finalizar(data.id)
-      toast.add({ severity: 'success', summary: 'Finalizado', detail: 'Asignación finalizada correctamente', life: 3000 })
+      toastSuccess('Asignación finalizada correctamente')
       loadAsignaciones()
     } catch (error) {
       console.error('Error al finalizar:', error)
-      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo finalizar la asignación', life: 3000 })
+      toastError('No se pudo finalizar la asignación')
     }
   }
 }

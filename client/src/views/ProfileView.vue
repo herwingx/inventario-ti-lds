@@ -5,7 +5,7 @@
  * También gestiona el cambio de contraseña de forma segura.
  */
 import { ref, onMounted, computed } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useSwal } from '../composables/useSwal'
 import { useAuthStore } from '../stores/auth'
 import ProfileService from '../services/ProfileService'
 // Componentes PrimeVue
@@ -18,7 +18,7 @@ import Password from 'primevue/password'
 import Avatar from 'primevue/avatar'
 import Dialog from 'primevue/dialog'
 
-const toast = useToast()
+const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useSwal()
 const authStore = useAuthStore()
 
 // Estados
@@ -99,12 +99,7 @@ const loadProfile = async () => {
         form.value.email = data.email || ''
     } catch (error) {
         console.error('Error cargando perfil:', error)
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo cargar el perfil',
-            life: 3000
-        })
+        toastError('No se pudo cargar el perfil')
     } finally {
         loading.value = false
     }
@@ -113,12 +108,7 @@ const loadProfile = async () => {
 // Guardar cambios de email
 const saveProfile = async () => {
     if (form.value.email === profile.value.email) {
-        toast.add({
-            severity: 'info',
-            summary: 'Sin cambios',
-            detail: 'No hay cambios que guardar',
-            life: 3000
-        })
+        toastInfo('No hay cambios que guardar')
         return
     }
 
@@ -126,20 +116,10 @@ const saveProfile = async () => {
     try {
         await ProfileService.updateProfile({ email: form.value.email })
         profile.value.email = form.value.email
-        toast.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Perfil actualizado correctamente',
-            life: 3000
-        })
+        toastSuccess('Perfil actualizado correctamente')
     } catch (error) {
         console.error('Error guardando perfil:', error)
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: error.response?.data?.message || 'No se pudo actualizar el perfil',
-            life: 5000
-        })
+        toastError(error.response?.data?.message || 'No se pudo actualizar el perfil')
     } finally {
         saving.value = false
     }
@@ -149,32 +129,17 @@ const saveProfile = async () => {
 const changePassword = async () => {
     // Validaciones
     if (!passwordForm.value.currentPassword || !passwordForm.value.newPassword || !passwordForm.value.confirmPassword) {
-        toast.add({
-            severity: 'warn',
-            summary: 'Campos requeridos',
-            detail: 'Todos los campos son obligatorios',
-            life: 3000
-        })
+        toastWarning('Todos los campos son obligatorios')
         return
     }
 
     if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Las contraseñas nuevas no coinciden',
-            life: 3000
-        })
+        toastError('Las contraseñas nuevas no coinciden')
         return
     }
 
     if (passwordForm.value.newPassword.length < 6) {
-        toast.add({
-            severity: 'warn',
-            summary: 'Contraseña débil',
-            detail: 'La contraseña debe tener al menos 6 caracteres',
-            life: 3000
-        })
+        toastWarning('La contraseña debe tener al menos 6 caracteres')
         return
     }
 
@@ -185,23 +150,13 @@ const changePassword = async () => {
             newPassword: passwordForm.value.newPassword
         })
         
-        toast.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Contraseña actualizada correctamente',
-            life: 3000
-        })
+        toastSuccess('Contraseña actualizada correctamente')
         
         showPasswordDialog.value = false
         passwordForm.value = { currentPassword: '', newPassword: '', confirmPassword: '' }
     } catch (error) {
         console.error('Error cambiando contraseña:', error)
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: error.response?.data?.message || 'No se pudo cambiar la contraseña',
-            life: 5000
-        })
+        toastError(error.response?.data?.message || 'No se pudo cambiar la contraseña')
     } finally {
         saving.value = false
     }

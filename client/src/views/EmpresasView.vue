@@ -5,7 +5,6 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import EmpresasService from '../services/EmpresasService'
 import DataTable from '../components/ui/DataTable.vue'
@@ -15,8 +14,7 @@ import { Search, Plus, Pencil, Trash2, Building } from 'lucide-vue-next'
 import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 
-const toast = useToast()
-const { confirmDelete: swalConfirmDelete } = useSwal()
+const { confirmDelete: swalConfirmDelete, success: toastSuccess, error: toastError } = useSwal()
 const router = useRouter()
 
 // Data
@@ -45,7 +43,7 @@ const loadEmpresas = async () => {
   try {
     empresas.value = await EmpresasService.getAll()
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las empresas', life: 3000 })
+    toastError('No se pudieron cargar las empresas')
   } finally {
     loading.value = false
   }
@@ -74,10 +72,10 @@ const confirmDelete = async (data) => {
   if (result.isConfirmed) {
     try {
       await EmpresasService.delete(data.id)
-      toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Empresa eliminada', life: 3000 })
+      toastSuccess('Empresa eliminada')
       loadEmpresas()
     } catch (error) {
-      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar (tienes sucursales asociadas?)', life: 4000 })
+      toastError('No se pudo eliminar (tienes sucursales asociadas?)')
     }
   }
 }
