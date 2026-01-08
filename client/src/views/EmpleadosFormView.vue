@@ -209,11 +209,11 @@ const goBack = () => {
     confirm.require({
         message: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
         header: 'Confirmar Salida',
-        icon: 'pi pi-info-circle',
+        icon: 'pi pi-exclamation-circle text-amber-500',
         rejectLabel: 'Continuar Editando',
         acceptLabel: 'Salir sin Guardar',
         rejectClass: 'btn-secondary',
-        acceptClass: 'btn-primary ml-2',
+        acceptClass: 'btn-danger ml-2',
         accept: () => {
             toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
             router.push({ name: 'empleados' })

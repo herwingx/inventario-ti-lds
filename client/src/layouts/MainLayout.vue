@@ -121,7 +121,7 @@ onUnmounted(() => {
       headerTitle: { class: 'text-xl font-bold text-gray-900 dark:text-white' },
       headerIcon: { class: 'hidden' }, 
       content: { class: 'px-6 py-4 flex items-start gap-4' },
-      icon: { class: '!text-3xl text-primary flex-shrink-0 mt-0.5' },
+      icon: { class: '!text-3xl flex-shrink-0 mt-0.5' },
       message: { class: 'text-gray-600 dark:text-gray-300 leading-relaxed text-sm' },
       footer: { class: 'px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 rounded-b-2xl flex justify-end gap-3' }
     }"
