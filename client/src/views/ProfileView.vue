@@ -338,7 +338,7 @@ const openPasswordDialog = () => {
                                                 v-model="form.email" 
                                                 type="email"
                                                 placeholder="tu@email.com"
-                                                class="w-full !bg-white dark:!bg-dark-input-bg focus:!border-primary transition-colors pr-10 font-bold"
+                                                class="w-full !bg-white dark:!bg-dark-bg dark:!text-gray-100 focus:!border-primary transition-colors pr-10 font-bold"
                                             />
                                             <Pencil :size="16" class="absolute right-3 top-1/2 -translate-y-1/2 text-light-muted dark:text-dark-muted pointer-events-none" />
                                         </div>
