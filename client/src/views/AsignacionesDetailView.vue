@@ -6,6 +6,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
+import { getStatusSeverity } from '../utils/status'
 import AsignacionesService from '../services/AsignacionesService'
 import EquiposService from '../services/EquiposService'
 
@@ -22,7 +23,6 @@ const { confirmWarning, success: toastSuccess, error: toastError } = useSwal()
 const asignacion = ref(null)
 const componentes = ref([])
 const loading = ref(true)
-
 // Variables para gestión de componentes
 const showComponentesDialog = ref(false)
 const savingComponentes = ref(false)
@@ -139,7 +139,7 @@ const formatDate = (date) => {
     return new Date(date).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-import { getStatusSeverity } from '../utils/status'
+
 </script>
 
 <template>
