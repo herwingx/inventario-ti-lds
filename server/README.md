@@ -128,6 +128,16 @@ DB_PORT=3306
 # Seguridad
 JWT_SECRET=tu_secreto_super_seguro_aqui
 JWT_EXPIRE=30d
+
+# Correo SMTP (Recuperación de contraseña)
+EMAIL_HOST=mail.tuserver.com
+EMAIL_PORT=587
+EMAIL_USER=tu_usuario
+EMAIL_PASS=tu_password
+EMAIL_FROM=no-reply@tudominio.com
+
+# Frontend URL (Para generar enlaces)
+FRONTEND_URL=http://localhost:5173
 ```
 
 ### Generar JWT_SECRET Seguro
@@ -204,6 +214,8 @@ server/
 | Método | Endpoint | Descripción | Body |
 |:-------|:---------|:------------|:-----|
 | POST | `/api/auth/login` | Iniciar sesión | `{ username, password }` |
+| POST | `/api/auth/forgot-password` | Solicitar recuperación | `{ email }` |
+| POST | `/api/auth/reset-password` | Restablecer con token | `{ token, newPassword }` |
 
 **Respuesta exitosa:**
 ```json
