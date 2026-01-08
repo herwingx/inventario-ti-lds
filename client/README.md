@@ -157,6 +157,8 @@ client/
 │   │
 │   ├── views/                    # Vistas/Páginas
 │   │   ├── LoginView.vue
+│   │   ├── ForgotPasswordView.vue
+│   │   ├── ResetPasswordView.vue
 │   │   ├── HomeView.vue
 │   │   ├── ProfileView.vue
 │   │   ├── EquiposView.vue
