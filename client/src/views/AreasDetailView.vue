@@ -6,7 +6,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import AreasService from '../services/AreasService'
 import { getStatusSeverity } from '../utils/status'
 
@@ -18,7 +18,7 @@ import Skeleton from 'primevue/skeleton'
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmDelete } = useSwal()
 
 const area = ref(null)
 const loading = ref(true)
@@ -60,36 +60,34 @@ const editArea = () => {
   router.push({ name: 'areas-editar', params: { id: area.value.id } })
 }
 
-const confirmDeleteArea = () => {
-  confirm.require({
-    message: `¿Estás seguro de que deseas eliminar permanentemente el área "${area.value.nombre}"? Esta acción no se puede deshacer.`,
-    header: 'Confirmar Eliminación',
-    icon: 'pi pi-exclamation-triangle',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Eliminar Área',
-    rejectClass: 'p-button-secondary p-button-text',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
-      try {
-        await AreasService.delete(area.value.id)
-        toast.add({ 
-          severity: 'success', 
-          summary: 'Eliminado', 
-          detail: `Área ${area.value.nombre} eliminada correctamente`, 
-          life: 3000 
-        })
-        router.push({ name: 'areas' })
-      } catch (error) {
-        console.error('Error al eliminar área:', error)
-        toast.add({ 
-          severity: 'error', 
-          summary: 'Error', 
-          detail: 'No se pudo eliminar el área', 
-          life: 3000 
-        })
-      }
-    }
+const confirmDeleteArea = async () => {
+  const result = await confirmDelete({
+    title: 'Confirmar Eliminación',
+    text: `¿Estás seguro de que deseas eliminar permanentemente el área "${area.value.nombre}"? Esta acción no se puede deshacer.`,
+    confirmButtonText: 'Eliminar Área',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await AreasService.delete(area.value.id)
+      toast.add({ 
+        severity: 'success', 
+        summary: 'Eliminado', 
+        detail: `Área ${area.value.nombre} eliminada correctamente`, 
+        life: 3000 
+      })
+      router.push({ name: 'areas' })
+    } catch (error) {
+      console.error('Error al eliminar área:', error)
+      toast.add({ 
+        severity: 'error', 
+        summary: 'Error', 
+        detail: 'No se pudo eliminar el área', 
+        life: 3000 
+      })
+    }
+  }
 }
 
 // Formatear fecha

@@ -6,7 +6,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import CorreosService from '../services/CorreosService'
 import { getStatusSeverity } from '../utils/status'
 
@@ -17,7 +17,7 @@ import Skeleton from 'primevue/skeleton'
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmDelete: swalConfirmDelete } = useSwal()
 
 const correo = ref(null)
 const loading = ref(true)
@@ -44,22 +44,23 @@ const goBack = () => router.push({ name: 'correos' })
 
 const editCorreo = () => router.push({ name: 'correos-editar', params: { id: correo.value.id } })
 
-const confirmDelete = () => {
-    confirm.require({
-        message: `¿Estás seguro de eliminar la cuenta ${correo.value.email}?`,
-        header: 'Confirmar Eliminación',
-        icon: 'pi pi-exclamation-triangle',
-        acceptClass: 'p-button-danger !bg-red-500 !border-none',
-        accept: async () => {
-            try {
-                await CorreosService.delete(correo.value.id)
-                toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Cuenta eliminada correctamente', life: 3000 })
-                router.push({ name: 'correos' })
-            } catch (error) {
-                toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar', life: 3000 })
-            }
-        }
+const confirmDelete = async () => {
+    const result = await swalConfirmDelete({
+        title: 'Confirmar Eliminación',
+        text: `¿Estás seguro de eliminar la cuenta ${correo.value.email}?`,
+        confirmButtonText: 'Eliminar Cuenta',
+        cancelButtonText: 'Cancelar'
     })
+    
+    if (result.isConfirmed) {
+        try {
+            await CorreosService.delete(correo.value.id)
+            toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Cuenta eliminada correctamente', life: 3000 })
+            router.push({ name: 'correos' })
+        } catch (error) {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar', life: 3000 })
+        }
+    }
 }
 
 // UI Helpers

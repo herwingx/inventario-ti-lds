@@ -6,7 +6,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import DireccionesIpService from '../services/DireccionesIpService'
 import CatalogosService from '../services/CatalogosService'
 
@@ -113,22 +113,20 @@ const handleSubmit = async () => {
     }
 }
 
-const confirm = useConfirm()
+const { confirmWarning } = useSwal()
 
-const goBack = () => {
-    confirm.require({
-        message: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
-        header: 'Confirmar Salida',
-        icon: 'pi pi-info-circle',
-        rejectLabel: 'Continuar Editando',
-        acceptLabel: 'Salir sin Guardar',
-        rejectClass: 'p-button-secondary p-button-text',
-        acceptClass: 'p-button-warning !bg-orange-500 !border-none hover:!bg-orange-600',
-        accept: () => {
-            toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
-            router.push({ name: 'direcciones-ip' })
-        }
+const goBack = async () => {
+    const result = await confirmWarning({
+        title: 'Confirmar Salida',
+        text: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
+        confirmButtonText: 'Salir sin Guardar',
+        cancelButtonText: 'Continuar Editando'
     })
+    
+    if (result.isConfirmed) {
+        toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
+        router.push({ name: 'direcciones-ip' })
+    }
 }
 </script>
 

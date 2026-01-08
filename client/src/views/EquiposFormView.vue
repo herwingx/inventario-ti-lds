@@ -6,7 +6,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import EquiposService from '../services/EquiposService'
 import CatalogosService from '../services/CatalogosService'
 import { getStatusSeverity } from '../utils/status'
@@ -218,22 +218,20 @@ const handleSubmit = async () => {
     }
 }
 
-const confirm = useConfirm()
+const { confirmWarning } = useSwal()
 
-const goBack = () => {
-    // Si el formulario tiene datos (opcional: podrías validar si hubo cambios reales)
-    confirm.require({
-        message: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
-        header: 'Confirmar Salida',
-        rejectLabel: 'Continuar Editando',
-        acceptLabel: 'Salir sin Guardar',
-        rejectClass: 'btn-secondary',
-        acceptClass: 'btn-warning ml-2',
-        accept: () => {
-            toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
-            router.push({ name: 'equipos' })
-        }
+const goBack = async () => {
+    const result = await confirmWarning({
+        title: 'Confirmar Salida',
+        text: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
+        confirmButtonText: 'Salir sin Guardar',
+        cancelButtonText: 'Continuar Editando'
     })
+    
+    if (result.isConfirmed) {
+        toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
+        router.push({ name: 'equipos' })
+    }
 }
 </script>
 
