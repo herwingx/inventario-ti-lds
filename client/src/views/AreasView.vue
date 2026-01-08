@@ -184,7 +184,7 @@ const clearFilters = () => {
         </template>
 
         <template #nombre_empresa="{ data }">
-          <span class="text-gray-800 dark:text-gray-200 text-sm font-bold bg-gray-100 dark:bg-gray-800/50 px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700">{{ data.nombre_empresa }}</span>
+          <span class="text-gray-600 dark:text-gray-300 text-xs font-bold uppercase tracking-wide">{{ data.nombre_empresa }}</span>
         </template>
 
         <template #skeleton-nombre_empresa>
