@@ -1,14 +1,16 @@
 /**
  * @fileoverview Punto de entrada de la aplicación Vue.js.
- * Inicializa la aplicación, configura Pinia, Router y PrimeVue con el tema Aura.
+ * Inicializa la aplicación, configura Pinia, Router y PrimeVue con Tailwind preset.
  */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
-import Aura from '@primevue/themes/aura'
 import App from './App.vue'
 import router from './router'
 import './assets/main.css'
+
+// PrimeVue Tailwind Preset
+import TailwindPreset from './presets/tailwind'
 
 // PrimeVue Icons
 import 'primeicons/primeicons.css'
@@ -21,16 +23,10 @@ app.use(createPinia())
 // Vue Router
 app.use(router)
 
-// PrimeVue con tema Aura personalizado
+// PrimeVue con Tailwind PassThrough preset
 app.use(PrimeVue, {
-  theme: {
-    preset: Aura,
-    options: {
-      prefix: 'p',
-      darkModeSelector: '.dark',
-      cssLayer: false,
-    }
-  }
+  unstyled: true,
+  pt: TailwindPreset
 })
 
 // Services

@@ -3,41 +3,34 @@
  * @fileoverview Vista de control de Direcciones IP.
  * Gestiona el inventario de IPs, permitiendo filtrar por segmento, estado y disponibilidad.
  */
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { FilterMatchMode } from '@primevue/core/api'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import DireccionesIpService from '../services/DireccionesIpService'
+import DataTable from '../components/ui/DataTable.vue'
 import { Search, Plus, Eye, Pencil, Trash2 } from 'lucide-vue-next'
 
-// Componentes PrimeVue
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
-import Button from 'primevue/button'
 import Tag from 'primevue/tag'
-import Skeleton from 'primevue/skeleton'
 import Select from 'primevue/select'
 
 const toast = useToast()
+const router = useRouter()
+const confirm = useConfirm()
+
+// Data
 const direccionesIp = ref([])
 const loading = ref(true)
-
-// Configuración de Filtros
-const filters = ref({
-  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  status_nombre: { value: null, matchMode: FilterMatchMode.EQUALS }
-})
-
-// Filtro de segmento (separado porque no es parte de los filtros de DataTable)
+const globalFilter = ref('')
+const statusFilter = ref(null)
 const selectedSegmento = ref(null)
 
 // Opciones para filtros
 const statuses = ref([
-    { label: 'Disponible', value: 'DISPONIBLE' },
-    { label: 'Asignado', value: 'ASIGNADO' },
-    { label: 'Reservado', value: 'RESERVADO' }
+  { label: 'Disponible', value: 'DISPONIBLE' },
+  { label: 'Asignado', value: 'ASIGNADO' },
+  { label: 'Reservado', value: 'RESERVADO' }
 ])
 
 // Segmentos de red (0-15)
@@ -61,7 +54,36 @@ const segmentos = ref([
   { label: '15 - Reservado Expansión', value: 15 }
 ])
 
-// Cargar datos
+// Columnas
+const columns = [
+  { field: 'id', header: 'ID', sortable: true, width: '6%' },
+  { field: 'direccion_ip', header: 'Dirección IP', sortable: true, width: '18%' },
+  { field: 'nombre_sucursal', header: 'Sucursal/Empresa', sortable: true, width: '25%' },
+  { field: 'comentario', header: 'Comentario', sortable: true, width: '25%' },
+  { field: 'status_nombre', header: 'Estado', sortable: true, width: '11%' },
+  { field: 'actions', header: 'Acciones', sortable: false, width: '15%', align: 'right' }
+]
+
+const filteredDireccionesIp = computed(() => {
+  let result = direccionesIp.value
+
+  if (globalFilter.value) {
+    const search = globalFilter.value.toLowerCase()
+    result = result.filter(ip =>
+      ip.direccion_ip?.toLowerCase().includes(search) ||
+      ip.nombre_sucursal?.toLowerCase().includes(search) ||
+      ip.nombre_empresa?.toLowerCase().includes(search) ||
+      ip.comentario?.toLowerCase().includes(search)
+    )
+  }
+
+  if (statusFilter.value) {
+    result = result.filter(ip => ip.status_nombre?.toUpperCase() === statusFilter.value)
+  }
+
+  return result
+})
+
 const loadDireccionesIp = async () => {
   loading.value = true
   await new Promise(resolve => setTimeout(resolve, 600))
@@ -83,14 +105,9 @@ onMounted(() => {
   loadDireccionesIp()
 })
 
-// Watch para recargar cuando cambia el segmento
-import { watch } from 'vue'
 watch(selectedSegmento, () => {
   loadDireccionesIp()
 })
-
-// Helpers UI
-const router = useRouter()
 
 const getSeverity = (status) => {
   if (!status) return 'secondary'
@@ -102,43 +119,43 @@ const getSeverity = (status) => {
 }
 
 const openNew = () => {
-    router.push({ name: 'direcciones-ip-nuevo' })
+  router.push({ name: 'direcciones-ip-nuevo' })
 }
 
 const viewDireccionIp = (ip) => {
-    router.push({ name: 'direcciones-ip-detalle', params: { id: ip.id } })
+  router.push({ name: 'direcciones-ip-detalle', params: { id: ip.id } })
 }
 
 const editDireccionIp = (ip) => {
-    router.push({ name: 'direcciones-ip-editar', params: { id: ip.id } })
+  router.push({ name: 'direcciones-ip-editar', params: { id: ip.id } })
 }
 
-const confirm = useConfirm()
-
-// Lógica de Eliminación
 const confirmDeleteDireccionIp = (ip) => {
-    confirm.require({
-        message: `¿Estás seguro de que deseas eliminar permanentemente la IP "${ip.direccion_ip}"? Esta acción no se puede deshacer.`,
-        header: 'Confirmar Eliminación',
-        icon: 'pi pi-exclamation-triangle',
-        rejectLabel: 'Cancelar',
-        acceptLabel: 'Eliminar IP',
-        rejectClass: 'btn-secondary',
-        acceptClass: 'btn-danger ml-2',
-        accept: async () => {
-            try {
-                await DireccionesIpService.delete(ip.id)
-                toast.add({ severity: 'success', summary: 'Eliminado', detail: `IP ${ip.direccion_ip} eliminada correctamente`, life: 3000 })
-                loadDireccionesIp()
-            } catch (error) {
-                console.error('Error al eliminar IP:', error)
-                toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la dirección IP', life: 3000 })
-            }
-        }
-    })
+  confirm.require({
+    message: `¿Estás seguro de que deseas eliminar permanentemente la IP "${ip.direccion_ip}"? Esta acción no se puede deshacer.`,
+    header: 'Confirmar Eliminación',
+    rejectLabel: 'Cancelar',
+    acceptLabel: 'Eliminar IP',
+    rejectClass: 'btn-secondary',
+    acceptClass: 'btn-danger ml-2',
+    accept: async () => {
+      try {
+        await DireccionesIpService.delete(ip.id)
+        toast.add({ severity: 'success', summary: 'Eliminado', detail: `IP ${ip.direccion_ip} eliminada correctamente`, life: 3000 })
+        loadDireccionesIp()
+      } catch (error) {
+        console.error('Error al eliminar IP:', error)
+        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la dirección IP', life: 3000 })
+      }
+    }
+  })
 }
 
-const skeletonRows = new Array(5).fill({})
+const clearFilters = () => {
+  globalFilter.value = ''
+  statusFilter.value = null
+  selectedSegmento.value = null
+}
 </script>
 
 <template>
@@ -146,131 +163,118 @@ const skeletonRows = new Array(5).fill({})
     
     <div class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 border border-gray-200 dark:border-dark-border transition-colors duration-300">
       
-      <!-- Toolbar: Filters, Search & Actions -->
+      <!-- Toolbar -->
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         
-        <!-- Left: Search & Filters -->
         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-1">
-            <!-- Search Input -->
-            <div class="relative w-full sm:w-64">
-                 <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
-                 <InputText v-model="filters['global'].value" placeholder="Buscar IP, sucursal..." class="w-full !pl-10 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white !py-2.5 !rounded-lg focus:!border-primary" />
-            </div>
+          <div class="relative w-full sm:w-64">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
+            <InputText v-model="globalFilter" placeholder="Buscar IP, sucursal..." class="w-full !pl-10 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white !py-2.5 !rounded-lg focus:!border-primary" />
+          </div>
 
-            <!-- Filter by Segmento -->
-            <Select v-model="selectedSegmento" :options="segmentos" optionLabel="label" optionValue="value" placeholder="Segmento" showClear class="w-full sm:w-56 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white custom-select" />
+          <Select v-model="selectedSegmento" :options="segmentos" optionLabel="label" optionValue="value" placeholder="Segmento" showClear class="w-full sm:w-56 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white custom-select" />
 
-            <!-- Filter by Status -->
-            <Select v-model="filters['status_nombre'].value" :options="statuses" optionLabel="label" optionValue="value" placeholder="Estado" showClear class="w-full sm:w-40 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white custom-select" />
+          <Select v-model="statusFilter" :options="statuses" optionLabel="label" optionValue="value" placeholder="Estado" showClear class="w-full sm:w-40 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white custom-select" />
         </div>
 
-        <!-- Right: New IP Button -->
         <button class="btn-primary w-full md:w-auto" @click="openNew">
-            <Plus :size="18" />
-            <span>Nueva IP</span>
+          <Plus :size="18" />
+          <span>Nueva IP</span>
         </button>
       </div>
 
-      <!-- DATATABLE -->
+      <!-- DataTable Nativo -->
       <DataTable 
-        :value="loading ? skeletonRows : direccionesIp" 
-        :paginator="true" 
-        :rows="15" 
-        dataKey="id" 
-        :filters="filters" 
-        :loading="false" 
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-        currentPageReportTemplate="{first}-{last} de {totalRecords}"
-        class="custom-table"
-        :rowHover="true"
-        :globalFilterFields="['direccion_ip', 'nombre_sucursal', 'nombre_empresa', 'comentario']"
+        :data="filteredDireccionesIp"
+        :columns="columns"
+        :loading="loading"
+        :rows="15"
+        row-key="id"
       >
         <template #empty>
-            <div class="flex flex-col items-center justify-center p-12 text-center">
-                <div class="w-24 h-24 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mb-4 transition-colors">
-                    <Search class="text-gray-400 dark:text-gray-500" :size="40" />
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-300 mb-1">No se encontraron resultados</h3>
-                <p class="text-gray-500 text-sm max-w-xs mx-auto">Intenta ajustar tus filtros o agrega una nueva dirección IP.</p>
-                <Button label="Limpiar Filtros" text class="mt-4 !text-primary" @click="filters['global'].value = null; filters['status_nombre'].value = null; selectedSegmento = null" />
+          <div class="flex flex-col items-center justify-center p-12 text-center">
+            <div class="w-24 h-24 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mb-4 transition-colors">
+              <Search class="text-gray-400 dark:text-gray-500" :size="40" />
             </div>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-300 mb-1">No se encontraron resultados</h3>
+            <p class="text-gray-500 text-sm max-w-xs mx-auto">Intenta ajustar tus filtros o agrega una nueva dirección IP.</p>
+            <button class="mt-4 text-primary font-medium hover:underline" @click="clearFilters">Limpiar Filtros</button>
+          </div>
         </template>
 
-        <!-- ID Column -->
-        <Column field="id" header="ID" sortable style="width: 6%">
-            <template #body="{ data }">
-                <Skeleton v-if="loading" width="2rem" class="!bg-gray-200 dark:!bg-dark-border" />
-                <span v-else class="text-gray-700 dark:text-gray-200 font-mono text-sm font-bold">#{{ data.id }}</span>
-            </template>
-        </Column>
+        <template #id="{ data }">
+          <span class="text-gray-700 dark:text-gray-200 font-mono text-sm font-bold">#{{ data.id }}</span>
+        </template>
 
-        <!-- IP Address Column -->
-        <Column field="direccion_ip" header="Dirección IP" sortable style="width: 18%">
-            <template #body="{ data }">
-                <Skeleton v-if="loading" width="8rem" class="!bg-gray-200 dark:!bg-dark-border" />
-                <div v-else class="text-gray-900 dark:text-white font-mono text-base font-bold">{{ data.direccion_ip }}</div>
-            </template>
-        </Column>
+        <template #skeleton-id>
+          <div class="skeleton h-4 w-8"></div>
+        </template>
 
-        <!-- Branch/Company Column -->
-        <Column field="nombre_sucursal" header="Sucursal/Empresa" sortable style="width: 25%">
-            <template #body="{ data }">
-                <Skeleton v-if="loading" width="10rem" class="!bg-gray-200 dark:!bg-dark-border" />
-                <div v-else class="flex flex-col">
-                    <span class="text-gray-900 dark:text-white text-sm font-bold">{{ data.nombre_sucursal || 'Sin sucursal' }}</span>
-                    <span class="text-[11px] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide mt-0.5">{{ data.nombre_empresa || 'N/A' }}</span>
-                </div>
-            </template>
-        </Column>
+        <template #direccion_ip="{ data }">
+          <div class="text-gray-900 dark:text-white font-mono text-base font-bold">{{ data.direccion_ip }}</div>
+        </template>
 
-        <!-- Comment Column -->
-        <Column field="comentario" header="Comentario" sortable style="width: 25%">
-            <template #body="{ data }">
-                <Skeleton v-if="loading" width="12rem" class="!bg-gray-200 dark:!bg-dark-border" />
-                <span v-else class="text-gray-700 dark:text-gray-300 text-sm">{{ data.comentario || '-' }}</span>
-            </template>
-        </Column>
+        <template #skeleton-direccion_ip>
+          <div class="skeleton h-4 w-28"></div>
+        </template>
 
-        <!-- Status Column -->
-        <Column field="status_nombre" header="Estado" sortable style="width: 11%">
-            <template #body="{ data }">
-                <Skeleton v-if="loading" width="5rem" height="1.5rem" borderRadius="4px" class="!bg-gray-200 dark:!bg-dark-border" />
-                <Tag v-else :value="data.status_nombre" :severity="getSeverity(data.status_nombre)" class="!text-xs !font-bold px-3 py-1.5 !rounded-md text-white tracking-wide" />
-            </template>
-        </Column>
+        <template #nombre_sucursal="{ data }">
+          <div class="flex flex-col">
+            <span class="text-gray-900 dark:text-white text-sm font-bold">{{ data.nombre_sucursal || 'Sin sucursal' }}</span>
+            <span class="text-[11px] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide mt-0.5">{{ data.nombre_empresa || 'N/A' }}</span>
+          </div>
+        </template>
 
-        <!-- Actions Column -->
-        <Column header="Acciones" style="width: 15%; text-align: right">
-            <template #body="{ data }">
-                <div v-if="loading" class="flex gap-2 justify-start">
-                    <Skeleton size="2rem" class="!bg-gray-200 dark:!bg-dark-border" />
-                    <Skeleton size="2rem" class="!bg-gray-200 dark:!bg-dark-border" />
-                    <Skeleton size="2rem" class="!bg-gray-200 dark:!bg-dark-border" />
-                </div>
-                <div v-else class="flex gap-1 justify-end">
-                    <!-- View Button -->
-                    <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center transition-all" @click="viewDireccionIp(data)" title="Ver detalles">
-                        <Eye :size="16" />
-                    </button>
-                    <!-- Edit Button -->
-                    <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all" @click="editDireccionIp(data)" title="Editar">
-                        <Pencil :size="16" />
-                    </button>
-                    <!-- Delete Button -->
-                    <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center transition-all" @click="confirmDeleteDireccionIp(data)" title="Eliminar">
-                        <Trash2 :size="16" />
-                    </button>
-                </div>
-            </template>
-        </Column>
+        <template #skeleton-nombre_sucursal>
+          <div class="space-y-1">
+            <div class="skeleton h-4 w-32"></div>
+            <div class="skeleton h-3 w-20"></div>
+          </div>
+        </template>
 
+        <template #comentario="{ data }">
+          <span class="text-gray-700 dark:text-gray-300 text-sm">{{ data.comentario || '-' }}</span>
+        </template>
+
+        <template #skeleton-comentario>
+          <div class="skeleton h-4 w-40"></div>
+        </template>
+
+        <template #status_nombre="{ data }">
+          <Tag :value="data.status_nombre" :severity="getSeverity(data.status_nombre)" class="!text-xs !font-bold px-3 py-1.5 !rounded-md text-white tracking-wide" />
+        </template>
+
+        <template #skeleton-status_nombre>
+          <div class="skeleton h-6 w-20 rounded-md"></div>
+        </template>
+
+        <template #actions="{ data }">
+          <div class="flex gap-1 justify-end">
+            <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center transition-all" @click="viewDireccionIp(data)" title="Ver detalles">
+              <Eye :size="16" />
+            </button>
+            <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all" @click="editDireccionIp(data)" title="Editar">
+              <Pencil :size="16" />
+            </button>
+            <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center transition-all" @click="confirmDeleteDireccionIp(data)" title="Eliminar">
+              <Trash2 :size="16" />
+            </button>
+          </div>
+        </template>
+
+        <template #skeleton-actions>
+          <div class="flex gap-2 justify-end">
+            <div class="skeleton w-8 h-8 rounded-lg"></div>
+            <div class="skeleton w-8 h-8 rounded-lg"></div>
+            <div class="skeleton w-8 h-8 rounded-lg"></div>
+          </div>
+        </template>
       </DataTable>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Animations */
 .animate-fade-in-up {
   animation: fadeInUp 0.5s ease-out forwards;
 }

@@ -352,6 +352,7 @@ npm run preview  # Preview del build
 Guías esenciales para la continuidad del proyecto:
 
 *   [🛠️ Guía de Desarrollo](docs/GUIA_DESARROLLO.md) - **"Receta de Cocina"** para crear nuevos módulos.
+*   [🚀 Guía de Despliegue](docs/GUIA_DESPLIEGUE.md) - Instrucciones de puesta en producción.
 *   [📘 Manual Técnico](docs/MANUAL_TECNICO.md) - Backups, restauración y solución de problemas.
 *   [🗂️ Diccionario de Datos](docs/DICCIONARIO_DATOS.md) - Referencia de IDs, roles y estados.
 
