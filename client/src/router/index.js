@@ -251,6 +251,18 @@ const routes = [
     name: 'login',
     component: () => import('../views/LoginView.vue'),
     meta: { title: 'Iniciar Sesión' }
+  },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('../views/ForgotPasswordView.vue'),
+    meta: { title: 'Recuperar Contraseña' }
+  },
+  {
+    path: '/reset-password/:token',
+    name: 'reset-password',
+    component: () => import('../views/ResetPasswordView.vue'),
+    meta: { title: 'Restablecer Contraseña' }
   }
 ]
 
@@ -264,11 +276,14 @@ router.beforeEach((to, from, next) => {
   // Cambiar título
   document.title = `${to.meta.title || 'Soporte'} - Linea Digital`
 
-  const publicPages = ['/login']
-  const authRequired = !publicPages.includes(to.path)
+  // Definir nombres de rutas públicas
+  const publicNames = ['login', 'forgot-password', 'reset-password']
+
+  // Validar si la ruta hacia la que vamos es pública
+  const isPublic = publicNames.includes(to.name)
   const token = localStorage.getItem('token')
 
-  if (authRequired && !token) {
+  if (!isPublic && !token) {
     return next('/login')
   }
 

@@ -36,6 +36,16 @@ class AuthService {
     localStorage.removeItem('token')
     localStorage.removeItem('userData')
   }
+
+  async forgotPassword(email) {
+    const response = await api.post('/auth/forgot-password', { email })
+    return response.data
+  }
+
+  async resetPassword(token, newPassword) {
+    const response = await api.post('/auth/reset-password', { token, newPassword })
+    return response.data
+  }
 }
 
 export default new AuthService()

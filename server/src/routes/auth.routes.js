@@ -12,7 +12,10 @@ const authController = require('../controllers/auth.controller');
 // [POST] /api/auth/login - Token de 30 días para facilitar inventario
 router.post('/login', authController.login);
 
-//TODO: Añadir otras rutas de autenticación aquí en el futuro,
-//      como /register, /forgot-password, /reset-password, etc.
+// [POST] /api/auth/forgot-password - Solicitar recuperación
+router.post('/forgot-password', authController.forgotPassword);
+
+// [POST] /api/auth/reset-password - Restablecer contraseña
+router.post('/reset-password', authController.resetPassword);
 
 module.exports = router; 
