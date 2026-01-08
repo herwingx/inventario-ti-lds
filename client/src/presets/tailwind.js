@@ -350,8 +350,8 @@ const TailwindPreset = {
     icon: { class: 'text-3xl flex-shrink-0 mt-0.5' },
     message: { class: 'text-light-muted dark:text-dark-muted text-sm leading-relaxed' },
     footer: { class: 'bg-light-bg dark:bg-dark-bg/50 px-6 py-4 border-t border-light-border dark:border-dark-border flex justify-end gap-3' },
-    acceptButton: { class: 'btn-base' },
-    rejectButton: { class: 'btn-base' }
+    acceptButton: { class: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-danger text-white shadow-lg hover:bg-red-600 hover:-translate-y-0.5 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500' },
+    rejectButton: { class: 'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-white dark:bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-white/5 hover:border-gray-400 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-200' }
   },
 
   // Toast
