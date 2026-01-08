@@ -10,13 +10,11 @@ import { useConfirm } from 'primevue/useconfirm'
 import AsignacionesService from '../services/AsignacionesService'
 import EquiposService from '../services/EquiposService'
 
-import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Skeleton from 'primevue/skeleton'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import MultiSelect from 'primevue/multiselect'
+import { ArrowLeft, CheckSquare } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -148,7 +146,9 @@ const formatDate = (date) => {
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div class="flex items-center gap-3">
-                <Button icon="pi pi-arrow-left" text rounded class="!text-gray-600 dark:!text-gray-400" @click="goBack" />
+                <button class="w-10 h-10 rounded-full bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-400 flex items-center justify-center transition-all" @click="goBack" title="Volver">
+                    <ArrowLeft :size="18" />
+                </button>
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                         <Skeleton v-if="loading" width="15rem" />
@@ -159,7 +159,10 @@ const formatDate = (date) => {
             </div>
             
             <div v-if="!loading && isActive" class="flex gap-2">
-                 <Button label="Finalizar Asignación" icon="pi pi-check-square" severity="warning" @click="finalizarAsignacion" class="!bg-amber-500 !border-none hover:!bg-amber-600 !font-bold !px-5 !py-2.5 !rounded-lg !text-white shadow-lg" />
+                <button class="btn-warning" @click="finalizarAsignacion">
+                    <CheckSquare :size="18" />
+                    <span>Finalizar Asignación</span>
+                </button>
             </div>
         </div>
 
@@ -261,14 +264,14 @@ const formatDate = (date) => {
                         </div>
                         Componentes Adicionales
                      </h3>
-                     <Button 
+                     <button 
                         v-if="isActive" 
-                        label="Gestionar o Añadir Componentes" 
-                        icon="pi pi-plus-circle" 
-                        size="small" 
-                        class="!bg-primary/10 !text-primary !border-primary/20 hover:!bg-primary/20 !font-bold !px-4"
-                        @click="openManageComponentes" 
-                    />
+                        class="bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors"
+                        @click="openManageComponentes"
+                    >
+                        <i class="pi pi-plus-circle"></i>
+                        <span>Gestionar o Añadir Componentes</span>
+                    </button>
                  </div>
                  
                  <div class="p-4">
@@ -279,17 +282,27 @@ const formatDate = (date) => {
                         <p class="text-light-muted dark:text-dark-muted font-medium">No hay componentes adicionales asignados.</p>
                     </div>
 
-                    <DataTable v-else :value="componentes" size="small" class="custom-table">
-                        <Column field="equipo_nombre" header="Equipo" class="!font-bold"></Column>
-                        <Column field="equipo_numero_serie" header="Serie">
-                            <template #body="{ data }">
-                                <span class="detail-value-mono text-primary font-bold">{{ data.equipo_numero_serie }}</span>
-                            </template>
-                        </Column>
-                        <Column field="tipo_equipo_nombre" header="Tipo"></Column>
-                        <Column field="marca" header="Marca"></Column>
-                        <Column field="modelo" header="Modelo"></Column>
-                    </DataTable>
+                    <!-- Tabla HTML Nativa de Componentes -->
+                    <table v-else class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200 dark:border-white/10">
+                                <th class="text-left text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 py-3 px-2">Equipo</th>
+                                <th class="text-left text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 py-3 px-2">Serie</th>
+                                <th class="text-left text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 py-3 px-2">Tipo</th>
+                                <th class="text-left text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 py-3 px-2">Marca</th>
+                                <th class="text-left text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 py-3 px-2">Modelo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="comp in componentes" :key="comp.id" class="border-b border-gray-100 dark:border-white/5 hover:bg-primary/5 transition-colors">
+                                <td class="py-3 px-2 text-sm font-bold text-gray-900 dark:text-white">{{ comp.equipo_nombre }}</td>
+                                <td class="py-3 px-2"><span class="font-mono text-primary font-bold text-sm">{{ comp.equipo_numero_serie }}</span></td>
+                                <td class="py-3 px-2 text-sm text-gray-700 dark:text-gray-300">{{ comp.tipo_equipo_nombre }}</td>
+                                <td class="py-3 px-2 text-sm text-gray-700 dark:text-gray-300">{{ comp.marca }}</td>
+                                <td class="py-3 px-2 text-sm text-gray-700 dark:text-gray-300">{{ comp.modelo }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                  </div>
             </div>
         </div>
@@ -318,8 +331,11 @@ const formatDate = (date) => {
                 </div>
             </div>
             <template #footer>
-                <Button label="Cancelar" text severity="secondary" @click="showComponentesDialog = false" />
-                <Button label="Guardar Cambios" icon="pi pi-check" :loading="savingComponentes" @click="saveComponentes" />
+                <button class="btn-secondary" @click="showComponentesDialog = false">Cancelar</button>
+                <button class="btn-primary" :disabled="savingComponentes" @click="saveComponentes">
+                    <i v-if="savingComponentes" class="pi pi-spinner pi-spin"></i>
+                    <span>Guardar Cambios</span>
+                </button>
             </template>
         </Dialog>
     </div>

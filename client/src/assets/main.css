@@ -1,8 +1,6 @@
 /* PrimeVue Icons */
 @import 'primeicons/primeicons.css';
 
-/* Fonts loaded in index.html for better performance */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -16,25 +14,35 @@
   }
 
   body {
-    @apply font-sans antialiased font-medium;
-    @apply bg-light-bg text-light-text dark:bg-dark-bg dark:text-dark-text;
+    @apply font-sans antialiased font-medium bg-light-bg text-light-text;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  /* Scrollbar personalizado */
+  .dark body {
+    @apply bg-dark-bg text-dark-text;
+  }
+
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-light-border dark:bg-dark-border;
+    @apply bg-light-border;
     border-radius: 4px;
   }
 
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-dark-border;
+  }
+
   ::-webkit-scrollbar-thumb {
-    @apply bg-primary/50 hover:bg-primary;
+    @apply bg-primary/50;
     border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
   }
 }
 
@@ -43,41 +51,38 @@
    ======================================== */
 @layer components {
 
-  /* Cards base */
+  /* Cards */
   .card {
-    @apply bg-light-card dark:bg-dark-card;
-    @apply border border-light-border dark:border-dark-border;
-    @apply rounded-xl shadow-card;
-    @apply transition-all duration-300;
+    @apply bg-light-card border border-light-border rounded-xl shadow-card transition-all duration-300;
+  }
+
+  .dark .card {
+    @apply bg-dark-card border-dark-border;
   }
 
   .card:hover {
     @apply shadow-card-hover;
   }
 
-  /* Quick Access Cards */
   .quick-access-card {
-    @apply rounded-xl p-4 cursor-pointer;
-    @apply transform transition-all duration-300;
-    @apply hover:-translate-y-1 hover:shadow-card-hover;
+    @apply rounded-xl p-4 cursor-pointer transform transition-all duration-300;
   }
 
-  /* Stat Widget Cards */
+  .quick-access-card:hover {
+    @apply -translate-y-1 shadow-card-hover;
+  }
+
   .stat-card {
-    @apply card p-4;
-    @apply flex items-center gap-4;
+    @apply card p-4 flex items-center gap-4;
   }
 
   .stat-card-icon {
-    @apply w-14 h-14 rounded-xl flex items-center justify-center;
-    @apply text-2xl;
+    @apply w-14 h-14 rounded-xl flex items-center justify-center text-2xl;
   }
 
-  /* Sidebar styles */
+  /* Sidebar */
   .sidebar {
-    @apply fixed left-0 top-0 h-screen;
-    @apply transition-all duration-300 ease-in-out;
-    @apply z-50 shadow-sidebar;
+    @apply fixed left-0 top-0 h-screen transition-all duration-300 ease-in-out z-50 shadow-sidebar;
   }
 
   .sidebar-expanded {
@@ -90,52 +95,39 @@
   }
 
   .sidebar-item {
-    @apply flex items-center gap-3 px-4 py-3;
-    @apply text-light-muted dark:text-gray-400;
-
-    /* Spacing & Shape updates for the "flush right" look */
-    @apply ml-3 mr-0 my-1;
-    @apply rounded-l-xl rounded-r-none;
-
-    @apply relative overflow-hidden;
-    @apply transition-all duration-200;
-    @apply cursor-pointer;
+    @apply flex items-center gap-3 px-4 py-3 text-light-muted ml-3 mr-0 my-1 rounded-l-xl rounded-r-none relative overflow-hidden transition-all duration-200 cursor-pointer;
   }
 
-  /* Expanded Gradient Effect (Right to Left) */
+  .dark .sidebar-item {
+    @apply text-gray-400;
+  }
+
   .sidebar-item:hover,
   .sidebar-item.active {
-    @apply bg-gradient-to-l from-primary/20 to-transparent;
-    @apply text-primary dark:text-white;
+    @apply text-primary;
+    background: linear-gradient(to left, rgba(19, 180, 151, 0.2), transparent);
   }
 
-  /* Reset background for collapsed state to handle specific override */
+  .dark .sidebar-item:hover,
+  .dark .sidebar-item.active {
+    @apply text-white;
+  }
+
   .sidebar-collapsed .sidebar-item {
     @apply justify-center px-0 mx-0 rounded-none;
     background: transparent;
-    /* Reset gradient */
   }
 
-  /* Collapsed Solid Fill Effect */
   .sidebar-collapsed .sidebar-item:hover,
   .sidebar-collapsed .sidebar-item.active {
     @apply bg-primary text-white;
-    /* Solid accented color */
   }
 
-  /* THE ACCENT BAR */
   .sidebar-item::before {
     content: '';
-    @apply absolute right-0 top-0 bottom-0;
-    @apply w-1 bg-primary;
-    @apply opacity-0 transition-opacity duration-200;
+    @apply absolute right-0 top-0 bottom-0 w-1 bg-primary opacity-0 transition-opacity duration-200;
   }
 
-  /* Show accent bar only on expanded state if we want solid block on collapsed? 
-     User said "collapsed is completely the color of the border". 
-     If it's solid bg,the sidebar bar might be redundant or invisible if same color. 
-     Let's keep it for expanded,maybe hide for collapsed if full fill looks better.
-  */
   .sidebar-item:hover::before,
   .sidebar-item.active::before {
     @apply opacity-100;
@@ -143,165 +135,189 @@
 
   .sidebar-collapsed .sidebar-item::before {
     display: none;
-    /* Hide distinct accent bar in collapsed mode since the whole item is the accent color */
   }
 
   .sidebar-submenu {
-    @apply ml-4 overflow-hidden;
-    @apply transition-all duration-300;
+    @apply ml-4 overflow-hidden transition-all duration-300;
   }
-
-  /* --- SUBMENU ITEM OVERRIDES --- */
-  /* Remove background,specific text color,remove icon */
 
   .sidebar-submenu .sidebar-item:hover,
   .sidebar-submenu .sidebar-item.active {
     background: transparent !important;
-    @apply text-primary dark:text-white !important;
+    @apply text-primary !important;
   }
 
-  /* Hide accent bar for submenu */
+  .dark .sidebar-submenu .sidebar-item:hover,
+  .dark .sidebar-submenu .sidebar-item.active {
+    @apply text-white !important;
+  }
+
   .sidebar-submenu .sidebar-item::before {
     display: none !important;
   }
 
-  /* Hide Icon in submenu as requested */
   .sidebar-submenu .sidebar-item i {
     display: none !important;
   }
 
-  /* Header styles - mismo color que sidebar */
+  /* Header */
   .header {
-    @apply fixed top-0 right-0 h-[5rem];
-    @apply bg-white dark:bg-[#2f363e];
-    @apply border-b border-light-border dark:border-dark-border;
-    @apply flex items-center justify-between px-6;
-    @apply z-40;
-    @apply transition-all duration-300;
+    @apply fixed top-0 right-0 h-20 bg-white border-b border-light-border flex items-center justify-between px-6 z-40 transition-all duration-300;
+  }
+
+  .dark .header {
+    @apply bg-dark-header border-dark-border;
   }
 
   /* Buttons */
   .btn-base {
-    @apply inline-flex items-center justify-center gap-2;
-    @apply px-5 py-2.5 rounded-xl;
-    @apply font-bold tracking-tight text-sm;
-    @apply transition-all duration-300 ease-out;
-    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-dark-bg;
-    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold tracking-tight text-sm transition-all duration-300 ease-out;
+  }
+
+  .btn-base:focus {
+    @apply outline-none ring-2 ring-offset-2;
+  }
+
+  .btn-base:disabled {
+    @apply opacity-50 cursor-not-allowed;
   }
 
   .btn-primary {
-    @apply btn-base;
-    @apply bg-primary text-white;
-    @apply shadow-lg shadow-primary/20;
-    @apply hover:bg-primary-hover hover:shadow-primary/40 hover:-translate-y-0.5;
-    @apply active:translate-y-0 active:scale-95;
-    @apply focus:ring-primary;
+    @apply btn-base bg-primary text-white;
+    box-shadow: 0 4px 14px rgba(19, 180, 151, 0.2);
+  }
+
+  .btn-primary:hover {
+    @apply bg-primary-hover -translate-y-0.5;
+    box-shadow: 0 6px 20px rgba(19, 180, 151, 0.4);
+  }
+
+  .btn-primary:active {
+    @apply translate-y-0 scale-95;
+  }
+
+  .btn-primary:focus {
+    @apply ring-primary;
   }
 
   .btn-secondary {
-    @apply btn-base;
-    @apply bg-gray-100 text-gray-700 dark:bg-dark-border dark:text-gray-200;
-    @apply hover:bg-gray-200 dark:hover:bg-zinc-700 hover:shadow-md;
-    @apply active:scale-95;
-    @apply focus:ring-gray-300;
+    @apply btn-base bg-gray-100 text-gray-700;
+  }
+
+  .dark .btn-secondary {
+    @apply bg-dark-border text-gray-200;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-gray-200 shadow-md;
+  }
+
+  .dark .btn-secondary:hover {
+    @apply bg-zinc-700;
+  }
+
+  .btn-secondary:active {
+    @apply scale-95;
+  }
+
+  .btn-secondary:focus {
+    @apply ring-gray-300;
   }
 
   .btn-danger {
-    @apply btn-base;
-    @apply bg-red-500 text-white;
-    @apply shadow-lg shadow-red-500/20;
-    @apply hover:bg-red-600 hover:shadow-red-500/40 hover:-translate-y-0.5;
-    @apply active:translate-y-0 active:scale-95;
-    @apply focus:ring-red-500;
+    @apply btn-base bg-red-500 text-white;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.2);
+  }
+
+  .btn-danger:hover {
+    @apply bg-red-600 -translate-y-0.5;
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  }
+
+  .btn-danger:active {
+    @apply translate-y-0 scale-95;
+  }
+
+  .btn-danger:focus {
+    @apply ring-red-500;
   }
 
   .btn-warning {
-    @apply btn-base;
-    @apply bg-amber-500 text-white;
-    @apply shadow-lg shadow-amber-500/20;
-    @apply hover:bg-amber-600 hover:shadow-amber-500/40 hover:-translate-y-0.5;
-    @apply active:translate-y-0 active:scale-95;
-    @apply focus:ring-amber-500;
+    @apply btn-base bg-amber-500 text-white;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.2);
+  }
+
+  .btn-warning:hover {
+    @apply bg-amber-600 -translate-y-0.5;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  }
+
+  .btn-warning:active {
+    @apply translate-y-0 scale-95;
+  }
+
+  .btn-warning:focus {
+    @apply ring-amber-500;
   }
 
   .btn-info {
-    @apply btn-base;
-    @apply bg-blue-500 text-white;
-    @apply shadow-lg shadow-blue-500/20;
-    @apply hover:bg-blue-600 hover:shadow-blue-500/40 hover:-translate-y-0.5;
-    @apply active:translate-y-0 active:scale-95;
-    @apply focus:ring-blue-500;
+    @apply btn-base bg-blue-500 text-white;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.2);
+  }
+
+  .btn-info:hover {
+    @apply bg-blue-600 -translate-y-0.5;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  }
+
+  .btn-info:active {
+    @apply translate-y-0 scale-95;
+  }
+
+  .btn-info:focus {
+    @apply ring-blue-500;
   }
 
   .btn-success {
-    @apply btn-base;
-    @apply bg-emerald-500 text-white;
-    @apply shadow-lg shadow-emerald-500/20;
-    @apply hover:bg-emerald-600 hover:shadow-emerald-500/40 hover:-translate-y-0.5;
-    @apply active:translate-y-0 active:scale-95;
-    @apply focus:ring-emerald-500;
+    @apply btn-base bg-emerald-500 text-white;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2);
+  }
+
+  .btn-success:hover {
+    @apply bg-emerald-600 -translate-y-0.5;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  }
+
+  .btn-success:active {
+    @apply translate-y-0 scale-95;
+  }
+
+  .btn-success:focus {
+    @apply ring-emerald-500;
   }
 
   .btn-ghost {
-    @apply btn-base shadow-none;
-    @apply bg-transparent text-gray-600 dark:text-gray-400;
-    @apply hover:bg-gray-100 dark:hover:bg-white/5 hover:text-primary dark:hover:text-white;
-    @apply focus:ring-gray-200 dark:focus:ring-gray-700;
+    @apply btn-base bg-transparent text-gray-600 shadow-none;
   }
 
-  /* Badge / Tag Overrides - Components Layer */
-  .p-tag {
-    @apply !font-bold !tracking-wide !rounded-lg !px-3 !py-1 !text-[10px] !uppercase !border;
+  .dark .btn-ghost {
+    @apply text-gray-400;
   }
 
-  /* Fix for formatter: Splitting dark mode to prevent @apply parsing errors */
-  .p-tag-success {
-    @apply !bg-emerald-50 !text-emerald-700 !border-emerald-200 !font-bold;
+  .btn-ghost:hover {
+    @apply bg-gray-100 text-primary;
   }
 
-  .dark .p-tag-success {
-    @apply !bg-emerald-500/10 !text-emerald-400 !border-emerald-500/20;
+  .dark .btn-ghost:hover {
+    @apply bg-white/5 text-white;
   }
 
-  .p-tag-warn {
-    @apply !bg-amber-50 !text-amber-700 !border-amber-200 !font-bold;
+  .btn-ghost:focus {
+    @apply ring-gray-200;
   }
 
-  .dark .p-tag-warn {
-    @apply !bg-amber-500/10 !text-amber-400 !border-amber-500/20;
-  }
-
-  .p-tag-danger {
-    @apply !bg-red-50 !text-red-700 !border-red-200 !font-bold;
-  }
-
-  .dark .p-tag-danger {
-    @apply !bg-red-500/10 !text-red-400 !border-red-500/20;
-  }
-
-  .p-tag-info {
-    @apply !bg-blue-50 !text-blue-700 !border-blue-200 !font-bold;
-  }
-
-  .dark .p-tag-info {
-    @apply !bg-blue-500/10 !text-blue-400 !border-blue-500/20;
-  }
-
-  .p-tag-secondary {
-    @apply !bg-gray-50 !text-gray-700 !border-gray-200 !font-bold;
-  }
-
-  .dark .p-tag-secondary {
-    @apply !bg-zinc-500/10 !text-zinc-400 !border-zinc-500/20;
-  }
-
-  .p-tag-contrast {
-    @apply !bg-zinc-900 !text-white !border-transparent !font-bold;
-  }
-
-  .dark .p-tag-contrast {
-    @apply !bg-white !text-zinc-900;
+  .dark .btn-ghost:focus {
+    @apply ring-gray-700;
   }
 }
 
@@ -311,18 +327,18 @@
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    @apply bg-gradient-to-r from-primary to-primary-hover;
+    background-image: linear-gradient(to right, #13B497, #0e8670);
   }
 
-  /* Glassmorphism effect */
   .glass {
-    @apply backdrop-blur-md bg-white/10;
-    @apply border border-white/20;
+    @apply backdrop-blur-md border;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
   }
 
   .dark .glass {
-    @apply bg-dark-card/80;
-    @apply border-dark-border/50;
+    background: rgba(47, 54, 62, 0.8);
+    border-color: rgba(62, 69, 77, 0.5);
   }
 }
 
@@ -354,547 +370,29 @@
   opacity: 0;
 }
 
-/* Skeleton loading */
 .skeleton {
-  @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+  @apply animate-pulse bg-gray-200 rounded;
+}
+
+.dark .skeleton {
+  @apply bg-gray-700;
 }
 
 /* ========================================
-   GLOBAL CUSTOM TABLE STYLES
-   ======================================== */
-
-/* --- Custom Table Variables --- */
-.custom-table {
-  /* Header Variables */
-  --p-datatable-header-background: transparent;
-  --p-datatable-header-border-color: transparent;
-  --p-datatable-header-cell-background: transparent;
-  --p-datatable-header-cell-color: #9ca3af;
-  /* text-gray-400 - más sutil */
-  --p-datatable-header-cell-border-color: rgba(229, 231, 235, 0.5);
-  /* border-gray-200 - más visible */
-
-  /* Body Variables */
-  --p-datatable-body-cell-border-color: rgba(243, 244, 246, 0.097);
-  /* border-gray-100 */
-  --p-datatable-row-hover-background: lab(65.76% -44.61 4.14 / 0.05);
-  /* Primary tint */
-  --p-datatable-row-background: transparent;
-  /* Paginator Variables */
-  --p-paginator-background: transparent;
-  --p-paginator-color: #6b7280;
-  --p-paginator-border-color: transparent;
-  --p-paginator-item-border-radius: 6px;
-  --p-paginator-item-width: 2rem;
-  --p-paginator-item-height: 2rem;
-}
-
-/* Dark Mode Variables Override */
-:global(.dark) .custom-table {
-  --p-datatable-header-cell-color: #6b7280;
-  /* text-gray-500 - más sutil en dark */
-  --p-datatable-header-cell-border-color: rgba(75, 85, 99, 0.5);
-  --p-datatable-body-cell-border-color: rgba(255, 255, 255, 0.05);
-  /* Very subtle separator */
-
-  /* Paginator Dark */
-  --p-paginator-color: #b0b3b8;
-}
-
-/* Body Styles */
-.custom-table .p-datatable-tbody>tr {
-  background-color: var(--p-datatable-row-background);
-  color: inherit;
-  transition: background-color 0.2s;
-}
-
-.custom-table .p-datatable-tbody>tr:not(:last-child)>td {
-  border-bottom: 1px solid var(--p-datatable-body-cell-border-color);
-}
-
-.custom-table .p-datatable-tbody>tr:last-child>td {
-  border-bottom: none !important;
-}
-
-/* Header Text Styles - Sutiles y discretos */
-.custom-table .p-datatable-thead>tr>th {
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  padding: 0.75rem 0.5rem;
-  letter-spacing: 0.06em;
-  border-bottom: 1px solid var(--p-datatable-header-cell-border-color);
-  background: var(--p-datatable-header-cell-background);
-  color: var(--p-datatable-header-cell-color);
-  text-align: center;
-}
-
-/* Body Cell Styles - Datos destacados */
-.custom-table .p-datatable-tbody>tr>td {
-  padding: 1rem 0.5rem;
-}
-
-/* Paginator Customization specific overrides (layout) */
-.p-paginator {
-  justify-content: flex-end;
-  margin-top: 1rem;
-  padding: 0;
-}
-
-.p-paginator-page,
-.p-paginator-next,
-.p-paginator-prev,
-.p-paginator-first,
-.p-paginator-last {
-  font-size: 0.875rem;
-}
-
-/* Highlight / Active State */
-.p-paginator-page.p-highlight {
-  background-color: #f3f4f6;
-  color: #13B497;
-  border: 1px solid #13B497;
-}
-
-.dark .p-paginator-page.p-highlight {
-  background-color: #24292d;
-  color: #1ea97c;
-  border: 1px solid #1ea97c;
-}
-
-.p-datatable-paginator-bottom {
-  border: none !important;
-}
-
-/* --- Select/Dropdown Overrides --- */
-.custom-select .p-select-label {
-  padding: 0.5rem 0.75rem;
-}
-
-.dark .custom-select .p-select-label {
-  color: white !important;
-}
-
-/* Dropdown Icon color */
-.dark .custom-select .p-select-dropdown {
-  color: #9ca3af !important;
-}
-
-/* Global Input Focus Override */
-.p-inputtext:focus,
-.p-select:not(.p-disabled).p-focus,
-.p-datepicker-input:focus,
-.p-textarea:focus {
-  box-shadow: 0 0 0 2px rgba(19, 180, 151, 0.2) !important;
-  border-color: #13B497 !important;
-}
-
-/* ========================================
-   MODALS & DIALOGS CUSTOMIZATION
-   ======================================== */
-
-/* Dialog Root */
-.p-dialog {
-  @apply !rounded-2xl !overflow-hidden !border-none !shadow-2xl;
-  @apply !bg-white;
-}
-.dark .p-dialog {
-  @apply !bg-dark-card;
-}
-
-.p-dialog-header {
-  @apply !bg-white !text-gray-900;
-  @apply !px-6 !py-5 !border-b !border-gray-100;
-}
-.dark .p-dialog-header {
-  @apply !bg-dark-card !text-white;
-  @apply !border-dark-border;
-}
-
-.p-dialog-content {
-  @apply !bg-white !text-gray-700;
-  @apply !px-6 !py-8;
-}
-.dark .p-dialog-content {
-  @apply !bg-dark-card !text-gray-300;
-}
-
-.p-dialog-footer {
-  @apply !bg-gray-50 !px-6 !py-4;
-  @apply !border-t !border-gray-100;
-  @apply flex justify-end gap-3;
-}
-.dark .p-dialog-footer {
-  @apply !bg-dark-bg/50;
-  @apply !border-dark-border;
-}
-
-/* Backdrop / Mask */
-.p-dialog-mask {
-  backdrop-filter: blur(4px);
-  background: rgba(0, 0, 0, 0.4);
-}
-.dark .p-dialog-mask {
-  background: rgba(0, 0, 0, 0.6);
-}
-
-/* Specific for Confirmation Dialog Icons */
-.p-confirm-dialog .p-dialog-content {
-  @apply flex flex-col items-center text-center gap-4;
-}
-
-.p-confirm-dialog-icon {
-  @apply !text-6xl !mb-2 !transition-all !duration-500 !scale-110 !drop-shadow-sm;
-}
-
-.p-confirm-dialog-message {
-  @apply !text-xl !font-bold !text-gray-800 !tracking-tight;
-}
-.dark .p-confirm-dialog-message {
-  @apply !text-gray-100;
-}
-
-/* Confirmation Dialog Action Buttons */
-.p-confirm-dialog .p-dialog-footer .p-button {
-  @apply !font-bold !px-8 !py-3 !rounded-xl !text-sm !transition-all !duration-300;
-}
-
-/* Ensure PrimeVue buttons in dialogs use our standard if possible 
-   but since they are generated,we override their base colors if they don't have .btn- classes
-*/
-.p-dialog-footer .p-button-secondary {
-  @apply !bg-gray-100 !border-none !text-gray-700 hover:!bg-gray-200 hover:!shadow-md;
-}
-.dark .p-dialog-footer .p-button-secondary {
-  @apply !bg-dark-border !text-gray-200 hover:!bg-zinc-700;
-}
-
-.p-dialog-footer .p-button-danger {
-  @apply !bg-red-500 !border-none !text-white hover:!bg-red-600 !shadow-lg !shadow-red-500/30 active:!scale-95;
-}
-
-.p-dialog-footer .p-button-success {
-  @apply !bg-emerald-500 !border-none !text-white hover:!bg-emerald-600 !shadow-lg !shadow-emerald-500/30 active:!scale-95;
-}
-
-.p-dialog-footer .p-button-warning {
-  @apply !bg-amber-500 !border-none !text-white hover:!bg-amber-600 !shadow-lg !shadow-amber-500/30 active:!scale-95;
-}
-
-.p-dialog-footer .p-button-info {
-  @apply !bg-blue-500 !border-none !text-white hover:!bg-blue-600 !shadow-lg !shadow-blue-500/30 active:!scale-95;
-}
-
-/* Primary / Standard Button in Dialogs */
-.p-dialog-footer .p-button:not(.p-button-secondary):not(.p-button-danger):not(.p-button-success):not(.p-button-warning):not(.p-button-info):not(.p-button-text) {
-  @apply !bg-primary !border-none !text-white hover:!bg-primary-hover !shadow-lg !shadow-primary/30 active:!scale-95;
-}
-
-.p-dialog-footer .p-button-text {
-  @apply !text-primary hover:!bg-primary/5 !border-none shadow-none active:!scale-95 transition-all;
-}
-
-/* Status Icons Colors with Glow effect in Dark mode */
-.p-confirm-dialog .pi-exclamation-triangle {
-  @apply !text-amber-500;
-}
-.dark .p-confirm-dialog .pi-exclamation-triangle {
-  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.5)) !important;
-}
-
-.p-confirm-dialog .pi-info-circle {
-  @apply !text-blue-500;
-}
-.dark .p-confirm-dialog .pi-info-circle {
-  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5)) !important;
-}
-
-.p-confirm-dialog .pi-times-circle {
-  @apply !text-red-500;
-}
-.dark .p-confirm-dialog .pi-times-circle {
-  filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.5)) !important;
-}
-
-.p-confirm-dialog .pi-check-circle {
-  @apply !text-emerald-500;
-}
-.dark .p-confirm-dialog .pi-check-circle {
-  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5)) !important;
-}
-
-/* Aura Preset Overrides for Dark Mode Select/Dropdown in Modal */
-.p-dialog .p-select,
-.p-dialog .p-multiselect {
-  @apply !bg-gray-50 !border-gray-200;
-}
-.dark .p-dialog .p-select,
-.dark .p-dialog .p-multiselect {
-  @apply !bg-dark-bg !border-dark-border;
-}
-
-/* ========================================
-   PRIMEVUE SELECT / DROPDOWN CUSTOMIZATION
-   ======================================== */
-
-/* 1. Dropdown Overlay Panel (The floating box) */
-.p-select-overlay {
-  @apply !bg-white;
-  @apply !border !border-gray-200;
-  @apply !shadow-xl;
-}
-
-.dark .p-select-overlay {
-  @apply !bg-dark-card;
-  @apply !border-dark-border;
-}
-
-/* 2. Options List */
-.p-select-list {
-  @apply !bg-transparent;
-  @apply !py-1;
-}
-
-.p-select-option {
-  @apply !text-gray-700;
-  @apply !transition-colors !duration-150;
-}
-
-.dark .p-select-option {
-  @apply !text-gray-200;
-}
-
-/* Hover state for options */
-.p-select-option:not(.p-disabled).p-focus {
-  @apply !bg-gray-100;
-  @apply !text-primary;
-}
-
-.dark .p-select-option:not(.p-disabled).p-focus {
-  @apply !bg-white/5;
-  @apply !text-primary;
-}
-
-.p-select-option.p-select-option-selected {
-  @apply !bg-primary/10;
-  @apply !text-primary !font-bold;
-}
-
-.dark .p-select-option.p-select-option-selected {
-  @apply !bg-primary/20;
-}
-
-/* 3. Dropdown Header (Search Area) */
-.p-select-header {
-  @apply !bg-gray-50;
-  @apply !border-b !border-gray-200;
-  @apply !p-2;
-}
-
-.dark .p-select-header {
-  @apply !bg-dark-card;
-  @apply !border-dark-border;
-}
-
-/* 4. Search Input inside Dropdown */
-/* Light Mode */
-.p-select-overlay .p-select-header .p-inputtext {
-  @apply !bg-white !border-gray-300 !text-gray-900;
-}
-
-/* Dark Mode - Explicit Selector */
-.dark .p-select-overlay .p-select-header .p-inputtext {
-  @apply !bg-dark-bg !border-dark-border !text-white;
-}
-
-/* Focus State */
-.p-select-overlay .p-select-header .p-inputtext:focus {
-  @apply !border-primary;
-  @apply ring-1 ring-primary;
-  box-shadow: none !important;
-}
-
-/* ========================================
-
-   PRIMEVUE MULTISELECT CUSTOMIZATION
-
-   ======================================== */
-
-   
-
-/* 1. Multiselect Overlay Panel */
-
-body .p-multiselect-overlay {
-
-  @apply !bg-white;
-
-  @apply !border !border-gray-200;
-
-  @apply !shadow-xl;
-
-}
-
-.dark body .p-multiselect-overlay {
-
-  @apply !bg-dark-card;
-
-  @apply !border-dark-border;
-
-}
-
-
-
-/* 2. Options List */
-
-body .p-multiselect-list {
-
-  @apply !bg-transparent;
-
-  @apply !py-1;
-
-}
-
-body .p-multiselect-option {
-
-  @apply !text-gray-700;
-
-  @apply !transition-colors !duration-150;
-
-}
-
-.dark body .p-multiselect-option {
-
-  @apply !text-gray-200;
-
-}
-
-
-
-/* Hover state for options */
-
-body .p-multiselect-option:not(.p-disabled).p-focus {
-
-  @apply !bg-gray-100;
-
-  @apply !text-primary;
-
-}
-
-.dark body .p-multiselect-option:not(.p-disabled).p-focus {
-
-  @apply !bg-white/5;
-
-  @apply !text-primary;
-
-}
-
-
-
-body .p-multiselect-option.p-highlight {
-
-  @apply !bg-primary/10;
-
-  @apply !text-primary !font-bold;
-
-}
-
-.dark body .p-multiselect-option.p-highlight {
-
-  @apply !bg-primary/20;
-
-}
-
-
-
-/* 3. Multiselect Header (Search Area) */
-
-body .p-multiselect-header {
-
-  @apply !bg-gray-50;
-
-  @apply !border-b !border-gray-200;
-
-  @apply !p-2;
-
-}
-
-.dark body .p-multiselect-header {
-
-  @apply !bg-dark-card;
-
-  @apply !border-dark-border;
-
-}
-
-
-
-/* 4. Search Input inside Multiselect */
-
-body .p-multiselect-filter-container .p-inputtext {
-
-  @apply !w-full;
-
-}
-
-/* Light Mode */
-
-body .p-multiselect-overlay .p-multiselect-header .p-inputtext {
-
-  @apply !bg-white !border-gray-300 !text-gray-900;
-
-}
-
-/* Dark Mode */
-
-.dark body .p-multiselect-overlay .p-multiselect-header .p-inputtext {
-
-  @apply !bg-dark-bg !border-dark-border !text-white;
-
-}
-
-
-
-/* Focus State */
-
-body .p-multiselect-overlay .p-multiselect-header .p-inputtext:focus {
-
-  @apply !border-primary;
-
-  @apply ring-1 ring-primary;
-
-  box-shadow: none !important;
-
-}
-
-
-
-/* Add some custom-select-like overrides */
-
-.custom-select .p-multiselect-label {
-
-  padding: 0.5rem 0.75rem;
-
-}
-
-.dark .custom-select .p-multiselect-label {
-
-  color: white !important;
-
-}
-
-/* ========================================
-   DETAIL VIEW STYLES (Standardized)
+   DETAIL VIEW STYLES
    ======================================== */
 .detail-card {
   @apply bg-white rounded-2xl shadow-xl p-8 border border-gray-100 transition-all duration-300;
 }
+
 .dark .detail-card {
   @apply bg-dark-card border-dark-border;
 }
 
 .detail-label {
-  @apply block text-[10px] font-bold uppercase tracking-widest text-light-muted mb-2;
+  @apply block text-xs font-bold uppercase tracking-widest text-light-muted mb-2;
 }
+
 .dark .detail-label {
   @apply text-dark-muted;
 }
@@ -902,18 +400,19 @@ body .p-multiselect-overlay .p-multiselect-header .p-inputtext:focus {
 .detail-value {
   @apply text-base font-bold text-light-text leading-tight;
 }
+
 .dark .detail-value {
   @apply text-gray-100;
 }
 
 .detail-value-mono {
-  @apply detail-value font-mono tracking-tight text-primary;
+  @apply font-mono tracking-tight text-primary;
 }
 
-/* Specific for reading fields (e.g. observations) */
 .detail-content-box {
   @apply bg-light-bg p-4 rounded-xl border border-light-border text-sm leading-relaxed text-light-text shadow-inner;
 }
+
 .dark .detail-content-box {
   @apply bg-dark-bg/50 border-dark-border text-gray-300;
 }
@@ -921,6 +420,7 @@ body .p-multiselect-overlay .p-multiselect-header .p-inputtext:focus {
 .detail-section-header {
   @apply flex items-center gap-3 mb-6 pb-4 border-b border-light-border;
 }
+
 .dark .detail-section-header {
   @apply border-dark-border;
 }
@@ -928,6 +428,7 @@ body .p-multiselect-overlay .p-multiselect-header .p-inputtext:focus {
 .detail-section-title {
   @apply text-lg font-bold text-light-text;
 }
+
 .dark .detail-section-title {
   @apply text-white;
 }
@@ -935,6 +436,24 @@ body .p-multiselect-overlay .p-multiselect-header .p-inputtext:focus {
 .detail-section-icon {
   @apply w-10 h-10 rounded-xl flex items-center justify-center bg-opacity-10 shadow-sm;
 }
+
 .dark .detail-section-icon {
   @apply bg-opacity-20;
+}
+
+/* ========================================
+   OVERLAY ANIMATIONS (PrimeVue)
+   ======================================== */
+.p-connected-overlay-enter-from,
+.p-connected-overlay-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.p-connected-overlay-enter-active {
+  transition: all 0.15s ease-out;
+}
+
+.p-connected-overlay-leave-active {
+  transition: all 0.1s ease-in;
 }
