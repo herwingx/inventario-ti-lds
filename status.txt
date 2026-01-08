@@ -1,0 +1,41 @@
+On branch feat/assignment-edit-refinement
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   client/src/assets/main.css
+	modified:   client/src/stores/auth.js
+	modified:   client/src/views/AreasDetailView.vue
+	modified:   client/src/views/AreasFormView.vue
+	modified:   client/src/views/AreasView.vue
+	modified:   client/src/views/AsignacionesDetailView.vue
+	modified:   client/src/views/CorreosDetailView.vue
+	modified:   client/src/views/CorreosFormView.vue
+	modified:   client/src/views/CorreosView.vue
+	modified:   client/src/views/DireccionesIpDetailView.vue
+	modified:   client/src/views/DireccionesIpFormView.vue
+	modified:   client/src/views/DireccionesIpView.vue
+	modified:   client/src/views/DocumentacionFormView.vue
+	modified:   client/src/views/DocumentacionView.vue
+	modified:   client/src/views/EmpleadosDetailView.vue
+	modified:   client/src/views/EmpleadosFormView.vue
+	modified:   client/src/views/EmpleadosView.vue
+	modified:   client/src/views/EmpresasFormView.vue
+	modified:   client/src/views/EmpresasView.vue
+	modified:   client/src/views/EquiposDetailView.vue
+	modified:   client/src/views/EquiposFormView.vue
+	modified:   client/src/views/EquiposView.vue
+	modified:   client/src/views/MantenimientosFormView.vue
+	modified:   client/src/views/MantenimientosView.vue
+	modified:   client/src/views/NotasFormView.vue
+	modified:   client/src/views/NotasView.vue
+	modified:   client/src/views/ProfileView.vue
+	modified:   client/src/views/SucursalesDetailView.vue
+	modified:   client/src/views/SucursalesFormView.vue
+	modified:   client/src/views/SucursalesView.vue
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	branches.txt
+	status.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")

@@ -3,13 +3,13 @@
  * @fileoverview Formulario de Equipo (Crear/Editar).
  * Formulario complejo para registrar hardware, especificando marca, modelo, serie y características técnicas.
  */
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import EquiposService from '../services/EquiposService'
 import CatalogosService from '../services/CatalogosService'
 import { getStatusSeverity } from '../utils/status'
-import { Check, X, Lock, Save } from 'lucide-vue-next'
+import { Check, X, Lock, Save, Calendar as CalendarIcon } from 'lucide-vue-next'
 
 // Componentes PrimeVue
 import InputText from 'primevue/inputtext'
@@ -28,6 +28,8 @@ const { confirmWarning, success: toastSuccess, error: toastError, info: toastInf
 // Estados de Carga
 const loading = ref(false)
 const submitting = ref(false)
+const isDirty = ref(false)
+const isSaved = ref(false)
 
 // Datos de Catálogos
 const tiposEquipo = ref([])
@@ -60,6 +62,30 @@ const form = ref({
     fecha_compra: null,
     id_status: null,
     otras_caracteristicas: ''
+})
+
+// Monitorear cambios para marcar como 'sucio'
+watch(form, () => {
+    if (!loading.value && !submitting.value && !isSaved.value) {
+        isDirty.value = true
+    }
+}, { deep: true })
+
+// Guardia de navegación para cambios no guardados
+onBeforeRouteLeave(async (to, from) => {
+    if (isDirty.value && !isSaved.value) {
+        const result = await confirmWarning({
+            title: 'Cambios no guardados',
+            text: 'Tienes cambios pendientes. ¿Estás seguro de que deseas salir sin guardar?',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'No, quedarme'
+        })
+        
+        if (!result.isConfirmed) {
+            return false
+        }
+        toastInfo('Operación cancelada')
+    }
 })
 
 const isEditing = computed(() => !!route.params.id)
@@ -203,9 +229,10 @@ const handleSubmit = async () => {
             toastSuccess('Equipo registrado correctamente')
         }
 
+        isSaved.value = true
         // Navegar de vuelta tras un breve delay
         setTimeout(() => {
-            router.push({ name: 'equipos' })
+            router.replace({ name: 'equipos' })
         }, 1000)
 
     } catch (error) {
@@ -228,6 +255,7 @@ const goBack = async () => {
     })
     
     if (result.isConfirmed) {
+        isDirty.value = false
         toastInfo('Operación cancelada')
         router.push({ name: 'equipos' })
     }
@@ -341,7 +369,10 @@ const goBack = async () => {
                     </div>
                     <div class="md:col-span-1">
                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Fecha de Compra</label>
-                        <DatePicker v-model="form.fecha_compra" dateFormat="yy-mm-dd" showIcon iconDisplay="input" placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
+                        <div class="relative">
+                            <CalendarIcon class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
+                            <DatePicker v-model="form.fecha_compra" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg !pr-10 w-full'" />
+                        </div>
                     </div>
 
                     <!-- STATUS -->

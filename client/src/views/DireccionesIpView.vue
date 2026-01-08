@@ -16,7 +16,7 @@ import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
 const router = useRouter()
-const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 // Data
 const direccionesIp = ref([])
@@ -140,6 +140,8 @@ const confirmDeleteDireccionIp = async (ip) => {
       console.error('Error al eliminar IP:', error)
       toastError('No se pudo eliminar la dirección IP')
     }
+  } else {
+    toastInfo('Operación cancelada')
   }
 }
 

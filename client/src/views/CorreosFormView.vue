@@ -3,8 +3,8 @@
  * @fileoverview Formulario de Cuenta de Correo (Crear/Editar).
  * Permite registrar cuentas de correo y asignarlas a empleados activos.
  */
-import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import CorreosService from '../services/CorreosService'
 import EmpleadosService from '../services/EmpleadosService'
@@ -19,11 +19,13 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const { success: toastSuccess, error: toastError } = useSwal()
+const { confirmWarning, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 const loading = ref(false)
 const submitting = ref(false)
 const isEditing = computed(() => !!route.params.id)
+const isDirty = ref(false)
+const isSaved = ref(false)
 
 const empleados = ref([])
 const statuses = ref([])
@@ -35,6 +37,27 @@ const form = ref({
     id_empleado_asignado: null,
     id_status: null,
     observaciones: ''
+})
+
+// Dirty detection
+watch(form, () => {
+    if (!loading.value && !submitting.value && !isSaved.value) {
+        isDirty.value = true
+    }
+}, { deep: true })
+
+// Route guard
+onBeforeRouteLeave(async (to, from) => {
+    if (isDirty.value && !isSaved.value) {
+        const result = await confirmWarning({
+            title: 'Cambios no guardados',
+            text: '¿Deseas salir del formulario de correo? Se perderán los cambios.',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'No, quedarme'
+        })
+        if (!result.isConfirmed) return false
+        toastInfo('Operación cancelada')
+    }
 })
 
 const errors = ref({})
@@ -74,6 +97,21 @@ onMounted(async () => {
     }
 })
 
+const goBack = async () => {
+    const result = await confirmWarning({
+        title: '¿Estás seguro?',
+        text: 'Se perderán los cambios no guardados.',
+        confirmButtonText: 'Sí, salir',
+        cancelButtonText: 'No, continuar editando'
+    })
+
+    if (result.isConfirmed) {
+        isDirty.value = false
+        toastInfo('Operación cancelada')
+        router.push({ name: 'correos' })
+    }
+}
+
 const validateEmail = (email) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return re.test(email)
@@ -101,7 +139,8 @@ const handleSubmit = async () => {
             await CorreosService.create(form.value)
             toastSuccess('Cuenta creada correctamente')
         }
-        router.push({ name: 'correos' })
+        isSaved.value = true
+        router.replace({ name: 'correos' })
     } catch (error) {
         console.error('Error submit:', error)
         const msg = error.response?.data?.message || 'Error al guardar'
@@ -121,7 +160,7 @@ const handleSubmit = async () => {
                  <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ isEditing ? 'Editar Cuenta' : 'Nueva Cuenta de Correo' }}</h2>
                  <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Gestión de cuentas corporativas para empleados</p>
             </div>
-            <button @click="router.back()" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+            <button @click="goBack" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
                 <X :size="20" />
                 <span>Cancelar</span>
             </button>
@@ -176,7 +215,7 @@ const handleSubmit = async () => {
 
             <!-- Botones -->
             <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-dark-border">
-                <button type="button" @click="router.back()" class="btn-secondary">
+                <button type="button" @click="goBack" class="btn-secondary">
                     <X :size="18" />
                     Cancelar
                 </button>

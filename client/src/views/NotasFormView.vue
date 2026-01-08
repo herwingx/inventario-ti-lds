@@ -3,8 +3,8 @@
  * @fileoverview Formulario de Nota (Crear/Editar).
  * Permite crear notas rápidas o bitácoras, asociándolas opcionalmente a equipos.
  */
-import { ref, onMounted, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import NotasService from '../services/NotasService'
 import EquiposService from '../services/EquiposService'
@@ -18,17 +18,40 @@ import Fluid from 'primevue/fluid'
 
 const router = useRouter()
 const route = useRoute()
-const { confirmWarning, success: toastSuccess, error: toastError, warning: toastWarning } = useSwal()
+const { confirmWarning, success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useSwal()
 
 const isEditing = computed(() => !!route.params.id)
 const formTitle = computed(() => isEditing.value ? `Editar Nota #${route.params.id}` : 'Crear Nueva Nota')
 const loading = ref(false)
 const saving = ref(false)
+const isDirty = ref(false)
+const isSaved = ref(false)
 
 const form = ref({
     titulo: '',
     contenido: '',
     id_equipo: null
+})
+
+// Dirty detection
+watch(form, () => {
+    if (!loading.value && !saving.value && !isSaved.value) {
+        isDirty.value = true
+    }
+}, { deep: true })
+
+// Route guard
+onBeforeRouteLeave(async (to, from) => {
+    if (isDirty.value && !isSaved.value) {
+        const result = await confirmWarning({
+            title: 'Cambios no guardados',
+            text: '¿Deseas salir? Tienes una nota con cambios pendientes.',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'No, quedarme'
+        })
+        if (!result.isConfirmed) return false
+        toastInfo('Operación cancelada')
+    }
 })
 
 const equipos = ref([])
@@ -85,7 +108,8 @@ const save = async () => {
             toastSuccess('Nota creada')
         }
         
-        setTimeout(() => router.push({ name: 'notas' }), 1000)
+        isSaved.value = true
+        setTimeout(() => router.replace({ name: 'notas' }), 1000)
     } catch (error) {
         console.error(error)
         toastError('Error al guardar')
@@ -97,12 +121,14 @@ const save = async () => {
 const goBack = async () => {
     const result = await confirmWarning({
         title: 'Confirmar Salida',
-        text: '¿Salir sin guardar?',
-        confirmButtonText: 'Salir',
-        cancelButtonText: 'Continuar'
+        text: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
+        confirmButtonText: 'Salir sin Guardar',
+        cancelButtonText: 'Continuar Editando'
     })
     
     if (result.isConfirmed) {
+        isDirty.value = false
+        toastInfo('Operación cancelada')
         router.push({ name: 'notas' })
     }
 }

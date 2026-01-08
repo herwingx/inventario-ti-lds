@@ -3,8 +3,8 @@
  * @fileoverview Formulario de Empleado (Crear/Editar).
  * Gestiona el alta y modificación de empleados, vinculándolos a empresas y áreas.
  */
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import EmpleadosService from '../services/EmpleadosService'
 import CatalogosService from '../services/CatalogosService'
@@ -23,6 +23,8 @@ const { confirmWarning, success: toastSuccess, error: toastError, info: toastInf
 // Estados de Carga
 const loading = ref(false)
 const submitting = ref(false)
+const isDirty = ref(false)
+const isSaved = ref(false)
 
 // Datos de Catálogos
 const empresas = ref([])
@@ -45,6 +47,27 @@ const form = ref({
     id_area: null,
     id_status: null,
     asignar_id_correo: null // Nuevo campo para asignación
+})
+
+// Monitorear cambios
+watch(form, () => {
+    if (!loading.value && !submitting.value && !isSaved.value) {
+        isDirty.value = true
+    }
+}, { deep: true })
+
+// Guardia de navegación
+onBeforeRouteLeave(async (to, from) => {
+    if (isDirty.value && !isSaved.value) {
+        const result = await confirmWarning({
+            title: 'Cambios no guardados',
+            text: 'Tienes cambios pendientes en el formulario del empleado. ¿Deseas salir?',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'No, quedarme'
+        })
+        if (!result.isConfirmed) return false
+        toastInfo('Operación cancelada')
+    }
 })
 
 const isEditing = computed(() => !!route.params.id)
@@ -188,9 +211,10 @@ const handleSubmit = async () => {
             toastSuccess('Empleado registrado correctamente')
         }
 
+        isSaved.value = true
         // Navegar de vuelta tras un breve delay
         setTimeout(() => {
-            router.push({ name: 'empleados' })
+            router.replace({ name: 'empleados' })
         }, 1000)
 
     } catch (error) {
@@ -213,6 +237,7 @@ const goBack = async () => {
     })
     
     if (result.isConfirmed) {
+        isDirty.value = false
         toastInfo('Operación cancelada')
         router.push({ name: 'empleados' })
     }

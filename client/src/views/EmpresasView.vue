@@ -14,7 +14,7 @@ import { Search, Plus, Pencil, Trash2, Building } from 'lucide-vue-next'
 import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 
-const { confirmDelete: swalConfirmDelete, success: toastSuccess, error: toastError } = useSwal()
+const { confirmDelete: swalConfirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 const router = useRouter()
 
 // Data
@@ -77,6 +77,8 @@ const confirmDelete = async (data) => {
     } catch (error) {
       toastError('No se pudo eliminar (tienes sucursales asociadas?)')
     }
+  } else {
+    toastInfo('Operación cancelada')
   }
 }
 

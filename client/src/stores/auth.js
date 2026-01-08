@@ -64,7 +64,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('userData', JSON.stringify(response.user))
 
       // Redirigir a la URL intentada o al home
-      router.push(returnUrl.value || '/home')
+      router.replace(returnUrl.value || '/home')
       returnUrl.value = null
 
       return { success: true }

@@ -78,6 +78,8 @@ const finalizarAsignacion = async () => {
         } catch (error) {
             toastError('No se pudo finalizar')
         }
+    } else {
+        toastInfo('Operación cancelada')
     }
 }
 
@@ -113,6 +115,11 @@ const openManageComponentes = async () => {
         console.error('Error loading options', error)
         toastError('No se pudieron cargar los equipos disponibles')
     }
+}
+
+const cancelManageComponentes = () => {
+    showComponentesDialog.value = false
+    toastInfo('Operación cancelada')
 }
 
 const saveComponentes = async () => {
@@ -335,7 +342,7 @@ const formatDate = (date) => {
                 </div>
             </div>
             <template #footer>
-                <button class="btn-secondary" @click="showComponentesDialog = false">Cancelar</button>
+                <button class="btn-secondary" @click="cancelManageComponentes">Cancelar</button>
                 <button class="btn-primary" :disabled="savingComponentes" @click="saveComponentes">
                     <i v-if="savingComponentes" class="pi pi-spinner pi-spin"></i>
                     <span>Guardar Cambios</span>

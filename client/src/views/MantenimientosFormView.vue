@@ -3,14 +3,14 @@
  * @fileoverview Formulario de Mantenimiento (Crear/Editar).
  * Permite registrar actividades de mantenimiento preventivo o correctivo para un equipo.
  */
-import { ref, onMounted, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import MantenimientosService from '../services/MantenimientosService'
 import EquiposService from '../services/EquiposService'
 import CatalogosService from '../services/CatalogosService'
 
-import { Check, X, Save, Info, List } from 'lucide-vue-next'
+import { Check, X, Save, Info, List, Calendar as CalendarIcon } from 'lucide-vue-next'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import DatePicker from 'primevue/datepicker'
@@ -21,12 +21,14 @@ import Fluid from 'primevue/fluid'
 
 const router = useRouter()
 const route = useRoute()
-const { confirmWarning, success: toastSuccess, error: toastError, warning: toastWarning } = useSwal()
+const { confirmWarning, success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useSwal()
 
 const isEditing = computed(() => !!route.params.id)
 const formTitle = computed(() => isEditing.value ? `Editar Servicio #${route.params.id}` : 'Registrar Nuevo Servicio')
 const loading = ref(false)
 const saving = ref(false)
+const isDirty = ref(false)
+const isSaved = ref(false)
 
 const mantenimiento = ref({
     id_equipo: null,
@@ -37,6 +39,27 @@ const mantenimiento = ref({
     costo: null,
     proveedor: '',
     id_status: null
+})
+
+// Dirty detection
+watch(mantenimiento, () => {
+    if (!loading.value && !saving.value && !isSaved.value) {
+        isDirty.value = true
+    }
+}, { deep: true })
+
+// Route guard
+onBeforeRouteLeave(async (to, from) => {
+    if (isDirty.value && !isSaved.value) {
+        const result = await confirmWarning({
+            title: 'Cambios no guardados',
+            text: '¿Deseas salir? Tienes progresos sin guardar en este mantenimiento.',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'No, quedarme'
+        })
+        if (!result.isConfirmed) return false
+        toastInfo('Operación cancelada')
+    }
 })
 
 const equipos = ref([])
@@ -138,9 +161,10 @@ const save = async () => {
             toastSuccess('Mantenimiento registrado')
         }
         
+        isSaved.value = true
         // Delay para feedback visual
         setTimeout(() => {
-             router.push({ name: 'mantenimientos' })
+             router.replace({ name: 'mantenimientos' })
         }, 1000)
 
     } catch (error) {
@@ -167,6 +191,8 @@ const goBack = async () => {
     })
     
     if (result.isConfirmed) {
+        isDirty.value = false
+        toastInfo('Operación cancelada')
         router.push({ name: 'mantenimientos' })
     }
 }
@@ -239,12 +265,18 @@ const goBack = async () => {
 
                     <div class="flex flex-col gap-2">
                         <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Fecha Inicio *</label>
-                        <DatePicker v-model="mantenimiento.fecha_inicio" dateFormat="yy-mm-dd" showIcon iconDisplay="input" class="!w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
+                        <div class="relative">
+                            <CalendarIcon class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
+                            <DatePicker v-model="mantenimiento.fecha_inicio" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="!w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg !pr-10 w-full'" />
+                        </div>
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Fecha Fin</label>
-                        <DatePicker v-model="mantenimiento.fecha_fin" dateFormat="yy-mm-dd" showIcon iconDisplay="input" placeholder="En proceso" class="!w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
+                        <div class="relative">
+                            <CalendarIcon class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
+                            <DatePicker v-model="mantenimiento.fecha_fin" dateFormat="yy-mm-dd" placeholder="En proceso" class="!w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg !pr-10 w-full'" />
+                        </div>
                     </div>
 
                     <!-- Divider -->

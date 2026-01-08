@@ -16,7 +16,7 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 const area = ref(null)
 const loading = ref(true)
@@ -70,6 +70,8 @@ const confirmDeleteArea = async () => {
       console.error('Error al eliminar área:', error)
       toastError('No se pudo eliminar el área')
     }
+  } else {
+    toastInfo('Operación cancelada')
   }
 }
 
