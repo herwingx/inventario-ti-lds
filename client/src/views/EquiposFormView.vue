@@ -9,6 +9,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import EquiposService from '../services/EquiposService'
 import CatalogosService from '../services/CatalogosService'
+import { getStatusSeverity } from '../utils/status'
 import { Check, X, Lock, Save } from 'lucide-vue-next'
 
 // Componentes PrimeVue
@@ -151,19 +152,12 @@ const toUpperCase = (field) => {
     }
 }
 
-// Helper Severidad Estado
+// Helper Severidad Estado - Adaptado para manejar objetos de status
 const getSeverity = (status) => {
     if (!status) return 'secondary'
-    // Si viene objeto complete, usar nombre. Si es string, usar directo.
+    // Si viene objeto completo, usar nombre. Si es string, usar directo.
     const nombre = typeof status === 'object' ? status.nombre_status : status
-    if (!nombre) return 'secondary'
-    
-    const s = nombre.toUpperCase()
-    if (s.includes('DISPONIBLE')) return 'success'
-    if (s.includes('ASIGNADO')) return 'warn' // Or info
-    if (s.includes('MANTENIMIENTO')) return 'warn'
-    if (s.includes('BAJA') || s.includes('DAÑADO')) return 'danger'
-    return 'secondary'
+    return getStatusSeverity(nombre)
 }
 
 // Submit

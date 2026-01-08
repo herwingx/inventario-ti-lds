@@ -442,6 +442,54 @@
 }
 
 /* ========================================
+   PASSWORD COMPONENT (PrimeVue)
+   ======================================== */
+.p-password {
+  position: relative !important;
+  display: inline-flex !important;
+  width: 100% !important;
+}
+
+.p-password-fluid {
+  display: flex !important;
+  width: 100% !important;
+}
+
+.p-password-fluid .p-password-input {
+  width: 100% !important;
+}
+
+.p-password .p-password-input {
+  width: 100% !important;
+  padding-right: 2.75rem !important;
+}
+
+/* Icono toggle de visibilidad - dentro del input a la derecha */
+.p-password-toggle-mask-icon,
+.p-password .p-password-toggle-mask-icon {
+  position: absolute !important;
+  right: 0.75rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+  @apply text-light-muted transition-colors duration-200;
+}
+
+.p-password-toggle-mask-icon:hover {
+  @apply text-primary;
+}
+
+.dark .p-password-toggle-mask-icon,
+.dark .p-password .p-password-toggle-mask-icon {
+  @apply text-dark-muted;
+}
+
+.dark .p-password-toggle-mask-icon:hover {
+  @apply text-primary;
+}
+
+/* ========================================
    OVERLAY ANIMATIONS (PrimeVue)
    ======================================== */
 .p-connected-overlay-enter-from,

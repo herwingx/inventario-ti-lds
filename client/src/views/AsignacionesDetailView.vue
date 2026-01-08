@@ -14,8 +14,6 @@ import Tag from 'primevue/tag'
 import Skeleton from 'primevue/skeleton'
 import Dialog from 'primevue/dialog'
 import MultiSelect from 'primevue/multiselect'
-import Toast from 'primevue/toast'
-import ConfirmDialog from 'primevue/confirmdialog'
 import { ArrowLeft, CheckSquare } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -147,8 +145,6 @@ import { getStatusSeverity } from '../utils/status'
 
 <template>
     <div class="animate-fade-in-up">
-        <Toast />
-        <ConfirmDialog />
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div class="flex items-center gap-3">
@@ -355,7 +351,11 @@ import { getStatusSeverity } from '../utils/status'
 /* Ocultar checkbox "Select All" en el encabezado del MultiSelect */
 [data-pc-name="multiselect"] [data-pc-section="headercheckboxcontainer"],
 [data-pc-name="multiselect"] [data-pc-section="headercheckbox"],
-.p-multiselect-header .p-checkbox {
+[data-pc-name="multiselect"] [data-pc-section="pcheadercheckbox"],
+[data-pc-name="multiselect"] [data-pc-name="pcheadercheckbox"],
+.p-multiselect-header .p-checkbox,
+.p-multiselect-header > .p-checkbox-box,
+[data-pc-section="header"] > [data-pc-name="checkbox"] {
     display: none !important;
 }
 </style>

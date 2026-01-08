@@ -415,6 +415,7 @@ const openPasswordDialog = () => {
                         <Password 
                             v-model="passwordForm.newPassword" 
                             toggleMask
+                            appendTo="self"
                             class="w-full"
                             inputClass="!bg-light-bg dark:!bg-dark-bg !border-light-border dark:!border-dark-border !text-light-text dark:!text-dark-text focus:!border-primary !w-full !rounded-xl !py-3"
                         >
@@ -475,10 +476,36 @@ const openPasswordDialog = () => {
 
 /* Ajustes para Password component */
 :deep(.p-password) {
+    position: relative;
+    display: inline-flex;
     width: 100%;
 }
 
 :deep(.p-password-input) {
     width: 100%;
+    padding-right: 2.75rem !important;
+}
+
+:deep(.p-password-toggle-mask-icon) {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 10;
+    color: #6b7280; /* gray-500 */
+    transition: color 0.2s ease;
+}
+
+:deep(.p-password-toggle-mask-icon:hover) {
+    color: #13B497; /* primary */
+}
+
+.dark :deep(.p-password-toggle-mask-icon) {
+    color: #9ca3af; /* gray-400 */
+}
+
+.dark :deep(.p-password-toggle-mask-icon:hover) {
+    color: #13B497; /* primary */
 }
 </style>

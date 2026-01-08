@@ -66,8 +66,8 @@ const TailwindPreset = {
 
   // Password
   password: {
-    root: { class: 'relative w-full' },
-    input: ({ props }) => ({
+    root: { class: 'relative inline-flex w-full' },
+    pcInputText: ({ props }) => ({
       class: [
         'w-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg',
         'text-gray-900 dark:text-gray-100 text-sm py-2.5 px-3 pr-10',
@@ -78,8 +78,23 @@ const TailwindPreset = {
         { 'border-red-500 focus:border-red-500 focus:ring-red-500/20': props?.invalid }
       ]
     }),
-    showIcon: { class: 'absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer dark:text-gray-500 dark:hover:text-gray-300 transition-colors' },
-    hideIcon: { class: 'absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer dark:text-gray-500 dark:hover:text-gray-300 transition-colors' }
+    maskIcon: { class: 'absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary cursor-pointer dark:text-gray-500 dark:hover:text-primary transition-colors z-10' },
+    unmaskIcon: { class: 'absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary cursor-pointer dark:text-gray-500 dark:hover:text-primary transition-colors z-10' },
+    // Overlay para el indicador de fortaleza
+    overlay: { class: 'absolute left-0 top-full mt-2 w-full bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-xl p-3 z-50' },
+    content: { class: 'flex flex-col gap-2' },
+    meter: { class: 'h-2 bg-gray-200 dark:bg-dark-border rounded-full overflow-hidden' },
+    meterLabel: ({ instance }) => ({
+      class: [
+        'h-full rounded-full transition-all duration-300',
+        {
+          'bg-red-500': instance?.meter?.strength === 'weak',
+          'bg-amber-500': instance?.meter?.strength === 'medium',
+          'bg-emerald-500': instance?.meter?.strength === 'strong'
+        }
+      ]
+    }),
+    meterText: { class: 'text-xs font-medium text-gray-600 dark:text-gray-400' }
   },
 
   // Select (Dropdown)
@@ -154,7 +169,7 @@ const TailwindPreset = {
     removeTokenIcon: { class: 'w-3.5 h-3.5 cursor-pointer hover:text-primary-hover flex-shrink-0' },
     dropdown: { class: 'ml-auto mr-2 text-gray-400 dark:text-gray-500 flex-shrink-0' },
     overlay: { class: 'bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-xl mt-1 overflow-hidden z-[1000]' },
-    header: { class: 'p-3 border-b border-gray-100 dark:border-dark-border bg-gray-50 dark:bg-dark-bg/50 flex items-center gap-2' },
+    header: { class: 'p-3 border-b border-gray-100 dark:border-dark-border bg-gray-50 dark:bg-dark-bg/50 w-full' },
     headerCheckboxContainer: { class: '!hidden w-0 h-0 overflow-hidden opacity-0 pointer-events-none' }, // Nuclear option to hide it
     headerCheckbox: {
       root: { class: '!hidden' },
@@ -162,9 +177,16 @@ const TailwindPreset = {
       input: { class: '!hidden' },
       icon: { class: '!hidden' }
     },
+    // PrimeVue 4 uses pcHeaderCheckbox as the slot name for the header checkbox component
+    pcHeaderCheckbox: {
+      root: { class: '!hidden' },
+      box: { class: '!hidden' },
+      input: { class: '!hidden' },
+      icon: { class: '!hidden' }
+    },
     // Fixed: Adjusted padding for Right-aligned icon as per user screenshot preference
     filterInput: { class: 'w-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg pl-3 pr-8 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none text-gray-900 dark:text-white transition-colors' },
-    filterContainer: { class: 'relative flex-1' },
+    filterContainer: { class: 'relative w-full' },
     filterIcon: { class: 'absolute top-1/2 -translate-y-1/2 right-3 text-gray-400' }, // Moved to right to match screenshot
     listContainer: { class: 'max-h-60 overflow-auto' },
     list: { class: 'py-1' },
@@ -366,6 +388,7 @@ const TailwindPreset = {
 
   // Tag
   // Fixed: Updated to SOLID colors for high visibility and eliminated "other color border" issues.
+  // Extended with purple, cyan, and slate for more status variety.
   tag: {
     root: ({ props }) => ({
       class: [
@@ -377,7 +400,13 @@ const TailwindPreset = {
           'bg-amber-100 !text-amber-800 border-amber-200 dark:bg-amber-500/20 dark:!text-amber-400 dark:border-amber-500/30': props?.severity === 'warn' || props?.severity === 'warning',
           'bg-red-100 !text-red-800 border-red-200 dark:bg-red-500/20 dark:!text-red-400 dark:border-red-500/30': props?.severity === 'danger',
           'bg-gray-100 !text-gray-800 border-gray-200 dark:bg-zinc-800 dark:!text-gray-400 dark:border-zinc-700': props?.severity === 'secondary' || !props?.severity,
-          'bg-gray-900 !text-white border-gray-900 dark:bg-white dark:!text-black': props?.severity === 'contrast'
+          'bg-gray-900 !text-white border-gray-900 dark:bg-white dark:!text-black': props?.severity === 'contrast',
+          // NEW: Extended color palette for more status variety
+          'bg-purple-100 !text-purple-800 border-purple-200 dark:bg-purple-500/20 dark:!text-purple-400 dark:border-purple-500/30': props?.severity === 'purple',
+          'bg-cyan-100 !text-cyan-800 border-cyan-200 dark:bg-cyan-500/20 dark:!text-cyan-400 dark:border-cyan-500/30': props?.severity === 'cyan',
+          'bg-slate-200 !text-slate-700 border-slate-300 dark:bg-slate-600/20 dark:!text-slate-400 dark:border-slate-500/30': props?.severity === 'slate',
+          'bg-pink-100 !text-pink-800 border-pink-200 dark:bg-pink-500/20 dark:!text-pink-400 dark:border-pink-500/30': props?.severity === 'pink',
+          'bg-indigo-100 !text-indigo-800 border-indigo-200 dark:bg-indigo-500/20 dark:!text-indigo-400 dark:border-indigo-500/30': props?.severity === 'indigo'
         }
       ]
     }),
