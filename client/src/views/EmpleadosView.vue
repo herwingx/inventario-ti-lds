@@ -203,10 +203,11 @@ const clearFilters = () => {
         </template>
 
         <template #email_corporativo="{ data }">
-          <div class="max-w-[180px] text-xs" :title="data.email_corporativo">
-            <span v-if="data.email_corporativo" class="text-gray-600 dark:text-gray-300 font-medium truncate block">
-              {{ data.email_corporativo }}
-            </span>
+          <div class="max-w-[200px] text-xs flex items-center gap-1.5" :title="data.email_corporativo">
+            <div v-if="data.email_corporativo" class="truncate">
+              <span class="text-gray-900 dark:text-gray-100 font-bold">{{ data.email_corporativo.split('@')[0] }}</span>
+              <span class="text-gray-400 dark:text-gray-500 font-normal">@{{ data.email_corporativo.split('@')[1] }}</span>
+            </div>
             <span v-else class="text-gray-400 dark:text-gray-600 italic">No asignado</span>
           </div>
         </template>
