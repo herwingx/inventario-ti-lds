@@ -156,9 +156,9 @@ const clearFilters = () => {
         </template>
 
         <template #email="{ data }">
-          <div class="flex flex-col">
-            <span class="text-gray-900 dark:text-white font-bold text-sm">{{ data.email }}</span>
-            <span class="text-xs text-gray-500">{{ data.usuario_email }}</span>
+          <div class="flex items-center gap-1.5" :title="data.email">
+            <span class="text-gray-900 dark:text-gray-100 font-bold text-sm">{{ data.email.split('@')[0] }}</span>
+            <span class="text-gray-400 dark:text-gray-500 font-normal text-sm">@{{ data.email.split('@')[1] }}</span>
           </div>
         </template>
 
