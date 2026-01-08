@@ -6,7 +6,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import EmpleadosService from '../services/EmpleadosService'
 import CatalogosService from '../services/CatalogosService'
 import { Check, X, Info, Calendar as CalendarIcon } from 'lucide-vue-next'
@@ -203,22 +203,20 @@ const handleSubmit = async () => {
     }
 }
 
-const confirm = useConfirm()
+const { confirmWarning } = useSwal()
 
-const goBack = () => {
-    confirm.require({
-        message: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
-        header: 'Confirmar Salida',
-        icon: 'pi pi-exclamation-circle text-amber-500',
-        rejectLabel: 'Continuar Editando',
-        acceptLabel: 'Salir sin Guardar',
-        rejectClass: 'btn-secondary',
-        acceptClass: 'btn-danger ml-2',
-        accept: () => {
-            toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
-            router.push({ name: 'empleados' })
-        }
+const goBack = async () => {
+    const result = await confirmWarning({
+        title: 'Confirmar Salida',
+        text: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
+        confirmButtonText: 'Salir sin Guardar',
+        cancelButtonText: 'Continuar Editando'
     })
+    
+    if (result.isConfirmed) {
+        toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
+        router.push({ name: 'empleados' })
+    }
 }
 </script>
 

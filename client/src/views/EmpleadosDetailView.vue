@@ -125,6 +125,7 @@ const infoSections = computed(() => {
       icon: 'pi-phone',
       color: 'text-green-500',
       fields: [
+        { label: 'Email Corporativo', value: empleado.value.email_corporativo || 'Sin asignar', mono: true },
         { label: 'Email Personal', value: empleado.value.email_personal || 'N/A' },
         { label: 'Teléfono', value: empleado.value.telefono || 'N/A' }
       ]
