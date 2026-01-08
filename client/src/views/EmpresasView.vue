@@ -6,7 +6,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import EmpresasService from '../services/EmpresasService'
 import DataTable from '../components/ui/DataTable.vue'
 import { getStatusSeverity } from '../utils/status'
@@ -16,7 +16,7 @@ import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmDelete: swalConfirmDelete } = useSwal()
 const router = useRouter()
 
 // Data
@@ -63,23 +63,23 @@ const editEmpresa = (data) => {
   router.push({ name: 'empresas-editar', params: { id: data.id } })
 }
 
-const confirmDelete = (data) => {
-  confirm.require({
-    message: `¿Estás seguro de eliminar "${data.nombre}"?`,
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Eliminar Empresa',
-    rejectClass: 'btn-secondary',
-    acceptClass: 'btn-danger ml-2',
-    accept: async () => {
-      try {
-        await EmpresasService.delete(data.id)
-        toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Empresa eliminada', life: 3000 })
-        loadEmpresas()
-      } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar (tienes sucursales asociadas?)', life: 4000 })
-      }
-    }
+const confirmDelete = async (data) => {
+  const result = await swalConfirmDelete({
+    title: 'Confirmar Eliminación',
+    text: `¿Estás seguro de eliminar "${data.nombre}"?`,
+    confirmButtonText: 'Eliminar Empresa',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await EmpresasService.delete(data.id)
+      toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Empresa eliminada', life: 3000 })
+      loadEmpresas()
+    } catch (error) {
+      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar (tienes sucursales asociadas?)', life: 4000 })
+    }
+  }
 }
 
 const clearFilters = () => {

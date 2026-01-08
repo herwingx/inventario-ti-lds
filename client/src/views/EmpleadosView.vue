@@ -6,7 +6,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import EmpleadosService from '../services/EmpleadosService'
 import DataTable from '../components/ui/DataTable.vue'
 import { getStatusSeverity } from '../utils/status'
@@ -18,7 +18,7 @@ import Select from 'primevue/select'
 
 const toast = useToast()
 const router = useRouter()
-const confirm = useConfirm()
+const { confirmDelete } = useSwal()
 
 // Data
 const empleados = ref([])
@@ -102,26 +102,25 @@ const editEmpleado = (empleado) => {
   router.push({ name: 'empleados-editar', params: { id: empleado.id } })
 }
 
-const confirmDeleteEmpleado = (empleado) => {
+const confirmDeleteEmpleado = async (empleado) => {
   const nombreCompleto = `${empleado.nombres} ${empleado.apellidos}`
-  confirm.require({
-    message: `¿Estás seguro de que deseas eliminar permanentemente a ${nombreCompleto}? Esta acción no se puede deshacer.`,
-    header: 'Confirmar Eliminación',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Eliminar Empleado',
-    rejectClass: 'btn-secondary',
-    acceptClass: 'btn-danger ml-2',
-    accept: async () => {
-      try {
-        await EmpleadosService.delete(empleado.id)
-        toast.add({ severity: 'success', summary: 'Eliminado', detail: `Empleado ${nombreCompleto} eliminado correctamente`, life: 3000 })
-        loadEmpleados()
-      } catch (error) {
-        console.error('Error al eliminar empleado:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el empleado', life: 3000 })
-      }
-    }
+  const result = await confirmDelete({
+    title: 'Confirmar Eliminación',
+    text: `¿Estás seguro de que deseas eliminar permanentemente a ${nombreCompleto}? Esta acción no se puede deshacer.`,
+    confirmButtonText: 'Eliminar Empleado',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await EmpleadosService.delete(empleado.id)
+      toast.add({ severity: 'success', summary: 'Eliminado', detail: `Empleado ${nombreCompleto} eliminado correctamente`, life: 3000 })
+      loadEmpleados()
+    } catch (error) {
+      console.error('Error al eliminar empleado:', error)
+      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el empleado', life: 3000 })
+    }
+  }
 }
 
 const clearFilters = () => {
