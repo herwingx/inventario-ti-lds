@@ -203,10 +203,12 @@ const clearFilters = () => {
         </template>
 
         <template #email_corporativo="{ data }">
-          <span v-if="data.email_corporativo" class="text-gray-600 dark:text-gray-300 text-sm flex items-center gap-1.5 truncate max-w-[200px]" :title="data.email_corporativo">
-            {{ data.email_corporativo }}
-          </span>
-          <span v-else class="text-gray-400 dark:text-gray-600 text-xs italic">No asignado</span>
+          <div class="max-w-[180px] text-xs" :title="data.email_corporativo">
+            <span v-if="data.email_corporativo" class="text-gray-600 dark:text-gray-300 font-medium truncate block">
+              {{ data.email_corporativo }}
+            </span>
+            <span v-else class="text-gray-400 dark:text-gray-600 italic">No asignado</span>
+          </div>
         </template>
 
         <template #skeleton-email_corporativo>
