@@ -534,10 +534,18 @@
   @apply !bg-dark-card;
 }
 
+
 .p-confirm-dialog .p-dialog-header-icon {
   @apply text-gray-400;
 }
 
 .dark .p-confirm-dialog .p-dialog-header-icon {
   @apply text-gray-400 hover:text-white hover:bg-white/10;
+}
+
+/* Icono principal del cuerpo del mensaje */
+.p-confirm-dialog .p-confirm-dialog-icon {
+  @apply text-primary !important;
+  font-size: 2rem !important;
+  /* Reducido de un valor más grande */
 }
