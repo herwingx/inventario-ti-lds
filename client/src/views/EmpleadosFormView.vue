@@ -331,11 +331,11 @@ const goBack = () => {
                     <!-- FECHAS -->
                     <div class="md:col-span-1">
                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Fecha de Nacimiento</label>
-                        <DatePicker v-model="form.fecha_nacimiento" dateFormat="yy-mm-dd" showIcon iconDisplay="input" placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
+                        <DatePicker v-model="form.fecha_nacimiento" dateFormat="yy-mm-dd" showIcon placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
                     </div>
                     <div class="md:col-span-1">
                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Fecha de Ingreso</label>
-                        <DatePicker v-model="form.fecha_ingreso" dateFormat="yy-mm-dd" showIcon iconDisplay="input" placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
+                        <DatePicker v-model="form.fecha_ingreso" dateFormat="yy-mm-dd" showIcon placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg'" />
                     </div>
 
                     <!-- STATUS -->
