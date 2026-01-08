@@ -1,9 +1,0 @@
-  develop
-* feat/assignment-edit-refinement
-  feat/show-employee-email
-  main
-  remotes/origin/HEAD -> origin/main
-  remotes/origin/develop
-  remotes/origin/feat/assignment-edit-refinement
-  remotes/origin/feat/show-employee-email
-  remotes/origin/main
