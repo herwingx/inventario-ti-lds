@@ -4,7 +4,8 @@
  * Permite visualizar información personal y editar el correo electrónico.
  * También gestiona el cambio de contraseña de forma segura.
  */
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import { useAuthStore } from '../stores/auth'
 import ProfileService from '../services/ProfileService'
@@ -25,6 +26,7 @@ const authStore = useAuthStore()
 const loading = ref(true)
 const saving = ref(false)
 const showPasswordDialog = ref(false)
+const isDirty = ref(false)
 
 // Datos del perfil
 const profile = ref({
@@ -49,6 +51,38 @@ const passwordForm = ref({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
+})
+
+// Dirty detection para email
+watch(() => form.value.email, (newVal) => {
+    if (!loading.value && newVal !== profile.value.email) {
+        isDirty.value = true
+    } else {
+        isDirty.value = false
+    }
+})
+
+// Dirty detection para password dialog
+watch(passwordForm, (newVal) => {
+    if (showPasswordDialog.value && (newVal.currentPassword || newVal.newPassword || newVal.confirmPassword)) {
+        // Marcamos como sucio si hay algo escrito en el diálogo
+        // Pero el diálogo tiene su propio 'Cancelar'.
+    }
+}, { deep: true })
+
+// Route guard
+onBeforeRouteLeave(async (to, from) => {
+    const hasPasswordInput = passwordForm.value.currentPassword || passwordForm.value.newPassword || passwordForm.value.confirmPassword
+    
+    if (isDirty.value || (showPasswordDialog.value && hasPasswordInput)) {
+        const result = await confirmWarning({
+            title: 'Cambios no guardados',
+            text: '¿Deseas salir del perfil? Tienes cambios sin guardar.',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'No, quedarme'
+        })
+        if (!result.isConfirmed) return false
+    }
 })
 
 // Computed
@@ -116,6 +150,7 @@ const saveProfile = async () => {
     try {
         await ProfileService.updateProfile({ email: form.value.email })
         profile.value.email = form.value.email
+        isDirty.value = false
         toastSuccess('Perfil actualizado correctamente')
     } catch (error) {
         console.error('Error guardando perfil:', error)

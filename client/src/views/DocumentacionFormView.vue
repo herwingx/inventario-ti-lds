@@ -3,8 +3,8 @@
  * @fileoverview Formulario de Documentación (Subir/Editar).
  * Facilita la carga de archivos o enlaces de documentación y su clasificación.
  */
-import { ref, onMounted, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import DocumentacionService from '../services/DocumentacionService'
 import CatalogosService from '../services/CatalogosService'
@@ -18,20 +18,14 @@ import Fluid from 'primevue/fluid'
 
 const router = useRouter()
 const route = useRoute()
-const { confirmWarning, success: toastSuccess, error: toastError, warning: toastWarning } = useSwal()
+const { confirmWarning, success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useSwal()
 
 const isEditing = computed(() => !!route.params.id)
 const formTitle = computed(() => isEditing.value ? `Editar Documento #${route.params.id}` : 'Registrar Nuevo Documento')
 const loading = ref(false)
 const saving = ref(false)
-
-const form = ref({
-    titulo: '',
-    descripcion: '',
-    tipo_documento: null,
-    url_archivo: '',
-    id_status: null
-})
+const isDirty = ref(false)
+const isSaved = ref(false)
 
 const tipos = ref([
     { label: 'Manual de Usuario', value: 'Manual' },
@@ -42,6 +36,35 @@ const tipos = ref([
 ])
 
 const statuses = ref([])
+
+const form = ref({
+    titulo: '',
+    descripcion: '',
+    tipo_documento: null,
+    url_archivo: '',
+    id_status: null
+})
+
+// Dirty detection
+watch(form, () => {
+    if (!loading.value && !saving.value && !isSaved.value) {
+        isDirty.value = true
+    }
+}, { deep: true })
+
+// Route guard
+onBeforeRouteLeave(async (to, from) => {
+    if (isDirty.value && !isSaved.value) {
+        const result = await confirmWarning({
+            title: 'Cambios no guardados',
+            text: '¿Deseas salir? Perderás los cambios realizados en el documento.',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'No, quedarme'
+        })
+        if (!result.isConfirmed) return false
+        toastInfo('Operación cancelada')
+    }
+})
 
 onMounted(async () => {
     loading.value = true
@@ -86,7 +109,8 @@ const save = async () => {
             toastSuccess('Documento registrado')
         }
         
-        setTimeout(() => router.push({ name: 'documentacion' }), 1000)
+        isSaved.value = true
+        setTimeout(() => router.replace({ name: 'documentacion' }), 1000)
     } catch (error) {
         toastError('Error al guardar')
     } finally {
@@ -101,12 +125,14 @@ const showWarn = (msg) => {
 const goBack = async () => {
     const result = await confirmWarning({
         title: 'Confirmar Salida',
-        text: '¿Salir sin guardar?',
-        confirmButtonText: 'Salir',
-        cancelButtonText: 'Continuar'
+        text: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
+        confirmButtonText: 'Salir sin Guardar',
+        cancelButtonText: 'Continuar Editando'
     })
     
     if (result.isConfirmed) {
+        isDirty.value = false
+        toastInfo('Operación cancelada')
         router.push({ name: 'documentacion' })
     }
 }

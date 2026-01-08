@@ -14,7 +14,7 @@ import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 
 const router = useRouter()
-const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 // Data
 const notas = ref([])
@@ -86,6 +86,8 @@ const deleteNota = async (nota) => {
     } catch (error) {
       toastError('No se pudo eliminar la nota')
     }
+  } else {
+    toastInfo('Operación cancelada')
   }
 }
 

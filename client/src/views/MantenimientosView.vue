@@ -16,7 +16,7 @@ import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
 const router = useRouter()
-const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 // Data
 const mantenimientos = ref([])
@@ -109,6 +109,8 @@ const deleteMantenimiento = async (mantenimiento) => {
     } catch (error) {
       toastError('No se pudo eliminar el registro')
     }
+  } else {
+    toastInfo('Operación cancelada')
   }
 }
 

@@ -15,7 +15,7 @@ import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
-const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 const router = useRouter()
 
 // Data
@@ -103,6 +103,8 @@ const confirmDeleteCorreo = async (data) => {
       console.error('Error al eliminar:', error)
       toastError('No se pudo eliminar la cuenta')
     }
+  } else {
+    toastInfo('Operación cancelada')
   }
 }
 

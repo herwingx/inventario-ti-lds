@@ -3,8 +3,8 @@
  * @fileoverview Formulario de Empresa (Crear/Editar).
  * Permite la gestión de entidades corporativas del grupo.
  */
-import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import EmpresasService from '../services/EmpresasService'
 import CatalogosService from '../services/CatalogosService'
@@ -16,16 +16,39 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const { success: toastSuccess, error: toastError } = useSwal()
+const { confirmWarning, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 const loading = ref(false)
 const submitting = ref(false)
 const isEditing = computed(() => !!route.params.id)
 const statuses = ref([])
+const isDirty = ref(false)
+const isSaved = ref(false)
 
 const form = ref({
     nombre: '',
     id_status: null
+})
+
+// Dirty detection
+watch(form, () => {
+    if (!loading.value && !submitting.value && !isSaved.value) {
+        isDirty.value = true
+    }
+}, { deep: true })
+
+// Route guard
+onBeforeRouteLeave(async (to, from) => {
+    if (isDirty.value && !isSaved.value) {
+        const result = await confirmWarning({
+            title: 'Cambios no guardados',
+            text: '¿Deseas salir? Tienes cambios pendientes en la empresa.',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'No, quedarme'
+        })
+        if (!result.isConfirmed) return false
+        toastInfo('Operación cancelada')
+    }
 })
 
 const errors = ref({})
@@ -65,11 +88,27 @@ const handleSubmit = async () => {
             await EmpresasService.create(form.value)
             toastSuccess('Empresa creada')
         }
-        router.push({ name: 'empresas' })
+        isSaved.value = true
+        router.replace({ name: 'empresas' })
     } catch (error) {
         toastError('Error al conectar o nombre duplicado')
     } finally {
         submitting.value = false
+    }
+}
+
+const goBack = async () => {
+    const result = await confirmWarning({
+        title: 'Confirmar Salida',
+        text: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
+        confirmButtonText: 'Salir sin Guardar',
+        cancelButtonText: 'Continuar Editando'
+    })
+    
+    if (result.isConfirmed) {
+        isDirty.value = false
+        toastInfo('Operación cancelada')
+        router.push({ name: 'empresas' })
     }
 }
 </script>
@@ -80,7 +119,7 @@ const handleSubmit = async () => {
         
         <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-gray-100 dark:border-dark-border pb-4 gap-4">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ isEditing ? 'Editar Empresa' : 'Nueva Empresa' }}</h2>
-            <button @click="router.back()" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+            <button @click="goBack" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
                 <X :size="20" />
                 <span>Cancelar</span>
             </button>
@@ -105,7 +144,7 @@ const handleSubmit = async () => {
             </div>
 
             <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-dark-border">
-                <button type="button" @click="router.back()" class="btn-secondary">
+                <button type="button" @click="goBack" class="btn-secondary">
                     <X :size="18" />
                     Cancelar
                 </button>

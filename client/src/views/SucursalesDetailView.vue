@@ -14,7 +14,7 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 const sucursal = ref(null)
 const loading = ref(true)
@@ -54,6 +54,8 @@ const remove = async () => {
         } catch (error) {
             toastError('No se pudo eliminar (probablemente tenga dependencias)')
         }
+    } else {
+        toastInfo('Operación cancelada')
     }
 }
 

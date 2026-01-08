@@ -30,7 +30,7 @@ import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
 const router = useRouter()
-const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 // Data
 const equipos = ref([])
@@ -168,6 +168,8 @@ const confirmDeleteEquipo = async (equipo) => {
       console.error('Error al eliminar equipo:', error)
       toastError('No se pudo eliminar el equipo')
     }
+  } else {
+    toastInfo('Operación cancelada')
   }
 }
 

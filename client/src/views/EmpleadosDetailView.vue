@@ -16,7 +16,7 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 const empleado = ref(null)
 const loading = ref(true)
@@ -71,6 +71,8 @@ const confirmDeleteEmpleado = async () => {
       console.error('Error al eliminar empleado:', error)
       toastError('No se pudo eliminar el empleado')
     }
+  } else {
+    toastInfo('Operación cancelada')
   }
 }
 

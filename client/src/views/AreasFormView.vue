@@ -3,8 +3,8 @@
  * @fileoverview Formulario de Área (Crear/Editar).
  * Permite registrar una nueva área o modificar una existente, validando campos obbligatorios.
  */
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import AreasService from '../services/AreasService'
 import CatalogosService from '../services/CatalogosService'
@@ -22,6 +22,8 @@ const { confirmWarning, success: toastSuccess, error: toastError, info: toastInf
 // Estados de Carga
 const loading = ref(false)
 const submitting = ref(false)
+const isDirty = ref(false)
+const isSaved = ref(false)
 
 // Datos de Catálogos
 const empresas = ref([])
@@ -36,6 +38,26 @@ const form = ref({
     id_status: null
 })
 
+// Dirty detection
+watch(form, () => {
+    if (!loading.value && !submitting.value && !isSaved.value) {
+        isDirty.value = true
+    }
+}, { deep: true })
+
+// Route guard
+onBeforeRouteLeave(async (to, from) => {
+    if (isDirty.value && !isSaved.value) {
+        const result = await confirmWarning({
+            title: 'Cambios no guardados',
+            text: '¿Estás seguro de que deseas salir? Se perderán las modificaciones del área.',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'No, quedarme'
+        })
+        if (!result.isConfirmed) return false
+        toastInfo('Operación cancelada')
+    }
+})
 const isEditing = computed(() => !!route.params.id)
 const formTitle = computed(() => isEditing.value ? `Editar Área #${route.params.id}` : 'Registrar Nueva Área')
 
@@ -138,9 +160,10 @@ const handleSubmit = async () => {
             toastSuccess('Área registrada correctamente')
         }
 
+        isSaved.value = true
         // Navegar de vuelta tras un breve delay
         setTimeout(() => {
-            router.push({ name: 'areas' })
+            router.replace({ name: 'areas' })
         }, 1000)
 
     } catch (error) {
@@ -163,6 +186,7 @@ const goBack = async () => {
     })
     
     if (result.isConfirmed) {
+        isDirty.value = false
         toastInfo('Operación cancelada')
         router.push({ name: 'areas' })
     }

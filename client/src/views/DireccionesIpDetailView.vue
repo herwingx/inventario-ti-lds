@@ -15,7 +15,7 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 const direccionIp = ref(null)
 const loading = ref(true)
@@ -61,6 +61,8 @@ const confirmDeleteDireccionIp = async () => {
       console.error('Error al eliminar IP:', error)
       toastError('No se pudo eliminar la dirección IP')
     }
+  } else {
+    toastInfo('Operación cancelada')
   }
 }
 

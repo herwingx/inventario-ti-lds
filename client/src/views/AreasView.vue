@@ -17,7 +17,7 @@ import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
 const router = useRouter()
-const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 // Data
 const areas = ref([])
@@ -113,6 +113,8 @@ const confirmDeleteArea = async (area) => {
       console.error('Error al eliminar área:', error)
       toastError('No se pudo eliminar el área')
     }
+  } else {
+    toastInfo('Operación cancelada')
   }
 }
 

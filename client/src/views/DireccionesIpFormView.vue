@@ -3,8 +3,8 @@
  * @fileoverview Formulario de Dirección IP (Crear/Editar).
  * Permite registrar o modificar una IP en el inventario, validando duplicidad y formato.
  */
-import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import DireccionesIpService from '../services/DireccionesIpService'
 import CatalogosService from '../services/CatalogosService'
@@ -22,6 +22,8 @@ const { confirmWarning, success: toastSuccess, error: toastError, info: toastInf
 
 const loading = ref(false)
 const submitting = ref(false)
+const isDirty = ref(false)
+const isSaved = ref(false)
 
 const sucursales = ref([])
 const statuses = ref([])
@@ -31,6 +33,27 @@ const form = ref({
     id_sucursal: null,
     comentario: '',
     id_status: null
+})
+
+// Dirty detection
+watch(form, () => {
+    if (!loading.value && !submitting.value && !isSaved.value) {
+        isDirty.value = true
+    }
+}, { deep: true })
+
+// Route guard
+onBeforeRouteLeave(async (to, from) => {
+    if (isDirty.value && !isSaved.value) {
+        const result = await confirmWarning({
+            title: 'Cambios no guardados',
+            text: 'Tienes cambios pendientes en la IP. ¿Estás seguro de que deseas salir?',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'No, quedarme'
+        })
+        if (!result.isConfirmed) return false
+        toastInfo('Operación cancelada')
+    }
 })
 
 const isEditing = computed(() => !!route.params.id)
@@ -102,7 +125,8 @@ const handleSubmit = async () => {
             toastSuccess('Dirección IP registrada correctamente')
         }
 
-        setTimeout(() => router.push({ name: 'direcciones-ip' }), 1000)
+        isSaved.value = true
+        setTimeout(() => router.replace({ name: 'direcciones-ip' }), 1000)
     } catch (error) {
         console.error('Error submit:', error)
         const msg = error.response?.data?.message || 'Error al guardar la dirección IP'
@@ -123,6 +147,7 @@ const goBack = async () => {
     })
     
     if (result.isConfirmed) {
+        isDirty.value = false
         toastInfo('Operación cancelada')
         router.push({ name: 'direcciones-ip' })
     }
