@@ -6,7 +6,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import AreasService from '../services/AreasService'
 import DataTable from '../components/ui/DataTable.vue'
 import { getStatusSeverity } from '../utils/status'
@@ -19,7 +19,7 @@ import Select from 'primevue/select'
 
 const toast = useToast()
 const router = useRouter()
-const confirm = useConfirm()
+const { confirmDelete } = useSwal()
 
 // Data
 const areas = ref([])
@@ -98,25 +98,24 @@ const editArea = (area) => {
   router.push({ name: 'areas-editar', params: { id: area.id } })
 }
 
-const confirmDeleteArea = (area) => {
-  confirm.require({
-    message: `¿Estás seguro de que deseas eliminar permanentemente el área "${area.nombre}"? Esta acción no se puede deshacer.`,
-    header: 'Confirmar Eliminación',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Eliminar Área',
-    rejectClass: 'btn-secondary',
-    acceptClass: 'btn-danger ml-2',
-    accept: async () => {
-      try {
-        await AreasService.delete(area.id)
-        toast.add({ severity: 'success', summary: 'Eliminado', detail: `Área ${area.nombre} eliminada correctamente`, life: 3000 })
-        loadAreas()
-      } catch (error) {
-        console.error('Error al eliminar área:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el área', life: 3000 })
-      }
-    }
+const confirmDeleteArea = async (area) => {
+  const result = await confirmDelete({
+    title: 'Confirmar Eliminación',
+    text: `¿Estás seguro de que deseas eliminar permanentemente el área "${area.nombre}"? Esta acción no se puede deshacer.`,
+    confirmButtonText: 'Eliminar Área',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await AreasService.delete(area.id)
+      toast.add({ severity: 'success', summary: 'Eliminado', detail: `Área ${area.nombre} eliminada correctamente`, life: 3000 })
+      loadAreas()
+    } catch (error) {
+      console.error('Error al eliminar área:', error)
+      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el área', life: 3000 })
+    }
+  }
 }
 
 const clearFilters = () => {

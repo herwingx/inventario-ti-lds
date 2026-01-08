@@ -6,7 +6,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import CorreosService from '../services/CorreosService'
 import DataTable from '../components/ui/DataTable.vue'
 import { getStatusSeverity } from '../utils/status'
@@ -17,7 +17,7 @@ import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmDelete } = useSwal()
 const router = useRouter()
 
 // Data
@@ -88,25 +88,24 @@ const editCorreo = (data) => {
   router.push({ name: 'correos-editar', params: { id: data.id } })
 }
 
-const confirmDeleteCorreo = (data) => {
-  confirm.require({
-    message: `¿Estás seguro de que deseas eliminar la cuenta "${data.email}"? Esta acción no se puede deshacer.`,
-    header: 'Confirmar Eliminación',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Eliminar Cuenta',
-    rejectClass: 'btn-secondary',
-    acceptClass: 'btn-danger ml-2',
-    accept: async () => {
-      try {
-        await CorreosService.delete(data.id)
-        toast.add({ severity: 'success', summary: 'Eliminado', detail: `Cuenta ${data.email} eliminada correctamente`, life: 3000 })
-        loadCorreos()
-      } catch (error) {
-        console.error('Error al eliminar:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la cuenta', life: 3000 })
-      }
-    }
+const confirmDeleteCorreo = async (data) => {
+  const result = await confirmDelete({
+    title: 'Confirmar Eliminación',
+    text: `¿Estás seguro de que deseas eliminar la cuenta "${data.email}"? Esta acción no se puede deshacer.`,
+    confirmButtonText: 'Eliminar Cuenta',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await CorreosService.delete(data.id)
+      toast.add({ severity: 'success', summary: 'Eliminado', detail: `Cuenta ${data.email} eliminada correctamente`, life: 3000 })
+      loadCorreos()
+    } catch (error) {
+      console.error('Error al eliminar:', error)
+      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la cuenta', life: 3000 })
+    }
+  }
 }
 
 // Usando función centralizada getStatusSeverity desde utils/status.js
