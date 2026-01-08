@@ -6,7 +6,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import DireccionesIpService from '../services/DireccionesIpService'
 import { getStatusSeverity } from '../utils/status'
 
@@ -17,7 +17,7 @@ import Skeleton from 'primevue/skeleton'
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmDelete } = useSwal()
 
 const direccionIp = ref(null)
 const loading = ref(true)
@@ -46,26 +46,24 @@ const getSeverity = getStatusSeverity
 const goBack = () => router.push({ name: 'direcciones-ip' })
 const editDireccionIp = () => router.push({ name: 'direcciones-ip-editar', params: { id: direccionIp.value.id } })
 
-const confirmDeleteDireccionIp = () => {
-  confirm.require({
-    message: `¿Estás seguro de que deseas eliminar permanentemente la IP "${direccionIp.value.direccion_ip}"?`,
-    header: 'Confirmar Eliminación',
-    icon: 'pi pi-exclamation-triangle',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Eliminar IP',
-    rejectClass: 'p-button-secondary p-button-text',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
-      try {
-        await DireccionesIpService.delete(direccionIp.value.id)
-        toast.add({ severity: 'success', summary: 'Eliminado', detail: `IP ${direccionIp.value.direccion_ip} eliminada correctamente`, life: 3000 })
-        router.push({ name: 'direcciones-ip' })
-      } catch (error) {
-        console.error('Error al eliminar IP:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la dirección IP', life: 3000 })
-      }
-    }
+const confirmDeleteDireccionIp = async () => {
+  const result = await confirmDelete({
+    title: 'Confirmar Eliminación',
+    text: `¿Estás seguro de que deseas eliminar permanentemente la IP "${direccionIp.value.direccion_ip}"?`,
+    confirmButtonText: 'Eliminar IP',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await DireccionesIpService.delete(direccionIp.value.id)
+      toast.add({ severity: 'success', summary: 'Eliminado', detail: `IP ${direccionIp.value.direccion_ip} eliminada correctamente`, life: 3000 })
+      router.push({ name: 'direcciones-ip' })
+    } catch (error) {
+      console.error('Error al eliminar IP:', error)
+      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la dirección IP', life: 3000 })
+    }
+  }
 }
 
 const formatDate = (date) => {

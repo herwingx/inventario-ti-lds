@@ -6,7 +6,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import DocumentacionService from '../services/DocumentacionService'
 import CatalogosService from '../services/CatalogosService'
 
@@ -20,7 +20,7 @@ import Fluid from 'primevue/fluid'
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmWarning } = useSwal()
 
 const isEditing = computed(() => !!route.params.id)
 const formTitle = computed(() => isEditing.value ? `Editar Documento #${route.params.id}` : 'Registrar Nuevo Documento')
@@ -100,16 +100,17 @@ const showWarn = (msg) => {
     toast.add({ severity: 'warn', summary: 'Atención', detail: msg, life: 3000 })
 }
 
-const goBack = () => {
-    confirm.require({
-        message: '¿Salir sin guardar?',
-        header: 'Confirmar Salida',
-        icon: 'pi pi-info-circle',
-        rejectLabel: 'Continuar',
-        acceptLabel: 'Salir',
-        acceptClass: 'p-button-warning !bg-orange-500 !border-none',
-        accept: () => router.push({ name: 'documentacion' })
+const goBack = async () => {
+    const result = await confirmWarning({
+        title: 'Confirmar Salida',
+        text: '¿Salir sin guardar?',
+        confirmButtonText: 'Salir',
+        cancelButtonText: 'Continuar'
     })
+    
+    if (result.isConfirmed) {
+        router.push({ name: 'documentacion' })
+    }
 }
 </script>
 

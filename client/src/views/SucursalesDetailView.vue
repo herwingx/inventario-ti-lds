@@ -6,7 +6,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import SucursalesService from '../services/SucursalesService'
 
 import Button from 'primevue/button'
@@ -16,7 +16,7 @@ import Skeleton from 'primevue/skeleton'
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmDelete } = useSwal()
 
 const sucursal = ref(null)
 const loading = ref(true)
@@ -40,22 +40,23 @@ onMounted(() => {
 const goBack = () => router.push({ name: 'sucursales' })
 const edit = () => router.push({ name: 'sucursales-editar', params: { id: sucursal.value.id } })
 
-const remove = () => {
-    confirm.require({
-        message: `¿Eliminar sucursal ${sucursal.value.nombre}?`,
-        header: 'Confirmar Eliminación',
-        icon: 'pi pi-exclamation-triangle',
-        acceptClass: 'p-button-danger',
-        accept: async () => {
-             try {
-                await SucursalesService.delete(sucursal.value.id)
-                toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Sucursal eliminada', life: 3000 })
-                router.push({ name: 'sucursales' })
-            } catch (error) {
-                toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar (probablemente tenga dependencias)', life: 3000 })
-            }
-        }
+const remove = async () => {
+    const result = await confirmDelete({
+        title: 'Confirmar Eliminación',
+        text: `¿Eliminar sucursal ${sucursal.value.nombre}?`,
+        confirmButtonText: 'Eliminar Sucursal',
+        cancelButtonText: 'Cancelar'
     })
+    
+    if (result.isConfirmed) {
+        try {
+            await SucursalesService.delete(sucursal.value.id)
+            toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Sucursal eliminada', life: 3000 })
+            router.push({ name: 'sucursales' })
+        } catch (error) {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar (probablemente tenga dependencias)', life: 3000 })
+        }
+    }
 }
 
 const formatDate = (d) => {

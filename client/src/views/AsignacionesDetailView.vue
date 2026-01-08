@@ -6,7 +6,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import AsignacionesService from '../services/AsignacionesService'
 import EquiposService from '../services/EquiposService'
 
@@ -19,7 +19,7 @@ import { ArrowLeft, CheckSquare } from 'lucide-vue-next'
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmWarning } = useSwal()
 
 const asignacion = ref(null)
 const componentes = ref([])
@@ -64,22 +64,23 @@ onMounted(() => {
 
 const goBack = () => router.push({ name: 'asignaciones' })
 
-const finalizarAsignacion = () => {
-    confirm.require({
-        message: '¿Está seguro de finalizar esta asignación? El equipo principal, la IP y todos los componentes asignados quedarán disponibles.',
-        header: 'Confirmar Finalización',
-        icon: 'pi pi-exclamation-triangle',
-        acceptClass: 'p-button-warning',
-        accept: async () => {
-            try {
-                await AsignacionesService.finalizar(asignacion.value.id)
-                toast.add({ severity: 'success', summary: 'Éxito', detail: 'Asignación finalizada', life: 3000 })
-                loadAsignacion() 
-            } catch (error) {
-                toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo finalizar', life: 3000 })
-            }
-        }
+const finalizarAsignacion = async () => {
+    const result = await confirmWarning({
+        title: 'Confirmar Finalización',
+        text: '¿Está seguro de finalizar esta asignación? El equipo principal, la IP y todos los componentes asignados quedarán disponibles.',
+        confirmButtonText: 'Finalizar',
+        cancelButtonText: 'Cancelar'
     })
+    
+    if (result.isConfirmed) {
+        try {
+            await AsignacionesService.finalizar(asignacion.value.id)
+            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Asignación finalizada', life: 3000 })
+            loadAsignacion() 
+        } catch (error) {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo finalizar', life: 3000 })
+        }
+    }
 }
 
 // Lógica para editar componentes

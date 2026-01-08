@@ -6,7 +6,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useSwal } from '../composables/useSwal'
 import EquiposService from '../services/EquiposService'
 import { getStatusSeverity } from '../utils/status'
 
@@ -18,7 +18,7 @@ import Skeleton from 'primevue/skeleton'
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmDelete } = useSwal()
 
 const equipo = ref(null)
 const loading = ref(true)
@@ -60,36 +60,34 @@ const editEquipo = () => {
   router.push({ name: 'equipos-editar', params: { id: equipo.value.id } })
 }
 
-const confirmDeleteEquipo = () => {
-  confirm.require({
-    message: `¿Estás seguro de que deseas eliminar permanentemente ${equipo.value.nombre_equipo}? Esta acción no se puede deshacer.`,
-    header: 'Confirmar Eliminación',
-    icon: 'pi pi-exclamation-triangle',
-    rejectLabel: 'Cancelar',
-    acceptLabel: 'Eliminar Equipo',
-    rejectClass: 'p-button-secondary p-button-text',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
-      try {
-        await EquiposService.delete(equipo.value.id)
-        toast.add({ 
-          severity: 'success', 
-          summary: 'Eliminado', 
-          detail: `Equipo ${equipo.value.nombre_equipo} eliminado correctamente`, 
-          life: 3000 
-        })
-        router.push({ name: 'equipos' })
-      } catch (error) {
-        console.error('Error al eliminar equipo:', error)
-        toast.add({ 
-          severity: 'error', 
-          summary: 'Error', 
-          detail: 'No se pudo eliminar el equipo', 
-          life: 3000 
-        })
-      }
-    }
+const confirmDeleteEquipo = async () => {
+  const result = await confirmDelete({
+    title: 'Confirmar Eliminación',
+    text: `¿Estás seguro de que deseas eliminar permanentemente ${equipo.value.nombre_equipo}? Esta acción no se puede deshacer.`,
+    confirmButtonText: 'Eliminar Equipo',
+    cancelButtonText: 'Cancelar'
   })
+  
+  if (result.isConfirmed) {
+    try {
+      await EquiposService.delete(equipo.value.id)
+      toast.add({ 
+        severity: 'success', 
+        summary: 'Eliminado', 
+        detail: `Equipo ${equipo.value.nombre_equipo} eliminado correctamente`, 
+        life: 3000 
+      })
+      router.push({ name: 'equipos' })
+    } catch (error) {
+      console.error('Error al eliminar equipo:', error)
+      toast.add({ 
+        severity: 'error', 
+        summary: 'Error', 
+        detail: 'No se pudo eliminar el equipo', 
+        life: 3000 
+      })
+    }
+  }
 }
 
 // Secciones de información
