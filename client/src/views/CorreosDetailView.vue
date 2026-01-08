@@ -8,6 +8,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import CorreosService from '../services/CorreosService'
+import { getStatusSeverity } from '../utils/status'
 
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
@@ -62,13 +63,8 @@ const confirmDelete = () => {
 }
 
 // UI Helpers
-const getSeverity = (status) => {
-    if (!status) return 'secondary'
-    const s = status.toUpperCase()
-    if (s.includes('ACTIVO')) return 'success'
-    if (s.includes('INACTIVO')) return 'warn'
-    return 'secondary'
-}
+// Usando función centralizada getStatusSeverity desde utils/status.js
+const getSeverity = getStatusSeverity
 
 const formatDate = (date) => {
     if (!date) return 'N/A'

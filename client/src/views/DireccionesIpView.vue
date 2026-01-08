@@ -9,6 +9,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import DireccionesIpService from '../services/DireccionesIpService'
 import DataTable from '../components/ui/DataTable.vue'
+import { getStatusSeverity } from '../utils/status'
 import { Search, Plus, Eye, Pencil, Trash2 } from 'lucide-vue-next'
 
 import InputText from 'primevue/inputtext'
@@ -109,14 +110,8 @@ watch(selectedSegmento, () => {
   loadDireccionesIp()
 })
 
-const getSeverity = (status) => {
-  if (!status) return 'secondary'
-  const s = status.toUpperCase()
-  if (s.includes('DISPONIBLE')) return 'success'
-  if (s.includes('ASIGNADO')) return 'warn'
-  if (s.includes('RESERVADO')) return 'contrast'
-  return 'secondary'
-}
+// Usando función centralizada getStatusSeverity desde utils/status.js
+const getSeverity = getStatusSeverity
 
 const openNew = () => {
   router.push({ name: 'direcciones-ip-nuevo' })

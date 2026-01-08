@@ -10,9 +10,9 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') }); // Necesito
 
 // * Defino los datos del usuario administrador que quiero crear.
 const adminUser = {
-    username: 'herwingx', // Usuario según README
-    password: 'herwingx-dev', // Contraseña según README
-    email: 'eduardo_macias@linea-digital.com',
+    username: 'linea', // Usuario según README
+    password: 'digital', // Contraseña según README
+    email: '',
     id_rol: 1, // Asumo que el ID 1 corresponde al rol 'Admin'
     id_status: 1 // Asumo que el ID 1 corresponde al status 'Activo'
 };

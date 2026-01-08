@@ -9,6 +9,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import MantenimientosService from '../services/MantenimientosService'
 import DataTable from '../components/ui/DataTable.vue'
+import { getStatusSeverity } from '../utils/status'
 import { Search, Plus, Pencil, Trash2, Wrench } from 'lucide-vue-next'
 
 import InputText from 'primevue/inputtext'
@@ -84,14 +85,7 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-const getStatusSeverity = (status) => {
-  if (!status) return 'secondary'
-  const s = status.toUpperCase()
-  if (s.includes('FINALIZADO') || s.includes('COMPLETADO')) return 'success'
-  if (s.includes('PROCESO') || s.includes('REPARACIÓN')) return 'warn'
-  if (s.includes('CANCELADO')) return 'danger'
-  return 'secondary'
-}
+// Usando función centralizada getStatusSeverity desde utils/status.js
 
 const openNew = () => {
   router.push({ name: 'mantenimientos-nuevo' })

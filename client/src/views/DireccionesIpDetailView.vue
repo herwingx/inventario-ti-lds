@@ -8,6 +8,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import DireccionesIpService from '../services/DireccionesIpService'
+import { getStatusSeverity } from '../utils/status'
 
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
@@ -39,14 +40,8 @@ onMounted(() => {
   loadDireccionIp()
 })
 
-const getSeverity = (status) => {
-  if (!status) return 'secondary'
-  const s = status.toUpperCase()
-  if (s.includes('DISPONIBLE')) return 'success'
-  if (s.includes('ASIGNADO')) return 'warn'
-  if (s.includes('RESERVADO')) return 'contrast'
-  return 'secondary'
-}
+// Usando función centralizada getStatusSeverity desde utils/status.js
+const getSeverity = getStatusSeverity
 
 const goBack = () => router.push({ name: 'direcciones-ip' })
 const editDireccionIp = () => router.push({ name: 'direcciones-ip-editar', params: { id: direccionIp.value.id } })

@@ -88,7 +88,30 @@ const handleLogin = async () => {
 </template>
 
 <style scoped>
+/* Ajustes para Password component */
+:deep(.p-password) {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+}
+
 :deep(.p-password-input) {
   width: 100%;
+  padding-right: 2.75rem !important;
+}
+
+:deep(.p-password-toggle-mask-icon) {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  z-index: 10;
+  color: #9ca3af;
+  transition: color 0.2s ease;
+}
+
+:deep(.p-password-toggle-mask-icon:hover) {
+  color: #13B497;
 }
 </style>

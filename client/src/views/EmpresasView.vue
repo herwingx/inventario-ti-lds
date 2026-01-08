@@ -9,6 +9,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import EmpresasService from '../services/EmpresasService'
 import DataTable from '../components/ui/DataTable.vue'
+import { getStatusSeverity } from '../utils/status'
 import { Search, Plus, Pencil, Trash2, Building } from 'lucide-vue-next'
 
 import InputText from 'primevue/inputtext'
@@ -127,7 +128,7 @@ const clearFilters = () => {
         </template>
 
         <template #status_nombre="{ data }">
-          <Tag :value="data.status_nombre" :severity="data.status_nombre === 'ACTIVO' ? 'success' : 'warn'" class="!text-xs !font-bold px-3 py-1.5" />
+          <Tag :value="data.status_nombre" :severity="getStatusSeverity(data.status_nombre)" class="!text-xs !font-bold px-3 py-1.5" />
         </template>
 
         <template #skeleton-status_nombre>

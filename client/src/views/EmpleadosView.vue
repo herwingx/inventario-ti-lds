@@ -9,6 +9,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import EmpleadosService from '../services/EmpleadosService'
 import DataTable from '../components/ui/DataTable.vue'
+import { getStatusSeverity } from '../utils/status'
 import { Search, Plus, Eye, Pencil, Trash2 } from 'lucide-vue-next'
 
 import InputText from 'primevue/inputtext'
@@ -85,15 +86,8 @@ onMounted(() => {
   loadEmpleados()
 })
 
-const getSeverity = (status) => {
-  if (!status) return 'secondary'
-  const s = status.toUpperCase()
-  if (s.includes('ACTIVO')) return 'success'
-  if (s.includes('INACTIVO')) return 'warn'
-  if (s.includes('SUSPENDIDO')) return 'contrast'
-  if (s.includes('BAJA')) return 'danger'
-  return 'secondary'
-}
+// Usando función centralizada getStatusSeverity desde utils/status.js
+const getSeverity = getStatusSeverity
 
 const openNew = () => {
   router.push({ name: 'empleados-nuevo' })
