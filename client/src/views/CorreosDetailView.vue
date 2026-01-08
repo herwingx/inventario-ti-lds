@@ -5,7 +5,6 @@
  */
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import CorreosService from '../services/CorreosService'
 import { getStatusSeverity } from '../utils/status'
@@ -16,8 +15,7 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
-const { confirmDelete: swalConfirmDelete } = useSwal()
+const { confirmDelete: swalConfirmDelete, success: toastSuccess, error: toastError } = useSwal()
 
 const correo = ref(null)
 const loading = ref(true)
@@ -29,7 +27,7 @@ const loadCorreo = async () => {
         correo.value = await CorreosService.getById(id)
     } catch (error) {
         console.error('Error al cargar correo:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la cuenta de correo', life: 3000 })
+        toastError('No se pudo cargar la cuenta de correo')
         router.push({ name: 'correos' })
     } finally {
         loading.value = false
@@ -55,10 +53,10 @@ const confirmDelete = async () => {
     if (result.isConfirmed) {
         try {
             await CorreosService.delete(correo.value.id)
-            toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Cuenta eliminada correctamente', life: 3000 })
+            toastSuccess('Cuenta eliminada correctamente')
             router.push({ name: 'correos' })
         } catch (error) {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar', life: 3000 })
+            toastError('No se pudo eliminar')
         }
     }
 }

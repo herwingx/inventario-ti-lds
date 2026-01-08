@@ -6,16 +6,15 @@
  */
 import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
-import { useToast } from 'primevue/usetoast'
+import { useSwal } from '../composables/useSwal'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
-import Toast from 'primevue/toast'
 import { Layers } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
-const toast = useToast()
+const { error: toastError, warning: toastWarning } = useSwal()
 
 const username = ref('')
 const password = ref('')
@@ -31,7 +30,7 @@ const loading = ref(false)
  */
 const handleLogin = async () => {
   if (!username.value || !password.value) {
-    toast.add({ severity: 'warn', summary: 'Atención', detail: 'Por favor ingrese usuario y contraseña', life: 3000 })
+    toastWarning('Por favor ingrese usuario y contraseña')
     return
   }
 
@@ -42,14 +41,13 @@ const handleLogin = async () => {
   loading.value = false
   
   if (!result.success) {
-    toast.add({ severity: 'error', summary: 'Error', detail: result.message, life: 3000 })
+    toastError(result.message)
   }
 }
 </script>
 
 <template>
   <div class="dark min-h-screen bg-[#24292d] flex items-center justify-center p-4">
-    <Toast />
     
     <!-- Login Card -->
     <div class="relative w-full max-w-[400px] bg-[#2f363e] rounded-lg shadow-2xl overflow-hidden p-8">

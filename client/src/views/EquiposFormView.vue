@@ -5,7 +5,6 @@
  */
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import EquiposService from '../services/EquiposService'
 import CatalogosService from '../services/CatalogosService'
@@ -24,7 +23,7 @@ import Tag from 'primevue/tag'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const { confirmWarning, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 
 // Estados de Carga
 const loading = ref(false)
@@ -98,7 +97,7 @@ onMounted(async () => {
         }
     } catch (error) {
         console.error('Error cargando datos:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos necesarios.', life: 3000 })
+        toastError('No se pudieron cargar los datos necesarios.')
     } finally {
         loading.value = false
     }
@@ -170,7 +169,7 @@ const handleSubmit = async () => {
     if (!form.value.id_status) errors.value.id_status = 'El estado es obligatorio'
 
     if (Object.keys(errors.value).length > 0) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Por favor complete los campos obligatorios.', life: 3000 })
+        toastError('Por favor complete los campos obligatorios.')
         return
     }
 
@@ -198,10 +197,10 @@ const handleSubmit = async () => {
 
         if (isEditing.value) {
             await EquiposService.update(route.params.id, payload)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Equipo actualizado correctamente', life: 3000 })
+            toastSuccess('Equipo actualizado correctamente')
         } else {
             await EquiposService.create(payload)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Equipo registrado correctamente', life: 3000 })
+            toastSuccess('Equipo registrado correctamente')
         }
 
         // Navegar de vuelta tras un breve delay
@@ -212,13 +211,13 @@ const handleSubmit = async () => {
     } catch (error) {
         console.error('Error submit:', error)
         const msg = error.response?.data?.message || 'Error al guardar el equipo'
-        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+        toastError(msg)
     } finally {
         submitting.value = false
     }
 }
 
-const { confirmWarning } = useSwal()
+
 
 const goBack = async () => {
     const result = await confirmWarning({
@@ -229,7 +228,7 @@ const goBack = async () => {
     })
     
     if (result.isConfirmed) {
-        toast.add({ severity: 'info', summary: 'Cancelado', detail: 'Operación cancelada', life: 3000 })
+        toastInfo('Operación cancelada')
         router.push({ name: 'equipos' })
     }
 }

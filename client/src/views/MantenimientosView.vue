@@ -5,7 +5,6 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import MantenimientosService from '../services/MantenimientosService'
 import DataTable from '../components/ui/DataTable.vue'
@@ -17,8 +16,7 @@ import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
 const router = useRouter()
-const toast = useToast()
-const { confirmDelete } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
 
 // Data
 const mantenimientos = ref([])
@@ -74,7 +72,7 @@ const loadMantenimientos = async () => {
   try {
     mantenimientos.value = await MantenimientosService.getAll()
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los mantenimientos', life: 3000 })
+    toastError('No se pudieron cargar los mantenimientos')
   } finally {
     loading.value = false
   }
@@ -106,10 +104,10 @@ const deleteMantenimiento = async (mantenimiento) => {
   if (result.isConfirmed) {
     try {
       await MantenimientosService.delete(mantenimiento.id)
-      toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Registro eliminado', life: 3000 })
+      toastSuccess('Registro eliminado')
       loadMantenimientos()
     } catch (error) {
-      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el registro', life: 3000 })
+      toastError('No se pudo eliminar el registro')
     }
   }
 }

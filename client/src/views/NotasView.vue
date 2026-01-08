@@ -5,7 +5,6 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import NotasService from '../services/NotasService'
 import DataTable from '../components/ui/DataTable.vue'
@@ -15,8 +14,7 @@ import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 
 const router = useRouter()
-const toast = useToast()
-const { confirmDelete } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
 
 // Data
 const notas = ref([])
@@ -53,7 +51,7 @@ const loadNotas = async () => {
   try {
     notas.value = await NotasService.getAll()
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las notas', life: 3000 })
+    toastError('No se pudieron cargar las notas')
   } finally {
     loading.value = false
   }
@@ -83,10 +81,10 @@ const deleteNota = async (nota) => {
   if (result.isConfirmed) {
     try {
       await NotasService.delete(nota.id)
-      toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Nota eliminada', life: 3000 })
+      toastSuccess('Nota eliminada')
       loadNotas()
     } catch (error) {
-      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la nota', life: 3000 })
+      toastError('No se pudo eliminar la nota')
     }
   }
 }

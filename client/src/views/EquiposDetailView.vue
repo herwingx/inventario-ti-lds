@@ -5,7 +5,6 @@
  */
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import EquiposService from '../services/EquiposService'
 import { getStatusSeverity } from '../utils/status'
@@ -17,8 +16,7 @@ import Skeleton from 'primevue/skeleton'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
-const { confirmDelete } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
 
 const equipo = ref(null)
 const loading = ref(true)
@@ -31,12 +29,7 @@ const loadEquipo = async () => {
     equipo.value = await EquiposService.getById(id)
   } catch (error) {
     console.error('Error al cargar equipo:', error)
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Error', 
-      detail: 'No se pudo cargar el equipo', 
-      life: 3000 
-    })
+    toastError('No se pudo cargar el equipo')
     router.push({ name: 'equipos' })
   } finally {
     loading.value = false
@@ -71,21 +64,11 @@ const confirmDeleteEquipo = async () => {
   if (result.isConfirmed) {
     try {
       await EquiposService.delete(equipo.value.id)
-      toast.add({ 
-        severity: 'success', 
-        summary: 'Eliminado', 
-        detail: `Equipo ${equipo.value.nombre_equipo} eliminado correctamente`, 
-        life: 3000 
-      })
+      toastSuccess(`Equipo ${equipo.value.nombre_equipo} eliminado correctamente`)
       router.push({ name: 'equipos' })
     } catch (error) {
       console.error('Error al eliminar equipo:', error)
-      toast.add({ 
-        severity: 'error', 
-        summary: 'Error', 
-        detail: 'No se pudo eliminar el equipo', 
-        life: 3000 
-      })
+      toastError('No se pudo eliminar el equipo')
     }
   }
 }

@@ -5,7 +5,6 @@
  */
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import DireccionesIpService from '../services/DireccionesIpService'
 import DataTable from '../components/ui/DataTable.vue'
@@ -16,9 +15,8 @@ import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
-const toast = useToast()
 const router = useRouter()
-const { confirmDelete } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
 
 // Data
 const direccionesIp = ref([])
@@ -96,7 +94,7 @@ const loadDireccionesIp = async () => {
     direccionesIp.value = await DireccionesIpService.getAll(params)
   } catch (error) {
     console.error('Error al cargar direcciones IP:', error)
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las direcciones IP', life: 3000 })
+    toastError('No se pudieron cargar las direcciones IP')
   } finally {
     loading.value = false
   }
@@ -136,11 +134,11 @@ const confirmDeleteDireccionIp = async (ip) => {
   if (result.isConfirmed) {
     try {
       await DireccionesIpService.delete(ip.id)
-      toast.add({ severity: 'success', summary: 'Eliminado', detail: `IP ${ip.direccion_ip} eliminada correctamente`, life: 3000 })
+      toastSuccess(`IP ${ip.direccion_ip} eliminada correctamente`)
       loadDireccionesIp()
     } catch (error) {
       console.error('Error al eliminar IP:', error)
-      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la dirección IP', life: 3000 })
+      toastError('No se pudo eliminar la dirección IP')
     }
   }
 }

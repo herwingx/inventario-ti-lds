@@ -5,7 +5,6 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import DocumentacionService from '../services/DocumentacionService'
 import DataTable from '../components/ui/DataTable.vue'
@@ -16,8 +15,7 @@ import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
 const router = useRouter()
-const toast = useToast()
-const { confirmDelete } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
 
 // Data
 const documentos = ref([])
@@ -72,7 +70,7 @@ const loadDocumentos = async () => {
   try {
     documentos.value = await DocumentacionService.getAll()
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los documentos', life: 3000 })
+    toastError('No se pudieron cargar los documentos')
   } finally {
     loading.value = false
   }
@@ -102,10 +100,10 @@ const deleteDocumento = async (doc) => {
   if (result.isConfirmed) {
     try {
       await DocumentacionService.delete(doc.id)
-      toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Documento eliminado', life: 3000 })
+      toastSuccess('Documento eliminado')
       loadDocumentos()
     } catch (error) {
-      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el documento', life: 3000 })
+      toastError('No se pudo eliminar el documento')
     }
   }
 }

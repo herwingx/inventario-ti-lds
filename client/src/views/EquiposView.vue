@@ -13,7 +13,6 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import EquiposService from '../services/EquiposService'
 import DataTable from '../components/ui/DataTable.vue'
@@ -30,9 +29,8 @@ import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
-const toast = useToast()
 const router = useRouter()
-const { confirmDelete } = useSwal()
+const { confirmDelete, success: toastSuccess, error: toastError } = useSwal()
 
 // Data
 const equipos = ref([])
@@ -116,7 +114,7 @@ const loadEquipos = async () => {
     equipos.value = await EquiposService.getAll()
   } catch (error) {
     console.error('Error al cargar equipos:', error)
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los equipos', life: 3000 })
+    toastError('No se pudieron cargar los equipos')
   } finally {
     loading.value = false
   }
@@ -164,11 +162,11 @@ const confirmDeleteEquipo = async (equipo) => {
   if (result.isConfirmed) {
     try {
       await EquiposService.delete(equipo.id)
-      toast.add({ severity: 'success', summary: 'Eliminado', detail: `Equipo ${equipo.nombre_equipo} eliminado correctamente`, life: 3000 })
+      toastSuccess(`Equipo ${equipo.nombre_equipo} eliminado correctamente`)
       loadEquipos()
     } catch (error) {
       console.error('Error al eliminar equipo:', error)
-      toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el equipo', life: 3000 })
+      toastError('No se pudo eliminar el equipo')
     }
   }
 }

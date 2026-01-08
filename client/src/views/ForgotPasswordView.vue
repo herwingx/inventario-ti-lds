@@ -6,13 +6,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthService from '../services/AuthService'
-import { useToast } from 'primevue/usetoast'
+import { useSwal } from '../composables/useSwal'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
-import Toast from 'primevue/toast'
 import { Layers, ArrowLeft } from 'lucide-vue-next'
 
-const toast = useToast()
+const { success: toastSuccess, error: toastError, warning: toastWarning } = useSwal()
 const router = useRouter()
 
 const email = ref('')
@@ -20,14 +19,14 @@ const loading = ref(false)
 
 const handleForgotPassword = async () => {
   if (!email.value) {
-    toast.add({ severity: 'warn', summary: 'Atención', detail: 'Ingresa tu correo electrónico', life: 3000 })
+    toastWarning('Ingresa tu correo electrónico')
     return
   }
 
   loading.value = true
   try {
     const res = await AuthService.forgotPassword(email.value)
-    toast.add({ severity: 'success', summary: 'Solicitud Enviada', detail: res.message, life: 5000 })
+    toastSuccess(res.message)
     
     // Regresar al login después de unos segundos
     setTimeout(() => {
@@ -35,7 +34,7 @@ const handleForgotPassword = async () => {
     }, 4000)
   } catch (error) {
     console.error(error)
-    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo procesar la solicitud.', life: 3000 })
+    toastError('No se pudo procesar la solicitud.')
   } finally {
     loading.value = false
   }
@@ -44,7 +43,6 @@ const handleForgotPassword = async () => {
 
 <template>
   <div class="dark min-h-screen bg-[#24292d] flex items-center justify-center p-4">
-    <Toast />
     
     <div class="relative w-full max-w-[400px] bg-[#2f363e] rounded-lg shadow-2xl overflow-hidden p-8">
       

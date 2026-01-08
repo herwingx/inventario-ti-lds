@@ -5,7 +5,6 @@
  */
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useSwal } from '../composables/useSwal'
 import DocumentacionService from '../services/DocumentacionService'
 import CatalogosService from '../services/CatalogosService'
@@ -19,8 +18,7 @@ import Fluid from 'primevue/fluid'
 
 const router = useRouter()
 const route = useRoute()
-const toast = useToast()
-const { confirmWarning } = useSwal()
+const { confirmWarning, success: toastSuccess, error: toastError, warning: toastWarning } = useSwal()
 
 const isEditing = computed(() => !!route.params.id)
 const formTitle = computed(() => isEditing.value ? `Editar Documento #${route.params.id}` : 'Registrar Nuevo Documento')
@@ -57,7 +55,7 @@ onMounted(async () => {
              if (activo) form.value.id_status = activo.id
         }
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar datos', life: 3000 })
+        toastError('Error al cargar datos')
     } finally {
         loading.value = false
     }
@@ -68,7 +66,7 @@ const loadDocumento = async (id) => {
         const data = await DocumentacionService.getById(id)
         form.value = { ...data }
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Documento no encontrado', life: 3000 })
+        toastError('Documento no encontrado')
         router.push({ name: 'documentacion' })
     }
 }
@@ -82,22 +80,22 @@ const save = async () => {
     try {
         if (isEditing.value) {
             await DocumentacionService.update(route.params.id, form.value)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Documento actualizado', life: 3000 })
+            toastSuccess('Documento actualizado')
         } else {
             await DocumentacionService.create(form.value)
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Documento registrado', life: 3000 })
+            toastSuccess('Documento registrado')
         }
         
         setTimeout(() => router.push({ name: 'documentacion' }), 1000)
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al guardar', life: 3000 })
+        toastError('Error al guardar')
     } finally {
         saving.value = false
     }
 }
 
 const showWarn = (msg) => {
-    toast.add({ severity: 'warn', summary: 'Atención', detail: msg, life: 3000 })
+    toastWarning(msg)
 }
 
 const goBack = async () => {

@@ -5,7 +5,7 @@
  */
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
+import { useSwal } from '../composables/useSwal'
 import AsignacionesService from '../services/AsignacionesService'
 import EquiposService from '../services/EquiposService'
 import DireccionesIpService from '../services/DireccionesIpService'
@@ -21,7 +21,7 @@ import MultiSelect from 'primevue/multiselect'
 import Skeleton from 'primevue/skeleton'
 
 const router = useRouter()
-const toast = useToast()
+const { success: toastSuccess, error: toastError } = useSwal()
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -104,7 +104,7 @@ onMounted(async () => {
 
     } catch (error) {
         console.error('Error cargando datos:', error)
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar recursos disponibles', life: 3000 })
+        toastError('Error al cargar recursos disponibles')
     } finally {
         loading.value = false
     }
@@ -133,7 +133,7 @@ const handleSubmit = async () => {
     if (form.value.tipo_asignacion === 'area' && !form.value.id_area_asignado) errors.value.id_area_asignado = 'Seleccione un área'
 
     if (Object.keys(errors.value).length > 0) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Complete los campos obligatorios', life: 3000 })
+        toastError('Complete los campos obligatorios')
         return
     }
 
@@ -164,13 +164,13 @@ const handleSubmit = async () => {
             await AsignacionesService.create(payload)
         }
         
-        toast.add({ severity: 'success', summary: 'Éxito', detail: 'Asignación registrada correctamente', life: 3000 })
+        toastSuccess('Asignación registrada correctamente')
         router.push({ name: 'asignaciones' })
 
     } catch (error) {
         console.error('Submit error:', error)
         const msg = error.response?.data?.message || 'Error al guardar asignación'
-        toast.add({ severity: 'error', summary: 'Error', detail: msg, life: 5000 })
+        toastError(msg)
     } finally {
         submitting.value = false
     }
