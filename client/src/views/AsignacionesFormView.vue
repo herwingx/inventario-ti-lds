@@ -4,14 +4,15 @@
  * Gestiona la asignación de equipos a empleados, áreas o sucursales, incluyendo validaciones de equipos disponibles.
  */
 import { ref, onMounted, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import AsignacionesService from '../services/AsignacionesService'
 import EquiposService from '../services/EquiposService'
 import DireccionesIpService from '../services/DireccionesIpService'
 import EmpleadosService from '../services/EmpleadosService'
 import CatalogosService from '../services/CatalogosService'
-import { Check, X } from 'lucide-vue-next'
+import AreasService from '../services/AreasService'
+import { Check, X, Calendar as CalendarIcon } from 'lucide-vue-next'
 import Select from 'primevue/select'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
@@ -21,18 +22,16 @@ import MultiSelect from 'primevue/multiselect'
 import Skeleton from 'primevue/skeleton'
 
 const router = useRouter()
-const { success: toastSuccess, error: toastError } = useSwal()
+const route = useRoute()
+const { confirmWarning, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
+
+const isEditing = computed(() => !!route.params.id)
+const formTitle = computed(() => isEditing.value ? `Editar Asignación #${route.params.id}` : 'Nueva Asignación')
 
 const loading = ref(false)
 const submitting = ref(false)
-
-// Data Sources
-const equiposDisponibles = ref([])
-const ipsDisponibles = ref([])
-const empleados = ref([])
-const sucursales = ref([])
-const areas = ref([])
-const componentesDisponibles = ref([])
+const isDirty = ref(false)
+const isSaved = ref(false)
 
 // Form Data
 const form = ref({
@@ -47,75 +46,183 @@ const form = ref({
     componentes: [] // IDs de componentes adicionales
 })
 
+// Data Sources
+const equiposDisponibles = ref([])
+const ipsDisponibles = ref([])
+const empleados = ref([])
+const sucursales = ref([])
+const areas = ref([])
+const componentesDisponibles = ref([])
+
+// Agrupar IPs por segmento (ej: 192.168.1.x)
+const groupedIps = computed(() => {
+    if (!ipsDisponibles.value || ipsDisponibles.value.length === 0) return []
+    
+    const groups = {}
+    
+    // Añadimos una IP "ninguna" opcional si se desea, o manejamos el array
+    ipsDisponibles.value.forEach(ip => {
+        if (!ip) return
+        const parts = (ip.direccion_ip || '').split('.')
+        let segment = 'Otros Segmentos'
+        
+        if (parts.length === 4) {
+            segment = `${parts[0]}.${parts[1]}.${parts[2]}.x`
+        }
+        
+        if (!groups[segment]) {
+            groups[segment] = { label: segment, items: [] }
+        }
+        groups[segment].items.push(ip)
+    })
+    
+    // Convertir a array y ordenar
+    const sortedGroups = Object.keys(groups).sort((a, b) => {
+        if (a === 'Otros Segmentos') return 1
+        if (b === 'Otros Segmentos') return -1
+        return a.localeCompare(b, undefined, { numeric: true })
+    }).map(key => groups[key])
+
+    return sortedGroups
+})
+
+// Función para limpiar campos al cambiar tipo de asignación no necesaria si usamos watch
+// const handleTipoChange = () => { ... }
+
+// Watch para tipo_asignacion (limpiar selecciones previas al cambiar de tipo)
+watch(() => form.value.tipo_asignacion, (newVal) => {
+    if (!loading.value) {
+        form.value.id_empleado = null
+        form.value.id_sucursal_asignado = null
+        form.value.id_area_asignado = null
+    }
+})
+
+// Dirty detection
+watch(form, () => {
+    if (!loading.value && !submitting.value && !isSaved.value) {
+        isDirty.value = true
+    }
+}, { deep: true })
+
+// Route guard
+onBeforeRouteLeave(async (to, from) => {
+    if (isDirty.value && !isSaved.value) {
+        const result = await confirmWarning({
+            title: 'Cambios no guardados',
+            text: '¿Deseas salir? Perderás los datos de la nueva asignación.',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'No, quedarme'
+        })
+        if (!result.isConfirmed) return false
+        toastInfo('Operación cancelada')
+    }
+})
+
 // Validation Errors
 const errors = ref({})
 
 onMounted(async () => {
     loading.value = true
     try {
-        // Cargar recursos disponibles
-        const [eqRes, ipRes, compRes] = await Promise.all([
+        // Preparamos todas las promesas necesarias
+        const queries = [
             EquiposService.getDisponibles(),
             DireccionesIpService.getDisponibles(),
-            EquiposService.getDisponiblesComponentes() // Necesita existir en servicio, si no, usar getDisponibles y filtrar por tipo
-        ])
-
-        // Si getDisponiblesComponentes falla o no existe, filtrar localmente de eqRes los que son periféricos comunes si se desea,
-        // o simplemente permitir asignar cualquier equipo disponible como componente.
-        // Asumiré que el endpoint existe o que filtraremos. 
-        // Si el endpoint devuelve error, atrapamos:
-        
-        equiposDisponibles.value = eqRes.map(e => ({
-            label: `${e.nombre_tipo_equipo || e.tipo_equipo || 'Equipo'} - ${e.nombre_equipo} ${e.modelo ? '(' + e.modelo + ')' : ''} [SN: ${e.numero_serie}]`,
-            value: e.id,
-            tipo: e.tipo_equipo
-        }))
-
-        ipsDisponibles.value = ipRes
-
-        // Cargar catálogos de entidades
-        const [empRes, sucRes, areasRes] = await Promise.all([
             EmpleadosService.getAll(),
             CatalogosService.getSucursales(),
-            CatalogosService.getAreas()
-        ])
-        
-        // Mapear para selects
-        empleados.value = empRes.map(e => ({ label: `${e.nombres} ${e.apellidos}`, value: e.id }))
-        sucursales.value = sucRes // asume id, nombre
-        
-        // Si no hay getAllAreas en catalogosService, tendremos que ver como cargarlas. 
-        // Asumamos que CatalogosService lo tiene o lo simulamos.
-        // Revisando código previo: CatalogosService tiene getAreas pero filtra.
-        // Voy a usar un endpoint que trae areas.
-        if (areasRes.length === 0 && CatalogosService.getAreas) {
-             // temporal fallback
-             // areas.value = await CatalogosService.getAreas() 
-             // Ojo: getAreas trae tipos de equipo en versiones viejas? No, es Areas.
-        } else {
-             areas.value = areasRes
+            AreasService.getAll()
+        ]
+
+        // Si es edición, añadimos las consultas de la asignación y sus componentes
+        if (isEditing.value) {
+            queries.push(AsignacionesService.getById(route.params.id))
+            queries.push(AsignacionesService.getComponentes(route.params.id))
         }
 
-        // Componentes disponibles (podemos usar la misma lista de equipos disponibles o filtrar)
-        componentesDisponibles.value = eqRes.map(e => ({
+        // Ejecutamos TODO en paralelo (un solo tiempo de espera)
+        const results = await Promise.all(queries)
+        
+        const [eqRes, ipRes, empRes, sucRes, areasRes] = results
+        
+        // Mapear Equipos Principales
+        const tiposPrincipales = ['LAPTOP', 'COMPUTADORA', 'SERVIDOR', 'TODO EN UNO', 'DESKTOP']
+        equiposDisponibles.value = (eqRes || [])
+            .filter(e => tiposPrincipales.includes((e.nombre_tipo_equipo || '').toUpperCase()))
+            .map(e => ({
+                label: `${e.nombre_tipo_equipo || e.tipo_equipo || 'Equipo'} - ${e.nombre_equipo} ${e.modelo ? '(' + e.modelo + ')' : ''} [SN: ${e.numero_serie}]`,
+                value: e.id,
+                tipo: e.tipo_equipo
+            }))
+
+        ipsDisponibles.value = ipRes || []
+        empleados.value = Array.isArray(empRes) ? empRes.map(e => ({ label: `${e.nombres} ${e.apellidos}`, value: e.id })) : []
+        sucursales.value = Array.isArray(sucRes) ? sucRes : []
+        areas.value = Array.isArray(areasRes) ? areasRes : []
+
+        // Componentes disponibles
+        componentesDisponibles.value = (eqRes || []).map(e => ({
             label: `${e.nombre_equipo} (${e.numero_serie})`,
             value: e.id
         }))
 
+        // Si es edición, poblar formulario con los resultados ya cargados
+        if (isEditing.value) {
+            const assignmentData = results[5]
+            const componentsData = results[6]
+            await populateFormOptimized(assignmentData, componentsData)
+        }
+
     } catch (error) {
         console.error('Error cargando datos:', error)
-        toastError('Error al cargar recursos disponibles')
+        toastError('Error al cargar la información del formulario')
     } finally {
         loading.value = false
     }
 })
 
-// Watch tipo_asignacion to clear others
-watch(() => form.value.tipo_asignacion, (newVal) => {
-    form.value.id_empleado = null
-    form.value.id_sucursal_asignado = null
-    form.value.id_area_asignado = null
-})
+const populateFormOptimized = async (data, comps) => {
+    // Asegurar equipo actual en lista
+    if (!equiposDisponibles.value.find(e => e.value === data.id_equipo)) {
+        equiposDisponibles.value.unshift({
+            label: `${data.equipo_nombre} [SN: ${data.equipo_numero_serie}] (Actual)`,
+            value: data.id_equipo
+        })
+    }
+
+    // Asegurar IP actual en lista
+    if (data.id_ip && !ipsDisponibles.value.find(ip => ip.id === data.id_ip)) {
+        ipsDisponibles.value.unshift({
+            id: data.id_ip,
+            direccion_ip: data.ip_direccion || data.direccion_ip || 'IP Actual'
+        })
+    }
+
+    form.value = {
+        fecha_asignacion: data.fecha_asignacion ? new Date(data.fecha_asignacion) : new Date(),
+        id_equipo: data.id_equipo,
+        tipo_asignacion: (data.id_empleado || data.empleado_nombres) ? 'empleado' : (data.id_sucursal_asignado ? 'sucursal' : 'area'),
+        id_empleado: data.id_empleado,
+        id_sucursal_asignado: data.id_sucursal_asignado,
+        id_area_asignado: data.id_area_asignado,
+        id_ip: data.id_ip,
+        observacion: data.observacion || '',
+        componentes: comps ? comps.map(c => c.id_equipo || c.id_equipo_hijo) : []
+    }
+
+    // Registrar componentes en la lista de opciones
+    if (comps) {
+        comps.forEach(c => {
+            const cId = c.id_equipo || c.id_equipo_hijo
+            if (!componentesDisponibles.value.find(opt => opt.value === cId)) {
+                componentesDisponibles.value.push({
+                    label: `${c.equipo_nombre || c.equipo_hijo_nombre} [SN: ${c.equipo_numero_serie || c.equipo_hijo_serie || 'N/A'}]`,
+                    value: cId
+                })
+            }
+        })
+    }
+}
 
 // Special logic: If assigning to employee/area, suggest IP sucursal logic? 
 // Not needed, backend handles logic. But we can filter IPs if we wanted.
@@ -158,14 +265,23 @@ const handleSubmit = async () => {
             payload.fecha_asignacion = payload.fecha_asignacion.toISOString().slice(0, 19).replace('T', ' ')
         }
 
-        if (form.value.componentes.length > 0) {
-            await AsignacionesService.createWithComponents(payload)
+        if (isEditing.value) {
+            await AsignacionesService.update(route.params.id, payload) // Pass the constructed payload
+            // Assuming updateComponentes expects the assignment ID and an array of component IDs
+            if (form.value.componentes.length >= 0) { // Check if components array exists, even if empty, to allow clearing
+                 await AsignacionesService.updateComponentes(route.params.id, form.value.componentes)
+            }
+            toastSuccess('Asignación actualizada correctamente')
         } else {
-            await AsignacionesService.create(payload)
+            if (form.value.componentes.length > 0) {
+                await AsignacionesService.createWithComponents(payload) // Pass the constructed payload
+            } else {
+                await AsignacionesService.create(payload) // Pass the constructed payload
+            }
+            toastSuccess('Asignación creada correctamente')
         }
-        
-        toastSuccess('Asignación registrada correctamente')
-        router.push({ name: 'asignaciones' })
+        isSaved.value = true
+        router.replace({ name: 'asignaciones' })
 
     } catch (error) {
         console.error('Submit error:', error)
@@ -173,6 +289,21 @@ const handleSubmit = async () => {
         toastError(msg)
     } finally {
         submitting.value = false
+    }
+}
+
+const goBack = async () => {
+    const result = await confirmWarning({
+        title: 'Confirmar Salida',
+        text: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
+        confirmButtonText: 'Salir sin Guardar',
+        cancelButtonText: 'Continuar Editando'
+    })
+    
+    if (result.isConfirmed) {
+        isDirty.value = false
+        toastInfo('Operación cancelada')
+        router.push({ name: 'asignaciones' })
     }
 }
 </script>
@@ -183,10 +314,10 @@ const handleSubmit = async () => {
         
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-100 dark:border-dark-border pb-4 gap-4">
             <div>
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Nueva Asignación</h2>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ formTitle }}</h2>
                 <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Asigne equipos a empleados, sucursales o áreas</p>
             </div>
-            <button @click="router.back()" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+            <button @click="goBack" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
                 <X :size="20" />
                 <span>Cancelar</span>
             </button>
@@ -216,7 +347,10 @@ const handleSubmit = async () => {
                 </div>
                 <div>
                      <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Fecha de Asignación <span class="text-red-500">*</span></label>
-                     <DatePicker v-model="form.fecha_asignacion" showTime hourFormat="24" class="w-full" inputClass="!bg-gray-50 dark:!bg-dark-bg w-full" :invalid="!!errors.fecha_asignacion" />
+                     <div class="relative">
+                         <CalendarIcon class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
+                         <DatePicker v-model="form.fecha_asignacion" showTime hourFormat="24" placeholder="YYYY-MM-DD HH:mm" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg !pr-10 w-full'" :invalid="!!errors.fecha_asignacion" />
+                     </div>
                      <small class="text-red-500">{{ errors.fecha_asignacion }}</small>
                 </div>
             </div>
@@ -224,18 +358,29 @@ const handleSubmit = async () => {
             <!-- Tipo de Asignación -->
             <div class="bg-gray-50 dark:bg-dark-bg p-4 rounded-lg border border-gray-200 dark:border-dark-border">
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Asignar a:</label>
-                <div class="flex gap-6 mb-4">
-                    <div class="flex items-center">
+                <div class="flex flex-wrap gap-4 md:gap-8 mb-4">
+                    <div 
+                        class="flex items-center px-4 py-2 rounded-xl border border-transparent hover:bg-white dark:hover:bg-dark-card hover:shadow-sm cursor-pointer transition-all duration-200"
+                        @click="form.tipo_asignacion = 'empleado'"
+                    >
                         <RadioButton v-model="form.tipo_asignacion" inputId="tipo_empleado" value="empleado" />
-                        <label for="tipo_empleado" class="ml-2 cursor-pointer">Empleado</label>
+                        <label for="tipo_empleado" class="ml-2 cursor-pointer font-bold text-gray-700 dark:text-gray-200">Empleado</label>
                     </div>
-                    <div class="flex items-center">
+                    
+                    <div 
+                        class="flex items-center px-4 py-2 rounded-xl border border-transparent hover:bg-white dark:hover:bg-dark-card hover:shadow-sm cursor-pointer transition-all duration-200"
+                        @click="form.tipo_asignacion = 'sucursal'"
+                    >
                         <RadioButton v-model="form.tipo_asignacion" inputId="tipo_sucursal" value="sucursal" />
-                        <label for="tipo_sucursal" class="ml-2 cursor-pointer">Sucursal</label>
+                        <label for="tipo_sucursal" class="ml-2 cursor-pointer font-bold text-gray-700 dark:text-gray-200">Sucursal</label>
                     </div>
-                    <div class="flex items-center">
+                    
+                    <div 
+                        class="flex items-center px-4 py-2 rounded-xl border border-transparent hover:bg-white dark:hover:bg-dark-card hover:shadow-sm cursor-pointer transition-all duration-200"
+                        @click="form.tipo_asignacion = 'area'"
+                    >
                         <RadioButton v-model="form.tipo_asignacion" inputId="tipo_area" value="area" />
-                        <label for="tipo_area" class="ml-2 cursor-pointer">Área</label>
+                        <label for="tipo_area" class="ml-2 cursor-pointer font-bold text-gray-700 dark:text-gray-200">Área</label>
                     </div>
                 </div>
 
@@ -257,15 +402,37 @@ const handleSubmit = async () => {
             <!-- IP (Opcional) -->
             <div>
                  <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Dirección IP (Opcional)</label>
-                 <Select v-model="form.id_ip" :options="ipsDisponibles" optionLabel="direccion_ip" optionValue="id" filter showClear placeholder="Seleccione una IP disponible" class="w-full !bg-gray-50 dark:!bg-dark-bg" />
+                  <Select 
+                    v-model="form.id_ip" 
+                    :options="groupedIps" 
+                    optionLabel="direccion_ip" 
+                    optionValue="id" 
+                    optionGroupLabel="label" 
+                    optionGroupChildren="items"
+                    filter 
+                    showClear 
+                    placeholder="Seleccione una IP disponible" 
+                    class="w-full !bg-gray-50 dark:!bg-dark-bg" 
+                    :virtualScrollerOptions="{ itemSize: 38 }"
+                  />
                  <small class="text-gray-500">Solo se muestran IPs disponibles.</small>
             </div>
 
             <!-- Componentes (Opcional) -->
             <div>
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Componentes Adicionales (Opcional)</label>
-                <MultiSelect v-model="form.componentes" :options="componentesDisponibles" optionLabel="label" optionValue="value" filter placeholder="Seleccione componentes (ej. monitor, teclado)" display="chip" class="w-full !bg-gray-50 dark:!bg-dark-bg" />
-                <small class="text-gray-500">Estos equipos se asignarán como hijos del equipo principal y tendrán la misma asignación.</small>
+                <MultiSelect 
+                    v-model="form.componentes" 
+                    :options="componentesDisponibles" 
+                    optionLabel="label" 
+                    optionValue="value" 
+                    filter 
+                    placeholder="Seleccione componentes" 
+                    :maxSelectedLabels="0"
+                    selectedItemsLabel="{0} componentes seleccionados"
+                    class="w-full !bg-gray-50 dark:!bg-dark-bg" 
+                />
+                <small class="text-gray-500">Mouses, teclados, monitores u otros equipos que dependen de este equipo.</small>
             </div>
 
              <!-- Observaciones -->
@@ -276,14 +443,14 @@ const handleSubmit = async () => {
 
             <!-- Botones -->
             <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-dark-border transition-colors duration-300">
-                <button @click="router.back()" class="btn-secondary" type="button">
+                <button @click="goBack" class="btn-secondary" type="button">
                     <X :size="18" />
                     Cancelar
                 </button>
                 <button type="submit" class="btn-primary" :disabled="submitting">
                     <Check v-if="!submitting" :size="18" />
                     <i v-else class="pi pi-spin pi-spinner text-lg"></i>
-                    <span>Registrar Asignación</span>
+                    <span>{{ isEditing ? 'Actualizar Asignación' : 'Registrar Asignación' }}</span>
                 </button>
             </div>
 
