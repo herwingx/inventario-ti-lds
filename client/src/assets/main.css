@@ -201,19 +201,19 @@
   }
 
   .btn-secondary {
-    @apply btn-base bg-gray-100 text-gray-700;
+    @apply btn-base bg-white border border-gray-300 text-gray-700 shadow-sm;
   }
 
   .dark .btn-secondary {
-    @apply bg-dark-border text-gray-200;
+    @apply bg-transparent border-gray-600 text-gray-300;
   }
 
   .btn-secondary:hover {
-    @apply bg-gray-200 shadow-md;
+    @apply bg-gray-50 border-gray-400 text-gray-900;
   }
 
   .dark .btn-secondary:hover {
-    @apply bg-zinc-700;
+    @apply bg-white/5 border-gray-500 text-white;
   }
 
   .btn-secondary:active {
@@ -221,7 +221,7 @@
   }
 
   .btn-secondary:focus {
-    @apply ring-gray-300;
+    @apply ring-gray-200;
   }
 
   .btn-danger {
@@ -502,6 +502,42 @@
   transition: all 0.15s ease-out;
 }
 
+
 .p-connected-overlay-leave-active {
   transition: all 0.1s ease-in;
+}
+
+/* ========================================
+   CONFIRM DIALOG STYLES
+   ======================================== */
+.p-confirm-dialog .p-dialog-header {
+  @apply rounded-t-2xl px-6 pt-6 pb-2 !bg-white border-b-0;
+}
+
+.dark .p-confirm-dialog .p-dialog-header {
+  @apply !bg-dark-card;
+}
+
+.p-confirm-dialog .p-dialog-content {
+  @apply px-6 py-4 !bg-white text-light-text;
+}
+
+.dark .p-confirm-dialog .p-dialog-content {
+  @apply !bg-dark-card text-gray-300;
+}
+
+.p-confirm-dialog .p-dialog-footer {
+  @apply rounded-b-2xl px-6 pb-6 pt-2 !bg-white border-t-0 flex gap-2 justify-end;
+}
+
+.dark .p-confirm-dialog .p-dialog-footer {
+  @apply !bg-dark-card;
+}
+
+.p-confirm-dialog .p-dialog-header-icon {
+  @apply text-gray-400;
+}
+
+.dark .p-confirm-dialog .p-dialog-header-icon {
+  @apply text-gray-400 hover:text-white hover:bg-white/10;
 }
