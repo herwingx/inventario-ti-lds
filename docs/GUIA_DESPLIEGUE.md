@@ -1,142 +1,149 @@
-# 🚀 Guía de Despliegue - Sistema de Inventario TI
+# 🚀 Guía Maestra de Despliegue
 
-Esta guía detalla los pasos para desplegar el Sistema de Inventario TI en un entorno de producción utilizando **Apache** como servidor web/proxy inverso y **Node.js** para el backend, operando bajo el subdirectorio `/soporte/`.
+> **Sistema de Inventario TI & Soporte LDS**
+>
+> Esta guía detalla el procedimiento estándar para desplegar la aplicación en un entorno de producción Linux (Ubuntu/Debian/CentOS), utilizando **Apache** como Proxy Inverso y **PM2** para la gestión de procesos.
 
-## 📋 Requisitos Previos
-
-*   **Servidor:** Linux (Ubuntu/Debian/CentOS)
-*   **Servidor Web:** Apache 2.4+ con módulos `mod_proxy` y `mod_proxy_http` habilitados.
-*   **Runtime:** Node.js v18+ y npm.
-*   **Base de Datos:** MySQL 8.0 o MariaDB 10+.
-*   **Gestor de Procesos:** PM2 (instalado globalmente: `npm install -g pm2`).
+[![License](https://img.shields.io/badge/License-Proprietary-red?style=flat-square)](LICENSE)
+[![Environment](https://img.shields.io/badge/Environment-Production-blue?style=flat-square)](https://nodejs.org/)
+[![Server](https://img.shields.io/badge/Server-Apache_2.4+-orange?style=flat-square)](https://httpd.apache.org/)
 
 ---
 
-## 🛠️ 1. Preparación del Proyecto
+## 📋 Requisitos de Infraestructura
 
-### 1.1 Backend (Servidor Node.js)
+Antes de comenzar, valida que el servidor cumpla con:
 
-1.  Navega al directorio del servidor:
-    ```bash
-    cd server
-    ```
-2.  Instala las dependencias de producción:
-    ```bash
-    npm install --production
-    ```
-3.  Configura las variables de entorno:
-    ```bash
-    cp .env.example .env
-    nano .env
-    ```
-    Asegúrate de configurar las siguientes variables críticas en el archivo `.env`:
-    ```env
-    PORT=3000
-    NODE_ENV=production
-    APP_URL=http://tu-dominio.com/soporte
-    API_URL=http://tu-dominio.com/soporte/api
+| Requisito | Versión Mínima | Descripción |
+| :--- | :--- | :--- |
+| **OS** | Linux | Ubuntu 20.04+, Debian 10+, CentOS 7+ |
+| **Node.js** | v18.x LTS | Runtime de JavaScript |
+| **MySQL** | 8.0 / MariaDB 10.x | Motor de Base de Datos |
+| **Apache** | 2.4 | Servidor Web / Reverse Proxy |
+| **PM2** | Latest | Gestor de Procesos Node (`npm i -g pm2`) |
+| **Git** | Latest | Control de Versiones |
+
+---
+
+## 🛠️ Fase 1: Preparación del Entorno
+
+### 1.1 Clonar Repositorio
+Ubicación recomendada: `/var/www/inventario-ti-lds`
+
+```bash
+cd /var/www
+git clone https://github.com/herwingx/inventario-ti-lds.git
+cd inventario-ti-lds
+```
+
+### 1.2 Configurar Backend (API)
+
+```bash
+cd server
+npm install --production  # Instalar solo dependencias críticas
+mv .env.example .env      # Configurar variables de entorno
+```
+
+**Variables Críticas (.env):**
+```ini
+PORT=3000
+NODE_ENV=production
+# Base de datos
+DB_HOST=localhost
+DB_USER=root
+DB_NAME=inventario_soporte
+# Seguridad
+JWT_SECRET=tu_secreto_super_seguro
+```
+
+---
+
+## 📦 Fase 2: Construcción del Frontend
+
+El cliente Vue.js debe ser compilado a archivos estáticos (`html, css, js`) y servido por el backend.
+
+### 2.1 Compilación
+```bash
+cd ../client
+npm install
+npm run build
+```
+
+Esta acción generará la carpeta `dist/` con la aplicación optimizada.
+
+### 2.2 Integración (Build & Copy)
+Copia los artefactos generados al servidor estático de Node.js.
+
+```bash
+# Desde la raíz del proyecto
+# 1. Limpiar despliegue anterior (preservando uploads)
+find server/public -mindepth 1 ! -regex '^server/public/uploads\(/.*\)?' -delete
+
+# 2. Copiar nuevo build
+cp -r client/dist/* server/public/
+```
+
+> 💡 **Nota Git:** La carpeta `server/public` está configurada en `.gitignore` para ignorar estos archivos generados, manteniendo tu repositorio limpio.
+
+---
+
+## 🌐 Fase 3: Configuración del Proxy (Apache)
+
+Configura Apache para redirigir el tráfico del subdirectorio `/soporte` hacia la aplicación Node.js.
+
+### 3.1 Módulos Requeridos
+```bash
+sudo a2enmod proxy
+sudo a2enmod proxy_http
+sudo systemctl restart apache2
+```
+
+### 3.2 VirtualHost
+Archivo: `/etc/apache2/sites-available/000-default.conf` (o tu dominio):
+
+```apache
+<VirtualHost *:80>
+    ServerName midominio.com
+
+    # ... otras configuraciones ...
+
+    # === INICIO CONFIGURACIÓN INVENTARIO ===
+    ProxyPreserveHost On
     
-    # Credenciales de Base de Datos
-    DB_HOST=localhost
-    DB_USER=usuario_db
-    DB_PASSWORD=contraseña_segura
-    DB_NAME=inventario_soporte
-    ```
+    # Redirigir /soporte hacia Node.js (Puerto 3000)
+    ProxyPass /soporte http://localhost:3000/soporte
+    ProxyPassReverse /soporte http://localhost:3000/soporte
+    # === FIN CONFIGURACIÓN INVENTARIO ===
 
-### 1.2 Frontend (Cliente Vue.js)
+</VirtualHost>
+```
 
-1.  Navega al directorio del cliente:
-    ```bash
-    cd ../client
-    ```
-2.  Instala las dependencias:
-    ```bash
-    npm install
-    ```
-3.  Construye la aplicación para producción:
-    ```bash
-    npm run build
-    ```
-    *Nota: La configuración `base: '/soporte/'` ya está definida en `vite.config.js`.*
-
-4.  **Despliegue de Estáticos:**
-    Copia el contenido generado en `client/dist/` a la carpeta pública del servidor Node.js. Esto permite que Node.js sirva tanto la API como el Frontend unificado.
-    ```bash
-    # Estando en la raíz del proyecto
-    rm -rf server/public/*  # Limpia public anterior si existe (cuidado con uploads/)
-    cp -r client/dist/* server/public/
-    ```
-    *Importante: Si tienes una carpeta `uploads` dentro de `server/public`, asegúrate de respaldarla o no borrarla.*
+Reiniciar Apache:
+```bash
+sudo apachectl configtest && sudo systemctl restart apache2
+```
 
 ---
 
-## 🗄️ 2. Base de Datos
+## 🚀 Fase 4: Lanzamiento (PM2)
 
-1.  Asegúrate de que la base de datos `inventario_soporte` exista.
-2.  Importa el esquema inicial si es una instalación nueva (revisar scripts en `server/src/database/` o documentación pertinente).
+Utiliza PM2 para mantener la aplicación "viva" permanentemente.
 
----
+```bash
+cd server
+# Iniciar proceso
+pm2 start server.js --name "inventario-api"
 
-## 🌐 3. Configuración de Apache
-
-Configura Apache para actuar como Proxy Inverso. Esto redirigirá todo el tráfico de `http://tu-dominio.com/soporte` hacia tu aplicación Node.js corriendo en el puerto 3000.
-
-1.  Habilita los módulos necesarios (si no lo están):
-    ```bash
-    sudo a2enmod proxy
-    sudo a2enmod proxy_http
-    sudo systemctl restart apache2
-    ```
-
-2.  Edita tu archivo de configuración de VirtualHost (ej. `/etc/apache2/sites-available/000-default.conf` o el de tu dominio):
-
-    ```apache
-    <VirtualHost *:80>
-        ServerName tu-dominio.com
-        
-        # ... otras configuraciones ...
-
-        # Configuración para el Sistema de Inventario (/soporte)
-        # La barra final es importante en ambas directivas para manejar correctamente los paths
-        
-        ProxyPreserveHost On
-        
-        # Redirigir /soporte hacia el servidor Node.js local
-        ProxyPass /soporte http://localhost:3000/soporte
-        ProxyPassReverse /soporte http://localhost:3000/soporte
-        
-    </VirtualHost>
-    ```
-
-3.  Verifica la configuración y reinicia Apache:
-    ```bash
-    sudo apachectl configtest
-    sudo systemctl restart apache2
-    ```
+# Congelar lista de procesos para reinicios
+pm2 save
+pm2 startup
+```
 
 ---
 
-## 🚀 4. Ejecución con PM2
+## ✅ Lista de Verificación Final
 
-Utiliza PM2 para mantener el servidor Node.js activo en segundo plano.
-
-1.  Inicia la aplicación desde el directorio `server`:
-    ```bash
-    cd server
-    pm2 start server.js --name "inventario-api"
-    ```
-
-2.  Guarda la lista de procesos para que se inicien automáticamente al reiniciar el sistema:
-    ```bash
-    pm2 save
-    pm2 startup
-    # Sigue las instrucciones que te de el comando startup
-    ```
-
----
-
-## ✅ 5. Verificación
-
-1.  Abre tu navegador y ve a `http://tu-dominio.com/soporte`.
-2.  Deberías ver la página de inicio de sesión del sistema.
-3.  Intenta iniciar sesión para verificar que la conexión con la API (`/soporte/api/...`) funciona correctamente.
+- [ ] Base de datos migrada/importada.
+- [ ] Backend corriendo en puerto 3000 (`pm2 status`).
+- [ ] Proxy Apache activo.
+- [ ] Acceso exitoso vía web: `http://midominio.com/soporte`.
