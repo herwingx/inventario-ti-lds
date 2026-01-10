@@ -565,7 +565,13 @@ dist/
 npm run preview
 ```
 
-### Despliegue con Nginx
+### Despliegue
+
+> 📘 **Guía Oficial:** Para instrucciones detalladas de despliegue en producción con **Apache**, consulta la [Guía de Despliegue](../docs/GUIA_DESPLIEGUE.md).
+
+### Configuración Alternativa (Nginx)
+
+Si prefieres usar Nginx como servidor web/proxy inverso:
 
 ```nginx
 server {
