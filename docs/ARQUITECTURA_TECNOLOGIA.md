@@ -1,33 +1,38 @@
 # 🏗️ Arquitectura y Stack Tecnológico
 
-Este documento detalla **qué** tecnologías usamos, **por qué** las elegimos y **cómo** interactúan entre sí. Es fundamental para entender la filosofía de diseño del sistema.
+> **Cimientos del Sistema**
+>
+> Documentación técnica detallada sobre las decisiones de arquitectura, tecnologías seleccionadas y patrones de diseño implementados en el Sistema de Inventario TI.
+
+[![Stack](https://img.shields.io/badge/Stack-MEVN-green?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+[![Architecture](https://img.shields.io/badge/Architecture-REST_API-blue?style=flat-square)](https://restfulapi.net/)
+[![Pattern](https://img.shields.io/badge/Pattern-MVC-orange?style=flat-square)](https://developer.mozilla.org/es/docs/Glossary/MVC)
 
 ---
 
 ## 🚀 Stack Tecnológico (MEVN)
 
-Elegimos el stack **MEVN** (MySQL, Express, Vue, Node) por su modernidad, rendimiento y soporte comunitario.
+El núcleo del sistema se basa en el stack **MEVN** (MySQL, Express, Vue, Node), seleccionado por su robustez empresarial y escalabilidad.
 
 ### 🎨 Frontend (Cliente)
 
-| Tecnología | Versión | Rol en el Proyecto | ¿Por qué esta opción? |
-|:-----------|:--------|:-------------------|:----------------------|
-| **Vue.js** | 3.x | Framework Reactivo | Ofrece la mejor curva de aprendizaje y utiliza `Composition API` (`<script setup>`) para un código más limpio y modular que React o Angular. |
-| **Vite** | 5.x | Build Tool | Reemplazo moderno de Webpack. Arranca el servidor de desarrollo en milisegundos y optimiza el build final (tree-shaking). |
-| **PrimeVue** | 4.0 | UI Component Library | Provee componentes empresariales listos (Tablas, Modales, Calendarios) con el tema "Aura" que da una apariencia premium inmediata. Evita escribir CSS desde cero. |
-| **Pinia** | 2.x | State Management | Sucesor de Vuex. Maneja datos globales (Usuario logueado, Tema Dark/Light) sin la complejidad de reducers/mutations. |
-| **Axios** | 1.x | Cliente HTTP | Maneja las peticiones AJAX al backend. Usamos interceptores para inyectar automáticamente el Token JWT en cada petición. |
-| **TailwindCSS** | 3.x | Estilizado | Permite ajustes rápidos de diseño (`p-4`, `flex`, `text-center`) sin salir del HTML. |
+| Tecnología | Versión | Rol | Justificación Técnica |
+| :--- | :--- | :--- | :--- |
+| **Vue.js** | 3.x | Framework Core | Utiliza **Composition API** (`<script setup>`) para una lógica modular, tipado seguro y mejor rendimiento que Options API. |
+| **Vite** | 5.x | Build Tool | Motor de desarrollo ultrarrápido con HMR (Hot Module Replacement) instantáneo y builds de producción optimizados. |
+| **PrimeVue** | 4.0 | UI Kit | Suite de componentes empresariales (DataTables, Modales) con diseño **Aura** para una estética premium inmediata. |
+| **Pinia** | 2.x | State Manager | Gestión de estado reactivo global (Auth, Theme) sin la complejidad de Vuex. |
+| **TailwindCSS** | 3.x | Styling | Utility-first CSS para prototipado rápido y diseño responsivo sin salir del markup. |
 
 ### ⚙️ Backend (Servidor)
 
-| Tecnología | Versión | Rol en el Proyecto | ¿Por qué esta opción? |
-|:-----------|:--------|:-------------------|:----------------------|
-| **Node.js** | 18+ | Runtime | Permite usar JavaScript en el servidor. Su modelo "Non-blocking I/O" es ideal para APIs que manejan muchas peticiones simultáneas ligeras. |
-| **Express.js**| 4.x | Framework Web | Estándar de la industria. Minimalista y flexible. Maneja el ruteo (`GET /api/equipos`) y los Middlewares. |
-| **MySQL** | 8.0 | Base de Datos | Necesitamos **Integridad Relacional** estricta (ACID) para inventarios. NoSQL (Mongo) no es adecuado aquí por las relaciones complejas (Equipos <-> Asignaciones <-> Empleados). |
-| **MySQL2** | 3.x | Driver DB | Versión mejorada del driver mysql. Soporta `Promises` (`async/await`) nativamente y `Prepared Statements` para seguridad. |
-| **JWT** | 9.x | Autenticación | JSON Web Tokens estandarizados. Stateless: El servidor no guarda sesión en memoria, lo que facilita reinicios sin desconectar usuarios. |
+| Tecnología | Versión | Rol | Justificación Técnica |
+| :--- | :--- | :--- | :--- |
+| **Node.js** | 18+ LTS | Runtime | Modelo **Non-blocking I/O** ideal para manejar alta concurrencia de APIs REST. |
+| **Express.js** | 4.x | Framework | Estándar de la industria para enrutamiento y middleware. Minimalista y extensible. |
+| **MySQL 8** | 8.0 | Base de Datos | Motor relacional compatible con **ACID** para garantizar integridad en transacciones de inventario. |
+| **MySQL2** | 3.x | Driver | Cliente nativo con soporte para **Promises** (`async/await`) y protección contra SQL Injection. |
+| **JWT** | 9.x | Seguridad | Autenticación **Stateless** (sin sesiones en servidor) para escalabilidad horizontal. |
 
 ---
 

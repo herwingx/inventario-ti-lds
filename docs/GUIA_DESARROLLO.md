@@ -1,16 +1,24 @@
-# 🛠️ Guía de Desarrollo - Protocolo de Expansión
+# 🛠️ Guía de Desarrollo
 
-Esta guía "Receta de Cocina" describe el proceso exacto para agregar nuevas funcionalidades o módulos al sistema, garantizando que el código se mantenga limpio, ordenado y bajo el estándar inicial.
+> **Protocolo de Expansión y Mantenimiento**
+>
+> "Receta de cocina" estandarizada para agregar nuevas funcionalidades, módulos o realizar hotfixes, garantizando la consistencia y escalabilidad del código.
+
+[![Standard](https://img.shields.io/badge/Code_Style-Standard-success?style=flat-square)](https://standardjs.com/)
+[![Git Flow](https://img.shields.io/badge/Workflow-GitFlow-blue?style=flat-square)](https://nvie.com/posts/a-successful-git-branching-model/)
 
 ---
 
-## 📋 Antes de Empezar
+## 📋 Pre-Flight Checklist
+
+Antes de escribir una sola línea de código:
 
 1.  **Entender la Arquitectura:**
-    *   **Backend:** Express + MySQL (Controladores puros, SQL queries manuales).
-    *   **Frontend:** Vue 3 + Pinia + PrimeVue.
-2.  **Rama de Trabajo:**
-    *   Crear rama: `git checkout -b feat/nombre-nueva-funcionalidad`
+    *   **Backend:** Express + MySQL (Controladores puristas, SQL queries manuales optimizadas).
+    *   **Frontend:** Vue 3 + Pinia + PrimeVue 4 (Aura Theme).
+2.  **Gestión de Ramas:**
+    *   Crear rama de feature: `git checkout -b feat/nombre-funcionalidad`
+    *   Crear rama de fix: `git checkout -b fix/bug-ticket-123`
 
 ---
 
