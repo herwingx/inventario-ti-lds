@@ -134,9 +134,11 @@ cd server
 # Iniciar proceso
 pm2 start server.js --name "inventario-api"
 
-# Congelar lista de procesos para reinicios
+# Garantizar inicio automático tras reinicio del servidor
 pm2 save
 pm2 startup
+# ⚠️ IMPORTANTE: 'pm2 startup' te mostrará un comando en terminal.
+# COPIA Y PÉGALO para confirmar la configuración de arranque.
 ```
 
 ---
