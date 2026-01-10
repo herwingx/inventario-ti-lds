@@ -408,6 +408,8 @@ const sql = `SELECT * FROM equipos WHERE id = ${id}`;
 
 ### Opción 1: PM2 (Recomendado)
 
+> ⚠️ **Pre-requisito:** Asegúrate de haber construido el frontend y copiado los archivos `dist/` a `server/public/` como se detalla en la [Guía de Despliegue](../docs/GUIA_DESPLIEGUE.md#12-frontend-cliente-vuejs).
+
 ```bash
 # Instalar PM2 globalmente
 npm install -g pm2
