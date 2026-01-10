@@ -404,6 +404,7 @@ const sql = `SELECT * FROM equipos WHERE id = ${id}`;
 ---
 
 ## 🚀 Despliegue
+> 📘 **Guía Oficial:** Para instrucciones detalladas de despliegue en producción, consulta la [Guía de Despliegue](../docs/GUIA_DESPLIEGUE.md).
 
 ### Opción 1: PM2 (Recomendado)
 
@@ -445,7 +446,7 @@ sudo systemctl enable inventario-api
 sudo systemctl start inventario-api
 ```
 
-### Nginx Reverse Proxy
+### Nginx Reverse Proxy (Alternativa)
 
 ```nginx
 server {
