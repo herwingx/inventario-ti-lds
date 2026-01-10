@@ -111,6 +111,19 @@ tmp/
 # ===============================================
 # Uploads y archivos de usuario
 # ===============================================
-uploads/
 files/
 .env
+
+# ===============================================
+# Frontend Build in Public
+# ===============================================
+public/*
+!public/uploads/
+!public/.gitkeep
+
+# Ignore upload contents but keep folder
+public/uploads/*
+!public/uploads/.gitkeep
+
+.gemini/
+gha-creds-*.json
