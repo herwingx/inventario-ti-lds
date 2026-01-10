@@ -65,23 +65,24 @@ Aunque usamos una API (sin "Views" HTML en backend), adaptamos el patrón:
 
 ## 🧠 Decisiones Clave de Diseño
 
+## 🧠 Decisiones Clave de Diseño
+
 ### 1. "Soft Delete" vs "Hard Delete"
 En tablas críticas (`equipos`, `empleados`), no borramos registros (`DELETE`). Cambiamos su `status_id` a "Baja/Inactivo".
-*   **Por qué:** Para mantener integridad histórica. Si borramos un empleado, perderíamos el rastro de qué equipos tuvo asignados en el pasado.
-*   *Excepción:* Tablas transaccionales erróneas o logs temporales.
+> **Por qué:** Para mantener integridad histórica. Si borramos un empleado, perderíamos el rastro de qué equipos tuvo asignados en el pasado.
 
-### 2. Validaciones en Backend (Always Trust No One)
+### 2. Confianza Cero (Zero Trust Validation)
 Aunque el frontend valida formularios, el backend **re-valida todo**.
-*   **Por qué:** Un usuario malintencionado puede saltarse el frontend usando Postman. El controlador de Equipos verifica fechas, unicidad y formatos independientemente de la UI.
+> **Por qué:** Un usuario malintencionado puede saltarse el frontend usando herramientas como Postman. El backend es la autoridad final de la verdad.
 
 ### 3. Segmentación de Red Lógica
-Referencia: `docs/PLAN_SEGMENTACION_RED.md`.
-La lógica de negocio valida IPs basándonos en la realidad física de la red de la empresa (segmentos /20). El software valida lo que la red física impone.
+La lógica de negocio valida IPs basándonos en la realidad física de la red corporativa.
+> **Referencia:** `docs/PLAN_SEGMENTACION_RED.md`
 
-### 4. Seguridad
-*   **Passwords:** Hasheados con `bcrypt`. Nunca se guardan en texto plano.
-*   **SQL Injection:** Prevenido usando `?` (placeholders) en todas las queries.
-*   **Variables de Entorno:** Credenciales DB y JWT Secret fuera del código fuente.
+### 4. Seguridad por Diseño
+*   **Contraseñas:** Hasheadas con `bcrypt` (Salted).
+*   **SQL:** Consultas parametrizadas (`?`) anti-inyección.
+*   **Secretos:** Variables de entorno (`.env`) excluidas del control de versiones.
 
 ---
 
