@@ -1,6 +1,11 @@
-# 📘 Manual Técnico - Inventario TI & Soporte LDS
+# 📘 Manual Técnico Operativo
 
-Este manual está diseñado para el **Administrador del Sistema** o desarrollador encargado del mantenimiento de la aplicación. Describe los procesos operativos críticos para asegurar la continuidad del servicio.
+> **Administración y Mantenimiento**
+>
+> Guía de referencia crítica para Administradores de Sistemas y DevOps. Cubre procedimientos de respaldo, restauración, troubleshooting y gestión de incidentes.
+
+[![Maintenance](https://img.shields.io/badge/Maintenance-Active-success?style=flat-square)]()
+[![Database](https://img.shields.io/badge/Database-MySQL_8.0-blue?style=flat-square)](https://www.mysql.com/)
 
 ---
 
