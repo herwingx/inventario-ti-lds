@@ -4,9 +4,10 @@
  * 
  * Reemplaza PrimeVue DataTable con una implementación HTML nativa que ofrece:
  * - Paginación integrada con navegación completa
+ * - Selector de filas por página (5, 10, 20, 50, Todos)
  * - Ordenamiento por columnas (sorting)
  * - Skeleton loading durante carga
- * - Diseño responsive y premium
+ * - Diseño responsive y premium con colores teal
  * - Compatible con dark mode
  * - Slot de contenido vacío personalizable
  * 
@@ -18,6 +19,7 @@
  *   :columns="columns"
  *   :loading="isLoading"
  *   :rows="10"
+ *   :rows-per-page-options="[5, 10, 20, 50]"
  *   row-key="id"
  * >
  *   <template #empty>
@@ -35,6 +37,7 @@ import {
   ArrowUp,
   ArrowDown
 } from 'lucide-vue-next'
+import Select from 'primevue/select'
 
 /**
  * @typedef {Object} Column
@@ -83,6 +86,11 @@ const props = defineProps({
   skeletonRows: {
     type: Number,
     default: 5
+  },
+  /** Opciones de filas por página */
+  rowsPerPageOptions: {
+    type: Array,
+    default: () => [5, 10, 20, 50]
   }
 })
 
@@ -90,6 +98,7 @@ const props = defineProps({
 const currentPage = ref(1)
 const sortField = ref(null)
 const sortOrder = ref(1) // 1 = ASC, -1 = DESC
+const rowsPerPage = ref(props.rows)
 
 // Reset página cuando cambian los datos
 watch(() => props.data, () => {
@@ -123,24 +132,27 @@ const sortedData = computed(() => {
  */
 const paginatedData = computed(() => {
   if (!props.paginator) return sortedData.value
+  if (rowsPerPage.value === -1) return sortedData.value // Mostrar todos
   
-  const start = (currentPage.value - 1) * props.rows
-  const end = start + props.rows
+  const start = (currentPage.value - 1) * rowsPerPage.value
+  const end = start + rowsPerPage.value
   return sortedData.value.slice(start, end)
 })
 
 /** Total de páginas */
 const totalPages = computed(() => {
-  return Math.ceil(props.data.length / props.rows)
+  if (rowsPerPage.value === -1) return 1 // Si se muestran todos, solo 1 página
+  return Math.ceil(props.data.length / rowsPerPage.value)
 })
 
 /** Rango de registros mostrados (ej: "1-10 de 50") */
 const pageInfo = computed(() => {
   const total = props.data.length
   if (total === 0) return '0 de 0'
+  if (rowsPerPage.value === -1) return `Todos (${total})`
   
-  const start = (currentPage.value - 1) * props.rows + 1
-  const end = Math.min(currentPage.value * props.rows, total)
+  const start = (currentPage.value - 1) * rowsPerPage.value + 1
+  const end = Math.min(currentPage.value * rowsPerPage.value, total)
   return `${start}-${end} de ${total}`
 })
 
@@ -202,10 +214,39 @@ const goToPage = (page) => {
     currentPage.value = page
   }
 }
+
+/** Cambiar filas por página */
+const changeRowsPerPage = (rows) => {
+  rowsPerPage.value = rows
+  currentPage.value = 1 // Reset a primera página
+}
+
+/** Opciones para el selector */
+const rowsOptions = computed(() => {
+  return [
+    ...props.rowsPerPageOptions.map(opt => ({ label: String(opt), value: opt })),
+    { label: 'Todos', value: -1 }
+  ]
+})
 </script>
 
 <template>
   <div class="data-table-wrapper">
+    <!-- Rows per page selector (TOP) -->
+    <div v-if="paginator && !loading && data.length > 0" class="data-table-rows-selector">
+      <label class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+        Mostrar:
+      </label>
+      <Select
+        v-model="rowsPerPage"
+        :options="rowsOptions"
+        optionLabel="label"
+        optionValue="value"
+        @change="changeRowsPerPage(rowsPerPage)"
+        class="!w-24 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white"
+      />
+    </div>
+
     <!-- Table -->
     <div class="overflow-x-auto">
       <table class="data-table">
@@ -289,17 +330,19 @@ const goToPage = (page) => {
       </table>
     </div>
 
-    <!-- Paginator -->
+    <!-- Paginator (BOTTOM) -->
     <div v-if="paginator && !loading && data.length > 0" class="data-table-paginator">
-      <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">
+      <!-- Page info -->
+      <span class="paginator-info">
         {{ pageInfo }}
       </span>
 
-      <div class="flex items-center gap-1">
+      <!-- Page navigation -->
+      <div class="paginator-nav">
         <!-- First Page -->
         <button 
           class="paginator-btn"
-          :disabled="currentPage === 1"
+          :disabled="currentPage === 1 || rowsPerPage === -1"
           @click="goToPage(1)"
           title="Primera página"
         >
@@ -309,7 +352,7 @@ const goToPage = (page) => {
         <!-- Previous Page -->
         <button 
           class="paginator-btn"
-          :disabled="currentPage === 1"
+          :disabled="currentPage === 1 || rowsPerPage === -1"
           @click="goToPage(currentPage - 1)"
           title="Página anterior"
         >
@@ -317,22 +360,24 @@ const goToPage = (page) => {
         </button>
 
         <!-- Page Numbers -->
-        <template v-for="page in visiblePages" :key="page">
-          <span v-if="page === '...'" class="px-2 text-gray-400">...</span>
-          <button 
-            v-else
-            class="paginator-btn"
-            :class="{ 'paginator-btn-active': page === currentPage }"
-            @click="goToPage(page)"
-          >
-            {{ page }}
-          </button>
+        <template v-if="rowsPerPage !== -1">
+          <template v-for="page in visiblePages" :key="page">
+            <span v-if="page === '...'" class="px-2 text-gray-400 dark:text-gray-500">...</span>
+            <button 
+              v-else
+              class="paginator-btn paginator-btn-number"
+              :class="{ 'paginator-btn-active': page === currentPage }"
+              @click="goToPage(page)"
+            >
+              {{ page }}
+            </button>
+          </template>
         </template>
 
         <!-- Next Page -->
         <button 
           class="paginator-btn"
-          :disabled="currentPage === totalPages"
+          :disabled="currentPage === totalPages || rowsPerPage === -1"
           @click="goToPage(currentPage + 1)"
           title="Página siguiente"
         >
@@ -342,7 +387,7 @@ const goToPage = (page) => {
         <!-- Last Page -->
         <button 
           class="paginator-btn"
-          :disabled="currentPage === totalPages"
+          :disabled="currentPage === totalPages || rowsPerPage === -1"
           @click="goToPage(totalPages)"
           title="Última página"
         >
@@ -393,14 +438,33 @@ const goToPage = (page) => {
   @apply text-sm;
 }
 
-/* Paginator */
+/* Rows per page selector (TOP) */
+.data-table-rows-selector {
+  @apply flex items-center gap-3 mb-4;
+  @apply pb-3 border-b border-gray-200/50 dark:border-white/5;
+}
+
+/* Paginator (BOTTOM) */
 .data-table-paginator {
-  @apply flex items-center justify-end gap-4 mt-4 pt-4;
-  @apply border-t border-gray-100 dark:border-white/5;
+  @apply flex flex-col sm:flex-row items-center justify-between gap-3;
+  @apply mt-4 pt-4;
+  @apply border-t border-gray-200/50 dark:border-white/5;
+}
+
+/* Page info */
+.paginator-info {
+  @apply text-sm text-gray-500 dark:text-gray-400 font-medium;
+  @apply order-2 sm:order-1;
+}
+
+/* Page navigation */
+.paginator-nav {
+  @apply flex items-center gap-1;
+  @apply order-1 sm:order-2;
 }
 
 .paginator-btn {
-  @apply w-8 h-8 rounded-lg;
+  @apply w-9 h-9 rounded-lg;
   @apply flex items-center justify-center;
   @apply text-sm font-medium;
   @apply text-gray-600 dark:text-gray-400;
@@ -410,9 +474,24 @@ const goToPage = (page) => {
   @apply transition-all duration-200;
 }
 
+/* Page number buttons get special styling */
+.paginator-btn-number {
+  @apply bg-gray-50 dark:bg-white/5;
+  @apply border border-gray-200 dark:border-white/10;
+  @apply hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200;
+  @apply dark:hover:bg-teal-500/10 dark:hover:text-teal-400 dark:hover:border-teal-500/20;
+}
+
 .paginator-btn-active {
-  @apply bg-gray-100 dark:bg-dark-border;
-  @apply text-primary;
-  @apply border border-primary;
+  @apply bg-teal-500 dark:bg-teal-500;
+  @apply text-white dark:text-white;
+  @apply border-teal-500 dark:border-teal-500;
+  @apply shadow-sm shadow-teal-500/20;
+}
+
+.paginator-btn-active:hover {
+  @apply bg-teal-600 dark:bg-teal-600;
+  @apply border-teal-600 dark:border-teal-600;
 }
 </style>
+
