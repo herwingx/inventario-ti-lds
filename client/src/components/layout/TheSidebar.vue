@@ -262,12 +262,18 @@ function navigateTo(routePath) {
       class="flex-none flex items-center justify-center transition-all duration-300 relative border-b border-light-border dark:border-dark-border" 
       :class="showText ? 'h-[5rem] px-6' : 'h-[5rem] px-2'"
     >
-      <img 
-        src="/logo-white.svg" 
-        alt="Linea Digital" 
-        class="transition-all duration-300 object-contain" 
-        :class="showText ? 'h-auto w-[11rem]' : 'h-8 w-auto'" 
-      />
+      <router-link 
+        to="/home"
+        class="transition-all duration-300 hover:opacity-80 cursor-pointer focus:outline-none"
+        title="Ir a Inicio"
+      >
+        <img 
+          src="/logo-white.svg" 
+          alt="Linea Digital" 
+          class="transition-all duration-300 object-contain" 
+          :class="showText ? 'h-auto w-[11rem]' : 'h-8 w-auto'" 
+        />
+      </router-link>
 
       <!-- Botón cerrar en móvil (posición absoluta) -->
       <button 
