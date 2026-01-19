@@ -8,12 +8,14 @@ import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import AreasService from '../services/AreasService'
 import CatalogosService from '../services/CatalogosService'
+import { getStatusSeverity } from '../utils/status'
 
 import { Check, X } from 'lucide-vue-next'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Skeleton from 'primevue/skeleton'
 import Fluid from 'primevue/fluid'
+import Tag from 'primevue/tag'
 
 const route = useRoute()
 const router = useRouter()
@@ -116,6 +118,9 @@ const toUpperCase = (field) => {
         form.value[field] = form.value[field].toUpperCase()
     }
 }
+
+// Helper Severidad Estado
+const getSeverity = getStatusSeverity
 
 // Watcher para filtrar sucursales cuando cambia la empresa
 watch(selectedEmpresa, (newEmpresa) => {
@@ -251,7 +256,21 @@ const goBack = async () => {
                     <!-- STATUS -->
                     <div>
                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Estado <span class="text-red-500">*</span></label>
-                        <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" placeholder="Seleccione Estado" class="!bg-gray-50 dark:!bg-dark-bg w-full" :invalid="!!errors.id_status" />
+                        <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" placeholder="Seleccione Estado" class="!bg-gray-50 dark:!bg-dark-bg w-full" :invalid="!!errors.id_status">
+                            <template #value="slotProps">
+                                <div v-if="slotProps.value" class="flex items-center">
+                                    <Tag :value="statuses.find(s => s.id === slotProps.value)?.nombre_status || 'Estado'" :severity="getSeverity(statuses.find(s => s.id === slotProps.value)?.nombre_status)" class="!text-xs !font-bold px-2 py-0.5" />
+                                </div>
+                                <span v-else>
+                                    {{ slotProps.placeholder }}
+                                </span>
+                            </template>
+                            <template #option="slotProps">
+                                <div class="flex items-center">
+                                    <Tag :value="slotProps.option.nombre_status" :severity="getSeverity(slotProps.option.nombre_status)" class="!text-xs !font-bold px-2 py-0.5" />
+                                </div>
+                            </template>
+                        </Select>
                         <small class="text-red-500" v-if="errors.id_status">{{ errors.id_status }}</small>
                     </div>
 

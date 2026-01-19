@@ -8,11 +8,13 @@ import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import EmpresasService from '../services/EmpresasService'
 import CatalogosService from '../services/CatalogosService'
+import { getStatusSeverity } from '../utils/status'
 
 import { Check, X } from 'lucide-vue-next'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Skeleton from 'primevue/skeleton'
+import Tag from 'primevue/tag'
 
 const route = useRoute()
 const router = useRouter()
@@ -97,6 +99,9 @@ const handleSubmit = async () => {
     }
 }
 
+// Helper Severidad Estado
+const getSeverity = getStatusSeverity
+
 const goBack = async () => {
     const result = await confirmWarning({
         title: 'Confirmar Salida',
@@ -140,7 +145,21 @@ const goBack = async () => {
 
             <div>
                  <label class="block text-sm font-bold mb-2 dark:text-gray-300">Estado</label>
-                 <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" class="w-full !bg-gray-50 dark:!bg-dark-bg" placeholder="Seleccionar (Opcional)" />
+                 <Select v-model="form.id_status" :options="statuses" optionLabel="nombre_status" optionValue="id" class="w-full !bg-gray-50 dark:!bg-dark-bg" placeholder="Seleccionar (Opcional)">
+                     <template #value="slotProps">
+                         <div v-if="slotProps.value" class="flex items-center">
+                             <Tag :value="statuses.find(s => s.id === slotProps.value)?.nombre_status || 'Estado'" :severity="getSeverity(statuses.find(s => s.id === slotProps.value)?.nombre_status)" class="!text-xs !font-bold px-2 py-0.5" />
+                         </div>
+                         <span v-else>
+                             {{ slotProps.placeholder }}
+                         </span>
+                     </template>
+                     <template #option="slotProps">
+                         <div class="flex items-center">
+                             <Tag :value="slotProps.option.nombre_status" :severity="getSeverity(slotProps.option.nombre_status)" class="!text-xs !font-bold px-2 py-0.5" />
+                         </div>
+                     </template>
+                 </Select>
             </div>
 
             <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-dark-border">
