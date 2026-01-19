@@ -182,7 +182,7 @@ const clearFilters = () => {
         :data="filteredDireccionesIp"
         :columns="columns"
         :loading="loading"
-        :rows="15"
+        :rows="10"
         row-key="id"
       >
         <template #empty>

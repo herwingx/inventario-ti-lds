@@ -105,6 +105,11 @@ watch(() => props.data, () => {
   currentPage.value = 1
 })
 
+// Sincronizar rowsPerPage con la prop rows
+watch(() => props.rows, (newRows) => {
+  rowsPerPage.value = newRows
+}, { immediate: true })
+
 /**
  * Datos ordenados según el campo y orden actual.
  */
