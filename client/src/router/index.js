@@ -274,7 +274,19 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory('/soporte/'),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    // Si hay una posición guardada (navegación con botones atrás/adelante), usarla
+    if (savedPosition) {
+      return savedPosition
+    }
+    // Si hay un hash en la URL, hacer scroll a ese elemento
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' }
+    }
+    // Por defecto, siempre hacer scroll al inicio de la página
+    return { top: 0, behavior: 'smooth' }
+  }
 })
 
 // Guard global

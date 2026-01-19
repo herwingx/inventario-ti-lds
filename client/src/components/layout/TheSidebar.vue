@@ -156,13 +156,16 @@ const isCollapsed = computed(() => {
 const activeItemId = ref(null)
 
 /**
- * Inicializar activeItemId basado en la ruta actual
+ * Inicializar activeItemId basado en la ruta actual y expandir el menú relevante.
  */
 const syncActiveItem = () => {
+  // Primero cerrar todos los menús (acordeón)
+  expandedMenus.value = {}
+  
   for (const item of menuItems.value) {
     if (isActiveRoute(item)) {
       activeItemId.value = item.id
-      // Expandir automáticamente el padre si es un submenú
+      // Expandir solo el menú padre del item activo
       if (item.children) {
         expandedMenus.value[item.id] = true
       }
