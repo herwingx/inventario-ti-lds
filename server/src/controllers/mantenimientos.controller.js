@@ -1,342 +1,278 @@
-// src/controllers/mantenimientos.controller.js
-// ! Controlador para la entidad Mantenimientos
-// * Registro y gestión del historial de servicio de los equipos: creación, consulta, actualización y eliminación de mantenimientos.
-// * Este módulo valida fechas, costos y relaciones con equipos y status, asegurando la integridad de los datos.
-
-const { query } = require('../config/db'); // * Utilizo la función personalizada para consultas a la base de datos.
-
-// ===============================================================
 /**
- * Valida si un string tiene formato de fecha YYYY-MM-DD válido.
- *
- * @param {string} dateString - Cadena de fecha a validar.
- * @returns {boolean} True si el formato y la fecha son válidos.
+ * @module Controllers/Mantenimientos
+ * @description Controlador para la gestión de mantenimientos proactivos (Fase 2B).
+ * Reemplaza la versión anterior para soportar el nuevo esquema de BD.
  */
-function isValidDate(dateString) {
-  // * Permito null/vacío si el campo no es obligatorio.
-  if (!dateString) return true;
-  const regex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!regex.test(dateString)) return false;
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return false;
-  const [year, month, day] = dateString.split('-').map(Number);
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-}
-
-// ===============================================================
-// * Funciones controladoras para cada endpoint de mantenimientos
-// ===============================================================
+const { query } = require('../config/db');
 
 /**
- * Obtiene el historial completo de mantenimientos.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
+ * Obtiene la lista de mantenimientos con filtros.
  */
 const getAllMantenimientos = async (req, res, next) => {
   try {
-    // * Consulta SQL con JOINs para traer toda la info relevante de cada mantenimiento
-    const sql = `
-      SELECT
-        m.id,
-        m.id_equipo,
-        e.numero_serie AS equipo_numero_serie,
-        e.nombre_equipo AS equipo_nombre,
-        m.fecha_inicio,
-        m.fecha_fin,
-        m.diagnostico,
-        m.solucion,
-        m.costo,
-        m.proveedor,
-        m.fecha_registro,
-        m.fecha_actualizacion,
-        m.id_status,
-        st.nombre_status AS status_nombre
-      FROM mantenimientos AS m
-      JOIN equipos AS e ON m.id_equipo = e.id
-      JOIN status AS st ON m.id_status = st.id
+    const {
+      tipo,
+      estatus,
+      fecha_inicio,
+      fecha_fin,
+      id_equipo,
+      proximos
+    } = req.query;
+
+    let sql = `
+      SELECT 
+        m.id, 
+        m.id_equipo, 
+        m.tipo,
+        m.titulo,
+        m.descripcion,
+        m.fecha_programada, 
+        m.fecha_fin as fecha_realizada, 
+        m.costo, 
+        m.estatus,
+        m.created_at,
+        e.nombre_equipo, e.numero_serie, e.marca, e.modelo,
+        'Equipo' as tipo_equipo,
+        u.username AS tecnico_asignado
+      FROM mantenimientos m
+      JOIN equipos e ON m.id_equipo = e.id
+      LEFT JOIN usuarios_sistema u ON m.id_tecnico_asignado = u.id
+      WHERE 1=1
     `;
-    const mantenimientos = await query(sql);
-    res.status(200).json(mantenimientos);
+    const params = [];
+
+    if (tipo) {
+      sql += ' AND m.tipo = ?';
+      params.push(tipo);
+    }
+
+    if (estatus) {
+      sql += ' AND m.estatus = ?';
+      params.push(estatus);
+    }
+
+    if (id_equipo) {
+      sql += ' AND m.id_equipo = ?';
+      params.push(id_equipo);
+    }
+
+    if (proximos === 'true') {
+      sql += ' AND m.estatus IN ("PENDIENTE", "EN_PROGRESO") AND m.fecha_programada <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)';
+      sql += ' ORDER BY m.fecha_programada ASC';
+    } else {
+      if (fecha_inicio && fecha_fin) {
+        sql += ' AND m.fecha_programada BETWEEN ? AND ?';
+        params.push(fecha_inicio, fecha_fin);
+      }
+      sql += ' ORDER BY m.fecha_programada DESC';
+    }
+
+    const mantenimientos = await query(sql, params);
+    res.json(mantenimientos);
   } catch (error) {
-    // ! Si hay error, lo paso al middleware global
-    console.error('Error al obtener todos los mantenimientos:', error);
     next(error);
   }
 };
 
 /**
- * Busca un registro de mantenimiento específico por su ID.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
+ * Obtiene el detalle de un mantenimiento con sus archivos.
  */
 const getMantenimientoById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const sql = `
-       SELECT
-        m.id,
-        m.id_equipo,
-        e.numero_serie AS equipo_numero_serie,
-        e.nombre_equipo AS equipo_nombre,
-        m.fecha_inicio,
-        m.fecha_fin,
-        m.diagnostico,
-        m.solucion,
-        m.costo,
-        m.proveedor,
-        m.fecha_registro,
-        m.fecha_actualizacion,
-        m.id_status,
-        st.nombre_status AS status_nombre
-      FROM mantenimientos AS m
-      JOIN equipos AS e ON m.id_equipo = e.id
-      JOIN status AS st ON m.id_status = st.id
+
+    const [maintenance] = await query(`
+      SELECT m.*, e.marca, e.modelo, e.numero_serie, e.tipo_equipo 
+      FROM mantenimientos m
+      JOIN equipos e ON m.id_equipo = e.id
       WHERE m.id = ?
-    `;
-    const params = [id];
-    const mantenimientos = await query(sql, params);
-    if (mantenimientos.length === 0) {
-      res.status(404).json({ message: `Registro de mantenimiento con ID ${id} no encontrado.` });
-    } else {
-      res.status(200).json(mantenimientos[0]);
+    `, [id]);
+
+    if (!maintenance) return res.status(404).json({ message: 'No encontrado' });
+
+    // Intentar obtener archivos si la tabla existe (por si acaso no corrieron el migration completo)
+    let archivos = [];
+    try {
+      archivos = await query('SELECT * FROM mantenimiento_archivos WHERE id_mantenimiento = ?', [id]);
+    } catch (e) {
+      console.warn('Tabla mantenimiento_archivos no encontrada o error', e.message);
     }
+
+    res.json({ ...maintenance, archivos });
   } catch (error) {
-    // ! Si hay error, lo paso al middleware global
-    console.error(`Error al obtener registro de mantenimiento con ID ${req.params.id}:`, error);
     next(error);
   }
 };
 
 /**
- * Registra un nuevo mantenimiento para un equipo.
- * Valida fechas, costos y referencias a equipos y status.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
+ * Crea un nuevo mantenimiento programado.
  */
 const createMantenimiento = async (req, res, next) => {
   try {
-    // * Extraigo los datos del body. id_equipo y fecha_inicio son obligatorios
     const {
-      id_equipo, fecha_inicio, fecha_fin, diagnostico, solucion,
-      costo, proveedor, id_status
+      id_equipo,
+      tipo,
+      titulo,
+      descripcion,
+      fecha_programada,
+      id_tecnico_asignado
     } = req.body;
-    // * Validaciones de campos obligatorios y formato de fechas
-    if (id_equipo === undefined || !fecha_inicio) {
-      return res.status(400).json({ message: 'Los campos id_equipo y fecha_inicio son obligatorios.' });
+
+    const id_creador = req.user ? req.user.userId : null;
+
+    if (!id_equipo || !titulo || !fecha_programada) {
+      return res.status(400).json({ message: 'Faltan campos obligatorios: id_equipo, titulo, fecha_programada' });
     }
-    if (!isValidDate(fecha_inicio)) {
-      return res.status(400).json({ message: 'El formato de fecha_inicio debe ser YYYY-MM-DD.' });
+
+    const sql = `
+      INSERT INTO mantenimientos 
+      (id_equipo, tipo, titulo, descripcion, fecha_programada, id_tecnico_asignado, id_creador, estatus)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDIENTE')
+    `;
+
+    const result = await query(sql, [
+      id_equipo,
+      tipo || 'PREVENTIVO',
+      titulo,
+      descripcion,
+      fecha_programada,
+      id_tecnico_asignado,
+      id_creador
+    ]);
+
+    // Intentar log de auditoría si el servicio existe
+    try {
+      const { logAction } = require('../services/audit.service');
+      await logAction({
+        tabla: 'mantenimientos',
+        accion: 'CREATE',
+        id_registro: result.insertId,
+        valor_nuevo: req.body,
+        id_usuario: id_creador,
+        ip_address: req.ip,
+        user_agent: req.get('User-Agent')
+      });
+    } catch (e) {
+      // Ignorar error de auditoría si no está configurada
     }
-    if (fecha_fin !== undefined && fecha_fin !== null) {
-      if (!isValidDate(fecha_fin)) {
-        return res.status(400).json({ message: 'El formato de fecha_fin debe ser YYYY-MM-DD.' });
-      }
-      if (new Date(fecha_fin) < new Date(fecha_inicio)) {
-        return res.status(400).json({ message: 'La fecha_fin no puede ser anterior a la fecha_inicio.' });
-      }
-    } else if (fecha_fin === '') {
-      fecha_fin = null;
-    }
-    // * Validar existencia de FKs
-    const equipoExists = await query('SELECT id FROM equipos WHERE id = ?', [id_equipo]);
-    if (equipoExists.length === 0) {
-      return res.status(400).json({ message: `El ID de equipo ${id_equipo} no es válido.` });
-    }
-    if (id_status !== undefined && id_status !== null) {
-      const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
-      if (statusExists.length === 0) {
-        return res.status(400).json({ message: `El ID de status ${id_status} no es válido.` });
-      }
-    } else if (id_status === null) {
-      return res.status(400).json({ message: 'El campo id_status no puede ser nulo.' });
-    }
-    // * Validar costo si se proporciona
-    if (costo !== undefined && costo !== null) {
-      if (typeof costo !== 'number' && typeof costo !== 'string' || !isFinite(parseFloat(costo))) {
-        return res.status(400).json({ message: 'El campo costo debe ser un número válido.' });
-      }
-    } else if (costo === '') {
-      costo = null;
-    }
-    // * Construyo la consulta SQL dinámicamente según los campos presentes
-    let sql = 'INSERT INTO mantenimientos (id_equipo, fecha_inicio';
-    const values = [id_equipo, fecha_inicio];
-    const placeholders = ['?', '?'];
-    if (fecha_fin !== undefined && fecha_fin !== null) { sql += ', fecha_fin'; placeholders.push('?'); values.push(fecha_fin); }
-    if (diagnostico !== undefined && diagnostico !== null) { sql += ', diagnostico'; placeholders.push('?'); values.push(diagnostico === null || diagnostico.trim() === '' ? null : diagnostico); }
-    if (solucion !== undefined && solucion !== null) { sql += ', solucion'; placeholders.push('?'); values.push(solucion === null || solucion.trim() === '' ? null : solucion); }
-    if (costo !== undefined && costo !== null) { sql += ', costo'; placeholders.push('?'); values.push(costo); }
-    if (proveedor !== undefined && proveedor !== null) { sql += ', proveedor'; placeholders.push('?'); values.push(proveedor === null || proveedor.trim() === '' ? null : proveedor); }
-    if (id_status !== undefined && id_status !== null) { sql += ', id_status'; placeholders.push('?'); values.push(id_status); }
-    sql += ') VALUES (' + placeholders.join(', ') + ')';
-    const result = await query(sql, values);
-    const newMantenimientoId = result.insertId;
+
     res.status(201).json({
-      message: 'Registro de mantenimiento creado exitosamente',
-      id: newMantenimientoId,
-      id_equipo: id_equipo,
-      fecha_inicio: fecha_inicio
+      id: result.insertId,
+      message: 'Mantenimiento programado exitosamente'
     });
   } catch (error) {
-    // ! Si hay error, lo paso al middleware global
-    console.error('Error al crear registro de mantenimiento:', error);
     next(error);
   }
 };
 
 /**
- * Actualiza los datos de un registro de mantenimiento.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
+ * Actualiza un mantenimiento.
+ * Soporta actualización de estatus con lógica de completado.
  */
 const updateMantenimiento = async (req, res, next) => {
   try {
-    // * Extraigo el ID y los datos a actualizar
     const { id } = req.params;
     const {
-      id_equipo, fecha_inicio, fecha_fin, diagnostico, solucion,
-      costo, proveedor, id_status
+      estatus,
+      notas_cierre,
+      costo,
+      fecha_realizada,
+      titulo,
+      descripcion,
+      fecha_programada,
+      id_tecnico_asignado
     } = req.body;
-    // * Validar que al menos un campo sea enviado
-    const updateFields = Object.keys(req.body);
-    if (updateFields.length === 0) {
-      return res.status(400).json({ message: 'Se debe proporcionar al menos un campo para actualizar.' });
-    }
-    if (fecha_inicio !== undefined && fecha_inicio !== null && fecha_inicio.trim() === '') {
-      return res.status(400).json({ message: 'El campo fecha_inicio no puede estar vacío.' });
-    }
-    if (fecha_inicio !== undefined && fecha_inicio !== null) {
-      if (!isValidDate(fecha_inicio)) {
-        return res.status(400).json({ message: 'El formato de fecha_inicio debe ser YYYY-MM-DD.' });
+
+    // Obtener datos actuales
+    const [current] = await query('SELECT * FROM mantenimientos WHERE id = ?', [id]);
+    if (!current) return res.status(404).json({ message: 'Mantenimiento no encontrado' });
+
+    // Si solo actualizamos datos básicos
+    if (!estatus || estatus === current.estatus) {
+      let sql = 'UPDATE mantenimientos SET ';
+      const params = [];
+      const updates = [];
+
+      if (titulo) { updates.push('titulo = ?'); params.push(titulo); }
+      if (descripcion) { updates.push('descripcion = ?'); params.push(descripcion); }
+      if (fecha_programada) { updates.push('fecha_programada = ?'); params.push(fecha_programada); }
+      if (id_tecnico_asignado) { updates.push('id_tecnico_asignado = ?'); params.push(id_tecnico_asignado); }
+      if (costo) { updates.push('costo = ?'); params.push(costo); }
+
+      if (updates.length > 0) {
+        sql += updates.join(', ') + ' WHERE id = ?';
+        params.push(id);
+        await query(sql, params);
+        return res.json({ message: 'Mantenimiento actualizado' });
+      } else {
+        return res.json({ message: 'Nada que actualizar' });
       }
     }
-    if (fecha_fin !== undefined && fecha_fin !== null) {
-      if (!isValidDate(fecha_fin)) {
-        return res.status(400).json({ message: 'El formato de fecha_fin debe ser YYYY-MM-DD.' });
+
+    // Lógica de cambio de estatus
+    let sql = 'UPDATE mantenimientos SET estatus = ?';
+    const params = [estatus];
+
+    if (estatus === 'COMPLETADO' && current.estatus !== 'COMPLETADO') {
+      sql += ', fecha_fin = ?, costo = ?';
+      const fechaFin = fecha_realizada || new Date();
+      params.push(fechaFin, costo || current.costo || 0);
+
+      // Si es preventivo, actualizar fechas del equipo
+      if (current.tipo === 'PREVENTIVO') {
+        const [equipo] = await query('SELECT frecuencia_mantenimiento_meses FROM equipos WHERE id = ?', [current.id_equipo]);
+
+        if (equipo && equipo.frecuencia_mantenimiento_meses) {
+          // Calcular próxima fecha
+          const nextDate = new Date(fechaFin);
+          nextDate.setMonth(nextDate.getMonth() + equipo.frecuencia_mantenimiento_meses);
+
+          // Formatear fecha para SQL YYYY-MM-DD
+          const nextDateStr = nextDate.toISOString().split('T')[0];
+
+          await query(
+            'UPDATE equipos SET ultima_fecha_mantenimiento = ?, proxima_fecha_mantenimiento = ? WHERE id = ?',
+            [fechaFin, nextDateStr, current.id_equipo]
+          );
+        } else {
+          await query(
+            'UPDATE equipos SET ultima_fecha_mantenimiento = ? WHERE id = ?',
+            [fechaFin, current.id_equipo]
+          );
+        }
       }
-    } else if (fecha_fin === '') {
-      fecha_fin = null;
     }
-    // * Validar relación entre fecha_inicio y fecha_fin SI AMBAS están presentes
-    let final_fecha_inicio = fecha_inicio;
-    let final_fecha_fin = fecha_fin;
-    if (final_fecha_inicio === undefined || final_fecha_fin === undefined) {
-      const currentMantenimiento = await query('SELECT fecha_inicio, fecha_fin FROM mantenimientos WHERE id = ?', [id]);
-      if (currentMantenimiento.length === 0) {
-        return res.status(404).json({ message: `Registro de mantenimiento con ID ${id} no encontrado.` });
-      }
-      if (final_fecha_inicio === undefined) final_fecha_inicio = currentMantenimiento[0].fecha_inicio;
-      if (final_fecha_fin === undefined) final_fecha_fin = currentMantenimiento[0].fecha_fin;
+
+    if (notas_cierre) {
+      sql += ', descripcion = CONCAT(descripcion, "\n\n[CIERRE]: ", ?)';
+      params.push(notas_cierre);
     }
-    const dateInicio = final_fecha_inicio ? new Date(final_fecha_inicio) : null;
-    const dateFin = final_fecha_fin ? new Date(final_fecha_fin) : null;
-    if (dateInicio && dateFin && dateFin < dateInicio) {
-      return res.status(400).json({ message: 'La fecha de fin no puede ser anterior a la fecha de inicio.' });
-    }
-    if (id_equipo !== undefined && id_equipo !== null) {
-      const equipoExists = await query('SELECT id FROM equipos WHERE id = ?', [id_equipo]);
-      if (equipoExists.length === 0) {
-        return res.status(400).json({ message: `El ID de equipo ${id_equipo} no es válido.` });
-      }
-    } else if (id_equipo === null) {
-      return res.status(400).json({ message: 'El campo id_equipo no puede ser nulo.' });
-    }
-    if (id_status !== undefined && id_status !== null) {
-      const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
-      if (statusExists.length === 0) {
-        return res.status(400).json({ message: `El ID de status ${id_status} no es válido.` });
-      }
-    } else if (id_status === null) {
-      return res.status(400).json({ message: 'El campo id_status no puede ser nulo.' });
-    }
-    if (costo !== undefined && costo !== null) {
-      if (typeof costo !== 'number' && typeof costo !== 'string' || !isFinite(parseFloat(costo))) {
-        return res.status(400).json({ message: 'El campo costo debe ser un número válido.' });
-      }
-    } else if (costo === '') {
-      costo = null;
-    }
-    // * Construyo la consulta UPDATE dinámicamente
-    let sql = 'UPDATE mantenimientos SET ';
-    const params = [];
-    const updates = [];
-    if (id_equipo !== undefined) { updates.push('id_equipo = ?'); params.push(id_equipo); }
-    if (fecha_inicio !== undefined) { updates.push('fecha_inicio = ?'); params.push(fecha_inicio); }
-    if (fecha_fin !== undefined) { updates.push('fecha_fin = ?'); params.push(fecha_fin === null ? null : fecha_fin); }
-    if (diagnostico !== undefined) { updates.push('diagnostico = ?'); params.push(diagnostico === null || diagnostico.trim() === '' ? null : diagnostico); }
-    if (solucion !== undefined) { updates.push('solucion = ?'); params.push(solucion === null || solucion.trim() === '' ? null : solucion); }
-    if (costo !== undefined) { updates.push('costo = ?'); params.push(costo); }
-    if (proveedor !== undefined) { updates.push('proveedor = ?'); params.push(proveedor === null || proveedor.trim() === '' ? null : proveedor); }
-    if (id_status !== undefined) { updates.push('id_status = ?'); params.push(id_status); }
-    if (updates.length === 0) {
-      return res.status(400).json({ message: 'No se proporcionaron campos válidos para actualizar.' });
-    }
-    sql += updates.join(', ');
+
     sql += ' WHERE id = ?';
     params.push(id);
-    const result = await query(sql, params);
-    if (result.affectedRows === 0) {
-      res.status(404).json({ message: `Registro de mantenimiento con ID ${id} no encontrado.` });
-    } else {
-      res.status(200).json({ message: `Registro de mantenimiento con ID ${id} actualizado exitosamente.` });
-    }
+
+    await query(sql, params);
+
+    res.json({ message: 'Estatus actualizado correctamente' });
   } catch (error) {
-    // ! Si hay error, lo paso al middleware global
-    console.error(`Error al actualizar registro de mantenimiento con ID ${req.params.id}:`, error);
     next(error);
   }
 };
 
-/**
- * Elimina un registro de mantenimiento.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
 const deleteMantenimiento = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const sql = 'DELETE FROM mantenimientos WHERE id = ?';
-    const params = [id];
-    const result = await query(sql, params);
-    if (result.affectedRows === 0) {
-      res.status(404).json({ message: `Registro de mantenimiento con ID ${id} no encontrado.` });
-    } else {
-      res.status(200).json({ message: `Registro de mantenimiento con ID ${id} eliminado exitosamente.` });
-    }
+    await query('DELETE FROM mantenimientos WHERE id = ?', [id]);
+    res.json({ message: 'Mantenimiento eliminado' });
   } catch (error) {
-    // ! Si hay error, lo paso al middleware global
-    console.error(`Error al eliminar registro de mantenimiento con ID ${req.params.id}:`, error);
-    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-      res.status(409).json({
-        message: `No se puede eliminar el registro de mantenimiento con ID ${req.params.id} porque está siendo utilizado por otros registros.`,
-        error: error.message
-      });
-    } else {
-      next(error);
-    }
+    next(error);
   }
 };
 
-// * Exporto todas las funciones del controlador para usarlas en las rutas
 module.exports = {
   getAllMantenimientos,
   getMantenimientoById,
   createMantenimiento,
   updateMantenimiento,
-  deleteMantenimiento,
+  deleteMantenimiento
 };

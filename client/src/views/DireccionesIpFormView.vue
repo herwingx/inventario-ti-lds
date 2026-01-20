@@ -180,10 +180,6 @@ const goBack = async () => {
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ formTitle }}</h2>
                 <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Configure la dirección IP de red</p>
             </div>
-            <button @click="goBack" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
-                <X :size="20" />
-                <span>Cancelar</span>
-            </button>
         </div>
 
         <form @submit.prevent="handleSubmit">

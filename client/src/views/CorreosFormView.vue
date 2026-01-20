@@ -165,10 +165,6 @@ const handleSubmit = async () => {
                  <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ isEditing ? 'Editar Cuenta' : 'Nueva Cuenta de Correo' }}</h2>
                  <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Gestión de cuentas corporativas para empleados</p>
             </div>
-            <button @click="goBack" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
-                <X :size="20" />
-                <span>Cancelar</span>
-            </button>
         </div>
 
         <div v-if="loading" class="space-y-4">

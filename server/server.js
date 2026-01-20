@@ -129,7 +129,7 @@ app.use('/api', protect);
 
 // * Middleware de Auditoría (Fase 2)
 // * Registra operaciones de escritura (POST/PUT/DELETE) en logs_sistema
-app.use('/api', auditMiddleware);
+// app.use('/api', auditMiddleware); // Deshabilitado temporalmente para pruebas de timeout
 // TODO: Aquí se montan las rutas principales de la API
 // * Cada entidad tiene su propio archivo de rutas
 // * (Se reiniciará el servidor automáticamente si se usa nodemon)
