@@ -1,240 +1,255 @@
 <script setup>
-/**
- * @fileoverview Vista de historial de Mantenimientos.
- * Permite visualizar y gestionar los servicios de mantenimiento (preventivo/correctivo) de los equipos.
- */
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import MaintenanceService from '../services/MaintenanceService'
+import { 
+  Calendar, CheckCircle, Clock, AlertTriangle, Plus, Filter, 
+  Archive, Wrench, X 
+} from 'lucide-vue-next'
 import { useSwal } from '../composables/useSwal'
-import MantenimientosService from '../services/MantenimientosService'
-import DataTable from '../components/ui/DataTable.vue'
-import { getStatusSeverity } from '../utils/status'
-import { Search, Plus, Pencil, Trash2, Wrench } from 'lucide-vue-next'
 
-import InputText from 'primevue/inputtext'
-import Tag from 'primevue/tag'
+// Componentes PrimeVue
 import Select from 'primevue/select'
+import Tag from 'primevue/tag'
 
 const router = useRouter()
-const { confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
+const { success, error, confirmSuccess } = useSwal()
 
-// Data
+// Estado
 const mantenimientos = ref([])
 const loading = ref(true)
-const globalFilter = ref('')
-const statusFilter = ref(null)
 
-// Opciones para el filtro de Estado
-const statuses = ref([
-  { label: 'En Proceso', value: 'EN PROCESO' },
-  { label: 'Finalizado', value: 'FINALIZADO' },
-  { label: 'Cancelado', value: 'CANCELADO' }
-])
-
-// Columnas
-const columns = [
-  { field: 'id', header: 'ID', sortable: true, width: '5%' },
-  { field: 'equipo_nombre', header: 'Equipo/Serie', sortable: true, width: '25%' },
-  { field: 'fecha_inicio', header: 'Inicio', sortable: true, width: '15%' },
-  { field: 'fecha_fin', header: 'Fin/Estado', sortable: true, width: '15%' },
-  { field: 'proveedor', header: 'Proveedor', sortable: true, width: '15%' },
-  { field: 'status_nombre', header: 'Status', sortable: true, width: '10%' },
-  { field: 'actions', header: 'Acciones', sortable: false, width: '12%', align: 'right' }
+// Opciones para Selects PrimeVue
+const statusOptions = [
+  { label: 'Pendiente', value: 'PENDIENTE' },
+  { label: 'En Progreso', value: 'EN_PROGRESO' },
+  { label: 'Completado', value: 'COMPLETADO' },
+  { label: 'Vencido', value: 'VENCIDO' }
 ]
 
-const filteredMantenimientos = computed(() => {
-  let result = mantenimientos.value
+const typeOptions = [
+  { label: 'Preventivo', value: 'PREVENTIVO' },
+  { label: 'Correctivo', value: 'CORRECTIVO' }
+]
 
-  if (globalFilter.value) {
-    const search = globalFilter.value.toLowerCase()
-    result = result.filter(m =>
-      m.equipo_nombre?.toLowerCase().includes(search) ||
-      m.equipo_numero_serie?.toLowerCase().includes(search) ||
-      m.proveedor?.toLowerCase().includes(search) ||
-      m.status_nombre?.toLowerCase().includes(search)
-    )
-  }
-
-  if (statusFilter.value) {
-    result = result.filter(m => m.status_nombre?.toUpperCase() === statusFilter.value)
-  }
-
-  return result
+// Filtros
+const filters = ref({
+  estatus: null,
+  tipo: null,
+  proximos: false
 })
 
-onMounted(async () => {
-  loadMantenimientos()
+onMounted(() => {
+  loadData()
 })
 
-const loadMantenimientos = async () => {
+const loadData = async () => {
   loading.value = true
-  await new Promise(resolve => setTimeout(resolve, 600))
   try {
-    mantenimientos.value = await MantenimientosService.getAll()
-  } catch (error) {
-    toastError('No se pudieron cargar los mantenimientos')
+    const params = { 
+      estatus: filters.value.estatus?.value, 
+      tipo: filters.value.tipo?.value,
+      proximos: filters.value.proximos
+    }
+    Object.keys(params).forEach(key => !params[key] && delete params[key])
+    
+    mantenimientos.value = await MaintenanceService.getAll(params)
+  } catch (err) {
+    console.error(err)
+    error('Error al cargar mantenimientos')
   } finally {
     loading.value = false
   }
 }
 
-const formatDate = (date) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })
+// Watchers
+watch(filters, () => {
+  loadData()
+}, { deep: true })
+
+// Helpers visuales
+const getStatusData = (status) => {
+  const map = {
+    'PENDIENTE': { severity: 'warning', icon: Clock, label: 'Pendiente' },
+    'EN_PROGRESO': { severity: 'info', icon: Wrench, label: 'En Progreso' },
+    'COMPLETADO': { severity: 'success', icon: CheckCircle, label: 'Completado' },
+    'CANCELADO': { severity: 'secondary', icon: X, label: 'Cancelado' },
+    'VENCIDO': { severity: 'danger', icon: AlertTriangle, label: 'Vencido' }
+  }
+  return map[status] || map['PENDIENTE'] // Fallback seguro
 }
 
-// Usando función centralizada getStatusSeverity desde utils/status.js
+const formatDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('es-MX', { 
+    year: 'numeric', month: 'short', day: 'numeric' 
+  })
+}
 
+// Acciones
 const openNew = () => {
   router.push({ name: 'mantenimientos-nuevo' })
 }
 
-const editMantenimiento = (mantenimiento) => {
-  router.push({ name: 'mantenimientos-editar', params: { id: mantenimiento.id } })
-}
-
-const deleteMantenimiento = async (mantenimiento) => {
-  const result = await confirmDelete({
-    title: 'Confirmar Eliminación',
-    text: '¿Estás seguro de eliminar este registro de mantenimiento?',
-    confirmButtonText: 'Eliminar Registro',
-    cancelButtonText: 'Cancelar'
+const markCompleted = async (item) => {
+  const result = await confirmSuccess({
+    title: '¿Marcar como completado?',
+    text: "Se registrará la fecha actual y costo del servicio.",
+    confirmButtonText: 'Sí, completar'
   })
-  
+
   if (result.isConfirmed) {
     try {
-      await MantenimientosService.delete(mantenimiento.id)
-      toastSuccess('Registro eliminado')
-      loadMantenimientos()
-    } catch (error) {
-      toastError('No se pudo eliminar el registro')
+      await MaintenanceService.update(item.id, { 
+        estatus: 'COMPLETADO',
+        fecha_fin: new Date() // Aseguramos enviar fecha_fin
+      })
+      success('Marcado como completado')
+      loadData()
+    } catch (err) {
+      error('Error al actualizar')
     }
-  } else {
-    toastInfo('Operación cancelada')
   }
-}
-
-const clearFilters = () => {
-  globalFilter.value = ''
-  statusFilter.value = null
 }
 </script>
 
 <template>
   <div class="animate-fade-in-up">
-    
+    <!-- Contenedor Principal -->
     <div class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 border border-gray-200 dark:border-dark-border transition-colors duration-300">
       
-      <!-- Toolbar -->
+      <!-- Filtros (Estilo Unificado con Correos) -->
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         
+        <!-- Izquierda: Search + Filters -->
         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-1">
-          <div class="relative w-full sm:w-72">
+          <!-- TODO: Implementar búsqueda por texto en API si es necesario, por ahora es visual -->
+          <!-- <div class="relative w-full sm:w-64">
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
-            <InputText v-model="globalFilter" placeholder="Buscar..." class="w-full !pl-10 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white !py-2.5 !rounded-lg focus:!border-primary" />
-          </div>
+            <InputText v-model="filters.search" placeholder="Buscar..." class="w-full !pl-10 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white !py-2.5 !rounded-lg focus:!border-primary" />
+          </div> -->
 
-          <Select v-model="statusFilter" :options="statuses" optionLabel="label" optionValue="value" placeholder="Estado" showClear class="w-full sm:w-40 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white custom-select" />
+          <Select 
+            v-model="filters.estatus" 
+            :options="statusOptions" 
+            optionLabel="label" 
+            placeholder="Estado" 
+            showClear
+            class="w-full sm:w-48 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white custom-select" 
+          >
+            <template #value="slotProps">
+              <div v-if="slotProps.value" class="flex items-center">
+                <Tag 
+                  :value="slotProps.value.label" 
+                  :severity="getStatusData(slotProps.value.value).severity"
+                  class="!text-xs !font-bold !px-2 !py-0.5"
+                />
+              </div>
+              <span v-else>{{ slotProps.placeholder }}</span>
+            </template>
+            <template #option="slotProps">
+              <div class="flex items-center">
+                <Tag 
+                  :value="slotProps.option.label" 
+                  :severity="getStatusData(slotProps.option.value).severity"
+                  class="!text-xs !font-bold !px-2 !py-0.5"
+                />
+              </div>
+            </template>
+          </Select>
+
+          <Select 
+            v-model="filters.tipo" 
+            :options="typeOptions" 
+            optionLabel="label" 
+            placeholder="Tipo" 
+            showClear
+            class="w-full sm:w-48 !bg-gray-50 dark:!bg-dark-bg !border-gray-300 dark:!border-dark-border !text-gray-900 dark:!text-white custom-select" 
+          />
+          
+          <div class="flex items-center h-full"> 
+             <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-bg px-3 py-2 rounded-lg transition-colors border border-transparent hover:border-gray-200 dark:hover:border-dark-border h-full">
+              <input type="checkbox" v-model="filters.proximos" class="rounded text-primary focus:ring-primary border-gray-300 dark:border-dark-border bg-white dark:bg-dark-card w-4 h-4">
+              <span class="text-sm text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">Próximos (30d)</span>
+            </label>
+          </div>
         </div>
 
-        <button class="btn-primary w-full md:w-auto" @click="openNew">
+        <!-- Derecha: Botón -->
+        <button @click="openNew" class="btn-primary w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all">
           <Plus :size="18" />
-          <span>Registrar Servicio</span>
+          <span class="font-bold">Nuevo Mantenimiento</span>
         </button>
       </div>
 
-      <!-- DataTable Nativo -->
-      <DataTable 
-        :data="filteredMantenimientos"
-        :columns="columns"
-        :loading="loading"
-        :rows="10"
-        row-key="id"
-      >
-        <template #empty>
-          <div class="flex flex-col items-center justify-center p-12 text-center">
-            <div class="w-24 h-24 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mb-4 transition-colors">
-              <Wrench class="text-gray-400 dark:text-gray-500" :size="40" />
+      <!-- Lista de Mantenimientos -->
+      <div v-if="loading" class="flex justify-center py-12">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      </div>
+
+      <div v-else-if="mantenimientos.length === 0" class="flex flex-col items-center justify-center py-16 bg-gray-50 dark:bg-dark-bg rounded-xl border border-dashed border-gray-300 dark:border-dark-border">
+        <div class="w-16 h-16 bg-gray-100 dark:bg-dark-card rounded-full flex items-center justify-center mb-4">
+          <Archive class="text-gray-400 dark:text-gray-500" :size="32" />
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">No hay mantenimientos</h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">Intenta cambiar los filtros o programa uno nuevo.</p>
+      </div>
+
+      <div v-else class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div 
+          v-for="item in mantenimientos" 
+          :key="item.id"
+          class="bg-white dark:bg-dark-card rounded-xl shadow-sm hover:shadow-lg hover:border-primary/50 transition-all p-5 border border-gray-200 dark:border-dark-border relative group duration-300"
+        >
+          <!-- Badge Estado -->
+          <div class="flex justify-between items-start mb-3">
+            <Tag 
+              :value="getStatusData(item.estatus).label" 
+              :severity="getStatusData(item.estatus).severity" 
+              class="!text-xs !font-bold px-2 py-1 !rounded-md"
+            >
+              <template #icon>
+                <component :is="getStatusData(item.estatus).icon" :size="12" class="mr-1" />
+              </template>
+            </Tag>
+            <span class="text-xs font-mono font-bold text-gray-400 dark:text-gray-500">#{{ item.id }}</span>
+          </div>
+
+          <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-lg line-clamp-1" :title="item.titulo">{{ item.titulo }}</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2 h-10">{{ item.descripcion }}</p>
+
+          <!-- Equipo -->
+          <div class="bg-gray-50 dark:bg-dark-bg rounded-lg p-3 mb-4 flex items-center gap-3 border border-gray-100 dark:border-dark-border">
+            <div class="p-2 bg-white dark:bg-dark-card rounded-lg shadow-sm border border-gray-100 dark:border-dark-border">
+              <Wrench :size="18" class="text-gray-500 dark:text-gray-400" />
             </div>
-            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-300 mb-1">Sin Registros</h3>
-            <p class="text-gray-500 text-sm max-w-xs mx-auto">No hay mantenimientos registrados aún.</p>
-            <button v-if="globalFilter || statusFilter" class="mt-4 text-primary font-medium hover:underline" @click="clearFilters">Limpiar Filtros</button>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">
+                {{ item.marca }} {{ item.modelo }}
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 font-mono truncate tracking-wide max-w-[150px]">{{ item.numero_serie }}</p>
+            </div>
           </div>
-        </template>
 
-        <template #id="{ data }">
-          <span class="text-gray-700 dark:text-gray-200 font-mono text-sm font-bold">#{{ data.id }}</span>
-        </template>
-
-        <template #skeleton-id>
-          <div class="skeleton h-4 w-8"></div>
-        </template>
-
-        <template #equipo_nombre="{ data }">
-          <div>
-            <div class="text-gray-900 dark:text-white font-bold text-base">{{ data.equipo_nombre }}</div>
-            <span class="text-gray-500 dark:text-gray-400 text-xs font-medium font-mono">{{ data.equipo_numero_serie }}</span>
+          <!-- Meta -->
+          <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-3 border-t border-gray-100 dark:border-dark-border">
+            <div class="flex items-center gap-1.5 font-medium">
+              <Calendar :size="14" />
+              <span :class="{'text-red-500 dark:text-red-400 font-bold': item.estatus === 'PENDIENTE' && new Date(item.fecha_programada) < new Date()}">
+                {{ formatDate(item.fecha_programada) }}
+              </span>
+            </div>
           </div>
-        </template>
 
-        <template #skeleton-equipo_nombre>
-          <div class="space-y-1">
-            <div class="skeleton h-4 w-32"></div>
-            <div class="skeleton h-3 w-24"></div>
-          </div>
-        </template>
-
-        <template #fecha_inicio="{ data }">
-          <span class="text-gray-700 dark:text-gray-200 text-sm font-bold">{{ formatDate(data.fecha_inicio) }}</span>
-        </template>
-
-        <template #skeleton-fecha_inicio>
-          <div class="skeleton h-4 w-20"></div>
-        </template>
-
-        <template #fecha_fin="{ data }">
-          <span v-if="data.fecha_fin" class="text-gray-700 dark:text-gray-200 text-sm">{{ formatDate(data.fecha_fin) }}</span>
-          <span v-else class="text-xs font-bold text-orange-500 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded uppercase tracking-wider">En Proceso</span>
-        </template>
-
-        <template #skeleton-fecha_fin>
-          <div class="skeleton h-4 w-20"></div>
-        </template>
-
-        <template #proveedor="{ data }">
-          <span class="text-gray-900 dark:text-white text-sm font-bold">{{ data.proveedor || 'Interno' }}</span>
-        </template>
-
-        <template #skeleton-proveedor>
-          <div class="skeleton h-4 w-24"></div>
-        </template>
-
-        <template #status_nombre="{ data }">
-          <Tag :value="data.status_nombre" :severity="getStatusSeverity(data.status_nombre)" class="!text-xs !font-bold px-3 py-1.5 !rounded-md text-white tracking-wide" />
-        </template>
-
-        <template #skeleton-status_nombre>
-          <div class="skeleton h-6 w-20 rounded-md"></div>
-        </template>
-
-        <template #actions="{ data }">
-          <div class="flex gap-1 justify-end">
-            <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all" @click="editMantenimiento(data)" title="Editar">
-              <Pencil :size="16" />
-            </button>
-            <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center transition-all" @click="deleteMantenimiento(data)" title="Eliminar">
-              <Trash2 :size="16" />
+          <!-- Acciones Hover -->
+          <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button v-if="item.estatus === 'PENDIENTE'" @click="markCompleted(item)" class="bg-white dark:bg-dark-bg p-2 rounded-lg shadow-md text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 border border-gray-200 dark:border-dark-border transition-colors" title="Completar">
+              <CheckCircle :size="18" />
             </button>
           </div>
-        </template>
-
-        <template #skeleton-actions>
-          <div class="flex gap-2 justify-end">
-            <div class="skeleton w-8 h-8 rounded-lg"></div>
-            <div class="skeleton w-8 h-8 rounded-lg"></div>
-          </div>
-        </template>
-      </DataTable>
+        </div>
+      </div>
+    
     </div>
   </div>
 </template>

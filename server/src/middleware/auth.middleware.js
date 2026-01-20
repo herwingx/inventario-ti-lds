@@ -48,13 +48,30 @@ const protect = (req, res, next) => {
         }
     }
 
-    // * Si no hay token en el encabezado, el usuario no está autorizado.
     if (!token) {
         console.warn('Middleware: Petición sin token.');
         return res.status(401).json({ message: 'No autorizado, no hay token.' });
     }
 };
 
+/**
+ * Middleware que verifica si el usuario es Admin (1) o Soporte (2).
+ * Asume que req.user ya fue llenado por protect.
+ */
+const isSupportOrAdmin = (req, res, next) => {
+    if (!req.user || !req.user.roleId) {
+        return res.status(401).json({ message: 'No autorizado, rol no identificado.' });
+    }
+
+    // IDs de rol: 1=Admin, 2=Soporte (según convención de semillas)
+    if (req.user.roleId === 1 || req.user.roleId === 2) {
+        next();
+    } else {
+        return res.status(403).json({ message: 'Acceso denegado. Se requiere nivel de soporte o admin.' });
+    }
+};
+
 module.exports = {
-    protect
+    protect,
+    isSupportOrAdmin
 }; 
