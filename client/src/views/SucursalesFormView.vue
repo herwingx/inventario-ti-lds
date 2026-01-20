@@ -130,10 +130,6 @@ const goBack = async () => {
         
         <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-gray-100 dark:border-dark-border pb-4 gap-4">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ isEditing ? 'Editar Sucursal' : 'Nueva Sucursal' }}</h2>
-            <button @click="goBack" class="btn-ghost text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
-                <X :size="20" />
-                <span>Cancelar</span>
-            </button>
         </div>
 
         <div v-if="loading" class="space-y-4">
