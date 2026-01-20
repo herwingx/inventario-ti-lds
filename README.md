@@ -22,9 +22,15 @@
 | 💻 **Gestión de Activos** | Control detallado de equipos, periféricos y direcciones IP.         |
 | 👥 **Asignaciones**       | Vinculación de activos a empleados con historial de movimientos.    |
 | 🔧 **Mantenimientos**     | Registro y seguimiento de mantenimientos preventivos y correctivos. |
+| 🎫 **Helpdesk/Tickets**  | Sistema de tickets de soporte con flujo QR público. *(Fase 2)*      |
+| 📱 **Acceso QR Público**  | Escaneo de equipos y reporte de fallas sin login. *(Fase 2)*        |
+| 📝 **Auditoría**         | Logs automáticos de operaciones (quién hizo qué). *(Fase 2)*        |
 | 📝 **Notas y Documentación** | Sistema de notas técnicas y documentación centralizada.          |
 | 🔐 **Seguridad JWT**      | Autenticación robusta basada en tokens para protección de API.      |
 | 🏢 **Multisucursal**      | Soporte para múltiples empresas, sucursales y áreas.                |
+| 🎫 **Helpdesk QR**        | Sistema de tickets con reporte público mediante escaneo de código QR. |
+| 🔍 **Auditoría**          | Registro detallado de cambios (quién, qué, cuándo) en tablas críticas. |
+| 📧 **Notificaciones**     | Alertas por correo electrónico para seguimiento de tickets. |
 | 🌓 **Modo Oscuro**        | Interfaz adaptable con tema claro y oscuro.                         |
 | 📱 **Responsive**         | Diseño adaptativo para escritorio, tablet y móvil.                  |
 | 👤 **Perfil de Usuario**  | Gestión de perfil con actualización de email y contraseña.          |
@@ -271,13 +277,23 @@ inventario-ti-lds/
 | **Empleados**    | `/api/empleados`    | Gestión de personal          |
 | **Asignaciones** | `/api/asignaciones` | Préstamos y devoluciones     |
 | **IPs**          | `/api/direcciones-ip` | Control de direccionamiento |
-| **Mantenimientos** | `/api/mantenimientos` | Tickets y mantenimiento   |
+| **Mantenimientos** | `/api/mantenimientos` | Registro de mantenimientos |
+| **Tickets**      | `/api/tickets`      | Helpdesk y soporte *(Fase 2)* |
 | **Notas**        | `/api/notas`        | Notas técnicas               |
 | **Empresas**     | `/api/empresas`     | Gestión de empresas          |
 | **Áreas**        | `/api/areas`        | Gestión de áreas             |
 | **Sucursales**   | `/api/sucursales`   | Gestión de sucursales        |
 
-> 📘 Todas las rutas (excepto `/api/auth/login`) requieren autenticación JWT.
+### Endpoints Públicos (Fase 2)
+
+| Método | Endpoint | Descripción | Auth |
+|:-------|:---------|:------------|:----:|
+| GET    | `/q/:token` | Info del equipo por QR | ❌ |
+| POST   | `/q/:token/report` | Reportar falla desde QR | ❌ |
+| GET    | `/q/ticket/:ticketToken` | Estado del ticket | ❌ |
+| POST   | `/q/ticket/:ticketToken/comment` | Comentar ticket | ❌ |
+
+> 📘 Todas las rutas `/api/*` (excepto `/api/auth/login`) requieren autenticación JWT.
 
 ---
 

@@ -16,6 +16,7 @@ import {
   Mail, 
   Wrench, 
   NotebookPen,
+  Ticket,
   ChevronRight,
   ChevronDown,
   ChevronsLeft,
@@ -118,7 +119,12 @@ const menuItems = ref([
       { id: 'mantenimiento-form', label: 'Registrar Mantenimiento', route: '/mantenimientos/nuevo' }
     ]
   },
-
+  {
+    id: 'tickets',
+    label: 'Tickets Soporte',
+    icon: Ticket,
+    route: '/tickets'
+  },
   {
     id: 'notas',
     label: 'Notas',

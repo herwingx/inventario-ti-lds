@@ -249,8 +249,33 @@ const routes = [
         component: () => import('../views/ProfileView.vue'),
         meta: { title: 'Mi Perfil' }
       },
-      // TODO: Agregar más rutas según se migren las vistas
+      // Tickets de Soporte (Fase 2)
+      {
+        path: 'tickets',
+        name: 'tickets',
+        component: () => import('../views/TicketsView.vue'),
+        meta: { title: 'Tickets de Soporte' }
+      },
+      {
+        path: 'tickets/:id',
+        name: 'tickets-detalle',
+        component: () => import('../views/TicketsDetailView.vue'),
+        meta: { title: 'Detalle de Ticket' }
+      },
     ]
+  },
+  // Rutas Públicas QR (Fase 2) - Sin MainLayout ni autenticación
+  {
+    path: '/q/:token',
+    name: 'qr-landing',
+    component: () => import('../views/QrLandingView.vue'),
+    meta: { title: 'Reporte de Falla', public: true }
+  },
+  {
+    path: '/q/ticket/:ticketToken',
+    name: 'ticket-tracking',
+    component: () => import('../views/TicketTrackingView.vue'),
+    meta: { title: 'Seguimiento de Ticket', public: true }
   },
   {
     path: '/login',
@@ -298,7 +323,7 @@ router.beforeEach((to, from, next) => {
   const publicNames = ['login', 'forgot-password', 'reset-password']
 
   // Validar si la ruta hacia la que vamos es pública
-  const isPublic = publicNames.includes(to.name)
+  const isPublic = publicNames.includes(to.name) || to.meta?.public
   const token = localStorage.getItem('token')
 
   if (!isPublic && !token) {
