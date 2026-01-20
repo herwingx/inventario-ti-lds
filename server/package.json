@@ -24,8 +24,11 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "mysql2": "^3.14.1",
-    "nodemailer": "^7.0.12"
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.12",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

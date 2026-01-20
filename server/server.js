@@ -25,7 +25,11 @@ const asignacionesRoutes = require('./src/routes/asignaciones.routes'); // * Rut
 const authRoutes = require('./src/routes/auth.routes'); // * Rutas de autenticación
 const profileRoutes = require('./src/routes/profile.routes'); // * Rutas de perfil de usuario
 const dashboardRoutes = require('./src/routes/dashboard.routes'); // * Rutas de dashboard
+const ticketsRoutes = require('./src/routes/tickets.routes'); // * Rutas de tickets de soporte (Fase 2)
+const qrPublicRoutes = require('./src/routes/qr-public.routes'); // * Rutas públicas QR (Fase 2)
 const { protect } = require('./src/middleware/auth.middleware'); // * Middleware de protección JWT
+const { auditMiddleware } = require('./src/middleware/audit.middleware'); // * Middleware de auditoría (Fase 2)
+const { initCronJobs } = require('./src/config/cron.config'); // * Tareas programadas (Fase 2)
 
 const app = express();
 const port = process.env.PORT || 3000; // * Puerto del servidor (por defecto 3000 si no hay .env)
@@ -83,6 +87,9 @@ app.use(express.static('public', {
   }
 }));
 
+// * Servir archivos subidos (evidencias, tickets) - Fase 2
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // * Middleware para parsear JSON en las peticiones (body-parser integrado)
 app.use(express.json());
 // * Middleware para parsear datos de formularios (URL-encoded)
@@ -111,10 +118,18 @@ app.get('/db-test', async (req, res) => {
 // * El login debe ser accesible sin un token.
 app.use('/api/auth', authRoutes);
 
+// * Rutas Públicas QR (Fase 2) - Acceso sin autenticación para escaneo de equipos
+// ! Estas rutas permiten a usuarios externos reportar fallas y dar seguimiento
+app.use('/q', qrPublicRoutes);
+
 // * Middleware de Protección JWT
 // ! Todas las rutas definidas DESPUÉS de esta línea requerirán un token JWT válido.
 // ! Aplico el middleware a todas las rutas que comiencen con /api.
 app.use('/api', protect);
+
+// * Middleware de Auditoría (Fase 2)
+// * Registra operaciones de escritura (POST/PUT/DELETE) en logs_sistema
+app.use('/api', auditMiddleware);
 // TODO: Aquí se montan las rutas principales de la API
 // * Cada entidad tiene su propio archivo de rutas
 // * (Se reiniciará el servidor automáticamente si se usa nodemon)
@@ -135,6 +150,7 @@ app.use('/api/notas/', notasRoutes); // * Notas
 app.use('/api/asignaciones/', asignacionesRoutes); // * Asignaciones
 app.use('/api/profile', profileRoutes); // * Perfil de usuario
 app.use('/api/dashboard', dashboardRoutes); // * Dashboard y estadísticas generales
+app.use('/api/tickets', ticketsRoutes); // * Tickets de soporte (Fase 2)
 
 // ? Middleware para rutas limpias de SPA: sirve index.html para cualquier ruta que no sea API ni archivo estático
 app.get(/^\/(?!api\/|.*\..*$).*/, (req, res) => {
@@ -166,6 +182,9 @@ app.listen(port, '0.0.0.0', () => {
     .then(connection => {
       console.log('✅ Base de datos conectada exitosamente.');
       connection.release(); // * Libero la conexión de vuelta al pool
+
+      // * Inicializar tareas programadas (Fase 2)
+      initCronJobs();
     })
     .catch(err => {
       // ! Si falla la conexión inicial, aviso por consola
