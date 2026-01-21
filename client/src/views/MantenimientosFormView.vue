@@ -1,9 +1,22 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+/**
+ * @fileoverview Formulario de Mantenimientos (Fase 2B).
+ * Incluye sección de evidencias con subida de archivos.
+ */
+import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import MaintenanceService from '../services/MaintenanceService'
 import { useSwal } from '../composables/useSwal'
-import { ArrowLeft, Save, Calendar as CalendarIcon, Check, X } from 'lucide-vue-next'
+import { 
+  Calendar as CalendarIcon, 
+  Check, 
+  X, 
+  Upload, 
+  Trash2, 
+  Image as ImageIcon,
+  FileText,
+  Eye
+} from 'lucide-vue-next'
 
 // Componentes PrimeVue
 import InputText from 'primevue/inputtext'
@@ -11,13 +24,17 @@ import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
 import Fluid from 'primevue/fluid'
+import FileUpload from 'primevue/fileupload'
 
 const router = useRouter()
 const route = useRoute()
-const { success, error, confirmWarning } = useSwal()
+const { success, error, confirmWarning, confirmDanger } = useSwal()
 
 const isEditMode = ref(false)
 const loading = ref(false)
+const loadingEvidencias = ref(false)
+const uploadingEvidencia = ref(false)
+
 const form = ref({
   titulo: '',
   id_equipo: '',
@@ -27,16 +44,30 @@ const form = ref({
   id_tecnico_asignado: ''
 })
 
+// Estado para evidencias
+const evidencias = ref([])
+const selectedTipoEvidencia = ref({ label: 'Diagnóstico', value: 'DIAGNOSTICO' })
+
 const typeOptions = [
   { label: 'Preventivo', value: 'PREVENTIVO' },
   { label: 'Correctivo', value: 'CORRECTIVO' }
 ]
 const selectedType = ref({ label: 'Preventivo', value: 'PREVENTIVO' })
 
+const tipoEvidenciaOptions = [
+  { label: 'Antes', value: 'ANTES' },
+  { label: 'Después', value: 'DESPUES' },
+  { label: 'Diagnóstico', value: 'DIAGNOSTICO' }
+]
+
+// Computed para URL base de archivos
+const baseUrl = computed(() => import.meta.env.VITE_API_URL || 'http://localhost:3000')
+
 onMounted(async () => {
   if (route.params.id) {
     isEditMode.value = true
     await loadData(route.params.id)
+    await loadEvidencias(route.params.id)
   }
 })
 
@@ -51,6 +82,18 @@ const loadData = async (id) => {
   } catch (err) {
     error('Error al cargar datos')
     router.push({ name: 'mantenimientos' })
+  }
+}
+
+const loadEvidencias = async (id) => {
+  loadingEvidencias.value = true
+  try {
+    evidencias.value = await MaintenanceService.getEvidencias(id)
+  } catch (err) {
+    console.warn('No se pudieron cargar evidencias:', err)
+    evidencias.value = []
+  } finally {
+    loadingEvidencias.value = false
   }
 }
 
@@ -78,8 +121,75 @@ const save = async () => {
   }
 }
 
+// Funciones de evidencias
+const onUploadEvidencia = async (event) => {
+  if (!route.params.id) return
+  
+  uploadingEvidencia.value = true
+  try {
+    const file = event.files[0]
+    const formData = new FormData()
+    formData.append('archivo', file)
+    formData.append('tipo', selectedTipoEvidencia.value.value)
+    formData.append('descripcion', '')
+
+    await MaintenanceService.uploadEvidencia(route.params.id, formData)
+    success('Evidencia subida correctamente')
+    await loadEvidencias(route.params.id)
+  } catch (err) {
+    console.error(err)
+    error('Error al subir evidencia')
+  } finally {
+    uploadingEvidencia.value = false
+  }
+}
+
+const deleteEvidencia = async (evidencia) => {
+  const result = await confirmDanger({
+    title: 'Eliminar Evidencia',
+    text: '¿Estás seguro de eliminar esta evidencia? Esta acción no se puede deshacer.',
+    confirmButtonText: 'Eliminar'
+  })
+  
+  if (!result.isConfirmed) return
+  
+  try {
+    await MaintenanceService.deleteEvidencia(route.params.id, evidencia.id)
+    success('Evidencia eliminada')
+    await loadEvidencias(route.params.id)
+  } catch (err) {
+    error('Error al eliminar evidencia')
+  }
+}
+
+const getEvidenciaUrl = (evidencia) => {
+  return `${baseUrl.value}${evidencia.url_archivo}`
+}
+
+const isImage = (evidencia) => {
+  return evidencia.mime_type?.startsWith('image/')
+}
+
+const getTipoLabel = (tipo) => {
+  const labels = {
+    'ANTES': 'Antes',
+    'DESPUES': 'Después',
+    'DIAGNOSTICO': 'Diagnóstico'
+  }
+  return labels[tipo] || tipo
+}
+
+const getTipoBadgeClass = (tipo) => {
+  const classes = {
+    'ANTES': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+    'DESPUES': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    'DIAGNOSTICO': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+  }
+  return classes[tipo] || 'bg-gray-100 text-gray-800'
+}
+
 const goBack = async () => {
-  if (form.value.titulo) { // Validación simple de dirty
+  if (form.value.titulo) {
      const result = await confirmWarning({
         title: 'Confirmar Salida',
         text: '¿Está seguro de que desea salir? Los cambios no guardados se perderán.',
@@ -93,9 +203,9 @@ const goBack = async () => {
 </script>
 
 <template>
-  <div class="animate-fade-in-up max-w-4xl mx-auto">
+  <div class="animate-fade-in-up max-w-4xl mx-auto space-y-6">
     
-    <!-- Card Formulario -->
+    <!-- Card Formulario Principal -->
     <div class="bg-white dark:bg-dark-card rounded-xl shadow-lg border border-gray-200 dark:border-dark-border p-8 transition-colors duration-300">
       
       <!-- Header Interno -->
@@ -160,6 +270,116 @@ const goBack = async () => {
           </div>
         </Fluid>
       </form>
+    </div>
+
+    <!-- Card Evidencias (Solo en modo edición) -->
+    <div v-if="isEditMode" class="bg-white dark:bg-dark-card rounded-xl shadow-lg border border-gray-200 dark:border-dark-border p-8 transition-colors duration-300">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <ImageIcon :size="22" class="text-primary-500" />
+            Evidencias Fotográficas
+          </h3>
+          <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            Adjunta fotos del estado antes, después o diagnósticos del mantenimiento
+          </p>
+        </div>
+      </div>
+
+      <!-- Zona de subida -->
+      <div class="mb-6 p-4 bg-gray-50 dark:bg-dark-bg rounded-lg border-2 border-dashed border-gray-300 dark:border-dark-border">
+        <div class="flex flex-col md:flex-row gap-4 items-center">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de Evidencia</label>
+            <Select 
+              v-model="selectedTipoEvidencia" 
+              :options="tipoEvidenciaOptions" 
+              optionLabel="label" 
+              class="w-full md:w-48" 
+            />
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subir Archivo</label>
+            <FileUpload 
+              mode="basic" 
+              name="archivo"
+              accept="image/*,application/pdf"
+              :maxFileSize="5000000"
+              :auto="true"
+              chooseLabel="Seleccionar Archivo"
+              :disabled="uploadingEvidencia"
+              @select="onUploadEvidencia"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">
+          📎 Formatos permitidos: JPG, PNG, WEBP, PDF. Tamaño máximo: 5MB
+        </p>
+      </div>
+
+      <!-- Loading -->
+      <div v-if="loadingEvidencias" class="flex justify-center py-8">
+        <i class="pi pi-spin pi-spinner text-3xl text-primary-500"></i>
+      </div>
+
+      <!-- Lista de evidencias vacía -->
+      <div v-else-if="evidencias.length === 0" class="text-center py-12 text-gray-500 dark:text-gray-400">
+        <ImageIcon :size="48" class="mx-auto mb-3 opacity-30" />
+        <p>No hay evidencias adjuntas aún</p>
+        <p class="text-sm">Sube fotos del estado del equipo</p>
+      </div>
+
+      <!-- Grid de evidencias -->
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div 
+          v-for="ev in evidencias" 
+          :key="ev.id"
+          class="relative group bg-gray-100 dark:bg-dark-bg rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border"
+        >
+          <!-- Preview de imagen -->
+          <div v-if="isImage(ev)" class="aspect-video bg-gray-200 dark:bg-gray-700">
+            <img 
+              :src="getEvidenciaUrl(ev)" 
+              :alt="ev.descripcion || 'Evidencia'"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <!-- Preview de PDF -->
+          <div v-else class="aspect-video bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <FileText :size="48" class="text-gray-400" />
+          </div>
+
+          <!-- Info overlay -->
+          <div class="p-3">
+            <span :class="['text-xs font-medium px-2 py-1 rounded-full', getTipoBadgeClass(ev.tipo)]">
+              {{ getTipoLabel(ev.tipo) }}
+            </span>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 truncate" :title="ev.nombre_original">
+              {{ ev.nombre_original }}
+            </p>
+          </div>
+
+          <!-- Acciones hover -->
+          <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+            <a 
+              :href="getEvidenciaUrl(ev)" 
+              target="_blank"
+              class="p-2 bg-white rounded-full text-gray-700 hover:bg-gray-100 transition-colors"
+              title="Ver archivo"
+            >
+              <Eye :size="18" />
+            </a>
+            <button 
+              @click="deleteEvidencia(ev)"
+              class="p-2 bg-red-500 rounded-full text-white hover:bg-red-600 transition-colors"
+              title="Eliminar"
+            >
+              <Trash2 :size="18" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

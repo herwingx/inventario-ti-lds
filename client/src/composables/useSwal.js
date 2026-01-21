@@ -167,6 +167,7 @@ export function useSwal() {
   return {
     confirmWarning,
     confirmDelete,
+    confirmDanger: confirmDelete, // Alias para consistencia
     confirmSuccess,
     toast,
     // Métodos de conveniencia para toasts
