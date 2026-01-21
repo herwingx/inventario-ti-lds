@@ -363,6 +363,7 @@ npm run preview  # Preview del build
 | [Reglas de Negocio](docs/REGLAS_NEGOCIO.md) | Ciclo de vida de activos y reglas lógicas |
 | [Plan de Red](docs/PLAN_SEGMENTACION_RED.md) | Estructura de red corporativa /20 |
 | [Stack Tecnológico](docs/ARQUITECTURA_TECNOLOGIA.md) | **¿Por qué Vue? ¿Por qué MySQL?** Explicación de arquitectura. |
+| [Arquitectura Fase 2](docs/ARQUITECTURA_FASE2.md) | **Nuevo:** Diagramas y flujos de Helpdesk, QR y Auditoría |
 
 ### 📚 Documentación de Mantenimiento y Desarrollo
 Guías esenciales para la continuidad del proyecto:
