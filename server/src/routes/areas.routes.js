@@ -10,22 +10,89 @@ const router = express.Router(); // * Instancia del enrutador de Express
 // * Importo el controlador de áreas
 const areasController = require('../controllers/areas.controller');
 
-// * Defino las rutas para áreas y les asigno el controlador correspondiente
-
-// * [GET] /api/areas - Trae todas las áreas
+/**
+ * @openapi
+ * /api/areas:
+ *   get:
+ *     summary: Listar todas las áreas
+ *     tags: [Estructura Organizacional]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de áreas.
+ */
 router.get('/', areasController.getAllAreas);
 
-// * [GET] /api/areas/:id - Trae un área específica por su ID
+/**
+ * @openapi
+ * /api/areas/{id}:
+ *   get:
+ *     summary: Obtener área por ID
+ *     tags: [Estructura Organizacional]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Datos del área.
+ */
 router.get('/:id', areasController.getAreaById);
 
-// * [POST] /api/areas - Crea una nueva área
+/**
+ * @openapi
+ * /api/areas:
+ *   post:
+ *     summary: Crear una nueva área
+ *     tags: [Estructura Organizacional]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [nombre, id_empresa]
+ *             properties:
+ *               nombre: { type: string }
+ *               id_empresa: { type: integer }
+ *     responses:
+ *       201:
+ *         description: Área creada.
+ */
 router.post('/', areasController.createArea);
 
-// * [PUT] /api/areas/:id - Actualiza un área por su ID
+/**
+ * @openapi
+ * /api/areas/{id}:
+ *   put:
+ *     summary: Actualizar un área
+ *     tags: [Estructura Organizacional]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Área actualizada.
+ */
 router.put('/:id', areasController.updateArea);
 
-// * [DELETE] /api/areas/:id - Elimina un área por su ID
+/**
+ * @openapi
+ * /api/areas/{id}:
+ *   delete:
+ *     summary: Eliminar un área
+ *     tags: [Estructura Organizacional]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Área eliminada.
+ */
 router.delete('/:id', areasController.deleteArea);
 
-// * Exporto el enrutador para usarlo en server.js
 module.exports = router;

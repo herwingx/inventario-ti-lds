@@ -1,108 +1,77 @@
-# 📘 Manual Técnico Operativo
+# 📘 Manual de Operaciones y Mantenimiento (O&M)
 
-> **Administración y Mantenimiento**
->
-> Guía de referencia crítica para Administradores de Sistemas y DevOps. Cubre procedimientos de respaldo, restauración, troubleshooting y gestión de incidentes.
-
-[![Maintenance](https://img.shields.io/badge/Maintenance-Active-success?style=flat-square)]()
-[![Database](https://img.shields.io/badge/Database-MySQL_8.0-blue?style=flat-square)](https://www.mysql.com/)
+> **Continuidad del Negocio:** Procedimientos críticos para la administración, respaldo y resolución de incidentes del Sistema de Inventario TI.
 
 ---
 
-## 🗄️ Mantenimiento de Base de Datos
+## 🗄️ Gestión de Datos (Disaster Recovery)
 
-El sistema utiliza MySQL. La integridad de los datos es prioritaria.
+La integridad de la base de datos MySQL es el activo más crítico. Se deben seguir estos protocolos para evitar la pérdida de información.
 
-### 1. Copias de Seguridad (Backups)
+### 1. Estrategia de Backups
+Se recomienda un esquema de respaldo **Diario (Incremental)** y **Semanal (Full)**.
 
-Se recomienda realizar backups diarios automatizados.
-
-**Comando Manual:**
+**Backup Manual Completo:**
 ```bash
-# Formato: mysqldump -u [usuario] -p [nombre_db] > [archivo_salida]
-mysqldump -u root -p inventario_soporte > backup_$(date +%Y%m%d).sql
+# Exportar estructura y datos
+mysqldump -u [usuario] -p --single-transaction --quick --lock-tables=false inventario_soporte > backup_$(date +%Y%m%d).sql
 ```
 
-**Restauración:**
-```bash
-# Formato: mysql -u [usuario] -p [nombre_db] < [archivo_entrada]
-mysql -u root -p inventario_soporte < backup_20250101.sql
-```
+**Restauración Crítica:**
+1. Crear base de datos vacía: `CREATE DATABASE inventario_soporte;`
+2. Importar dump: `mysql -u [usuario] -p inventario_soporte < backup_archivo.sql`
+3. Sincronizar Prisma: `npx prisma generate`
 
-### 2. Verificación de Integridad
-
-Si el sistema reporta errores de datos extraños, verificar la integridad de las tablas:
-
+### 2. Mantenimiento Preventivo (DB)
+Ejecutar mensualmente para optimizar índices:
 ```sql
-CHECK TABLE equipos;
-CHECK TABLE asignaciones;
-ANALYZE TABLE equipos;
+OPTIMIZE TABLE equipos, asignaciones, tickets, logs_sistema;
 ```
 
 ---
 
-## 🚀 Guía de Despliegue (Producción)
+## 🔧 Resolución de Incidentes (Troubleshooting)
 
-Para desplegar actualizaciones sin interrumpir el servicio (Zero Downtime con PM2).
+### Nivel 1: Conectividad
+*   **Error:** `Network Error` / `ECONNREFUSED`
+    *   **Causa:** Backend caído o puerto 3000 bloqueado.
+    *   **Acción:** Ejecutar `pm2 list`. Si el proceso está en `errored`, revisar logs con `pm2 logs`.
+*   **Error:** `403 Forbidden` (CORS)
+    *   **Causa:** Petición desde un dominio no autorizado.
+    *   **Acción:** Verificar la variable `CORS_ORIGIN` en el `.env` del servidor.
 
-### 1. Actualizar Código
-```bash
-cd /ruta/al/proyecto
-git pull origin main
-```
-
-### 2. Backend (Node.js)
-```bash
-cd server
-npm install --production # Solo si hubo cambios en package.json
-pm2 reload inventario-api # Reinicio suave
-```
-
-### 3. Frontend (Vue.js)
-```bash
-cd client
-npm install # Si cambiaron dependencias
-npm run build
-# No es necesario reiniciar Nginx si solo son archivos estáticos
-```
-
-### 4. Verificación Post-Despliegue
-- Verificar logs del backend: `pm2 logs inventario-api`
-- Verificar carga del frontend en navegador (Ctrl+F5 para limpiar caché).
+### Nivel 2: Aplicación
+*   **Error:** `Token Expired` / `401 Unauthorized`
+    *   **Causa:** El JWT ha expirado o el `JWT_SECRET` fue modificado.
+    *   **Acción:** El sistema forzará logout. Si el problema persiste para todos, verificar sincronización de hora del servidor (`ntp`).
+*   **Error:** `PrismaClientKnownRequestError`
+    *   **Causa:** Inconsistencia entre el código y la base de datos.
+    *   **Acción:** Ejecutar `npx prisma db pull` para verificar discrepancias.
 
 ---
 
-## 🔧 Solución de Problemas Comunes (Troubleshooting)
+## 🔑 Gestión de Secretos y Configuración
 
-### Error: "Network Error" / "No se puede conectar al servidor"
-1. **Verificar si el backend corre:** `pm2 status`
-2. **Verificar puertos:** Asegurarse que el puerto 3000 (o el configurado) no esté bloqueado por firewall.
-3. **CORS:** Si el dominio del frontend cambió, actualizar la variable `CORS_ORIGIN` o la configuración en `server.js`.
+El sistema depende estrictamente de las variables de entorno. 
 
-### Error: "Token inválido" o Logout repentino
-- Verificar si la fecha/hora del servidor es correcta (los tokens JWT dependen de la hora).
-- Verificar si `JWT_SECRET` cambió en el archivo `.env`.
-
-### Error: "Too many connections" (MySQL)
-- El pool de conexiones está saturado. Reiniciar el servicio backend libera las conexiones: `pm2 restart inventario-api`.
+| Variable | Impacto si se pierde | Acción de Recuperación |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | Pérdida total de servicio. | Restaurar conexión a MySQL. |
+| `JWT_SECRET` | Cierre de todas las sesiones. | Generar uno nuevo; los usuarios deberán re-loguearse. |
+| `VITE_API_URL` | El frontend no encuentra la API. | Re-compilar frontend con `npm run build`. |
 
 ---
 
-## 🔑 Gestión de Credenciales
+## 📅 Calendario de Mantenimiento Sugerido
 
-Las credenciales sensibles NUNCA deben estar en el código. Se gestionan en archivos `.env`:
-
-| Archivo | Ubicación | Claves Críticas |
-|:--------|:----------|:----------------|
-| Backend | `server/.env` | `DB_PASSWORD`, `JWT_SECRET` |
-| Frontend | `client/.env.production` | `VITE_API_URL` |
-
-**Nota:** Si se pierde el `JWT_SECRET`, todos los usuarios tendrán que volver a iniciar sesión.
+| Tarea | Frecuencia | Responsable |
+| :--- | :--- | :--- |
+| Revisión de `logs_sistema` (Auditoría) | Semanal | Administrador TI |
+| Rotación de `logs/error.log` | Mensual | DevOps/Soporte |
+| Prueba de restauración de Backup | Trimestral | DevOps |
+| Actualización de dependencias (`npm audit`) | Trimestral | Desarrollador |
 
 ---
 
-## 📅 Tareas Rutinarias Recomendadas
-
-- **Semanal:** Revisar logs de PM2 por errores recurrentes (`pm2 logs --lines 100`).
-- **Mensual:** Actualizar parches de seguridad de Node.js y paquetes (`npm audit`).
-- **Trimestral:** Realizar prueba de restauración de backup en un entorno local.
+## 🚨 Contacto de Emergencia
+En caso de fallo crítico no documentado, consulte la [Guía de Desarrollo](GUIA_DESARROLLO.md) para entender la traza de errores o contacte al Arquitecto del Sistema.

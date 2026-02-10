@@ -1,0 +1,461 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model areas {
+  id                  Int            @id @default(autoincrement())
+  nombre              String         @db.VarChar(100)
+  id_empresa          Int
+  fecha_registro      DateTime?      @default(now()) @db.Timestamp(0)
+  fecha_actualizacion DateTime?      @default(now()) @db.Timestamp(0)
+  id_status           Int            @default(1)
+  empresas            empresas       @relation(fields: [id_empresa], references: [id], onDelete: Cascade, map: "fk_areas_empresas")
+  status              status         @relation(fields: [id_status], references: [id], map: "fk_areas_status")
+  asignaciones        asignaciones[]
+  empleados           empleados[]
+
+  @@unique([nombre, id_empresa], map: "uq_area_nombre_empresa")
+  @@index([id_empresa], map: "fk_areas_empresas")
+  @@index([id_status], map: "fk_areas_status")
+}
+
+model asignaciones {
+  id                                            Int             @id @default(autoincrement())
+  id_equipo                                     Int
+  id_empleado                                   Int?
+  id_sucursal_asignado                          Int?
+  id_area_asignado                              Int?
+  id_equipo_padre                               Int?
+  id_ip                                         Int?
+  fecha_asignacion                              DateTime        @db.DateTime(0)
+  fecha_fin_asignacion                          DateTime?       @db.DateTime(0)
+  observacion                                   String?         @db.Text
+  fecha_registro                                DateTime?       @default(now()) @db.Timestamp(0)
+  fecha_actualizacion                           DateTime?       @default(now()) @db.Timestamp(0)
+  id_status_asignacion                          Int             @default(1)
+  firma_receptor                                String?         @db.LongText
+  url_responsiva_pdf                            String?         @db.VarChar(255)
+  areas                                         areas?          @relation(fields: [id_area_asignado], references: [id], map: "fk_asignaciones_area_asignado")
+  direcciones_ip                                direcciones_ip? @relation(fields: [id_ip], references: [id], map: "fk_asignaciones_direcciones_ip")
+  empleados                                     empleados?      @relation(fields: [id_empleado], references: [id], map: "fk_asignaciones_empleados")
+  equipos_asignaciones_id_equipo_padreToequipos equipos?        @relation("asignaciones_id_equipo_padreToequipos", fields: [id_equipo_padre], references: [id], onDelete: Cascade, map: "fk_asignaciones_equipo_padre")
+  equipos_asignaciones_id_equipoToequipos       equipos         @relation("asignaciones_id_equipoToequipos", fields: [id_equipo], references: [id], map: "fk_asignaciones_equipos")
+  status                                        status          @relation(fields: [id_status_asignacion], references: [id], map: "fk_asignaciones_status")
+  sucursales                                    sucursales?     @relation(fields: [id_sucursal_asignado], references: [id], map: "fk_asignaciones_sucursal_asignado")
+
+  @@index([id_area_asignado], map: "fk_asignaciones_area_asignado")
+  @@index([id_ip], map: "fk_asignaciones_direcciones_ip")
+  @@index([id_empleado], map: "fk_asignaciones_empleados")
+  @@index([id_equipo_padre], map: "fk_asignaciones_equipo_padre")
+  @@index([id_equipo], map: "fk_asignaciones_equipos")
+  @@index([id_status_asignacion], map: "fk_asignaciones_status")
+  @@index([id_sucursal_asignado], map: "fk_asignaciones_sucursal_asignado")
+}
+
+model cuentas_email_corporativo {
+  id                   Int        @id @default(autoincrement())
+  email                String     @unique(map: "email") @db.VarChar(100)
+  usuario_email        String?    @db.VarChar(100)
+  password_data        String?    @db.VarChar(255)
+  id_empleado_asignado Int?
+  fecha_creacion       DateTime?  @default(now()) @db.Timestamp(0)
+  fecha_actualizacion  DateTime?  @default(now()) @db.Timestamp(0)
+  id_status            Int        @default(1)
+  observaciones        String?    @db.Text
+  empleados            empleados? @relation(fields: [id_empleado_asignado], references: [id], map: "fk_cuentas_email_empleados")
+  status               status     @relation(fields: [id_status], references: [id], map: "fk_cuentas_email_status")
+  notas                notas[]
+
+  @@index([id_empleado_asignado], map: "fk_cuentas_email_empleados")
+  @@index([id_status], map: "fk_cuentas_email_status")
+}
+
+model direcciones_ip {
+  id                  Int            @id @default(autoincrement())
+  direccion_ip        String         @unique(map: "direccion_ip") @db.VarChar(45)
+  id_sucursal         Int?
+  comentario          String?        @db.Text
+  fecha_registro      DateTime?      @default(now()) @db.Timestamp(0)
+  fecha_actualizacion DateTime?      @default(now()) @db.Timestamp(0)
+  id_status           Int            @default(1)
+  asignaciones        asignaciones[]
+  status              status         @relation(fields: [id_status], references: [id], map: "fk_direcciones_ip_status")
+  sucursales          sucursales?    @relation(fields: [id_sucursal], references: [id], map: "fk_direcciones_ip_sucursales")
+
+  @@index([id_status], map: "fk_direcciones_ip_status")
+  @@index([id_sucursal], map: "fk_direcciones_ip_sucursales")
+}
+
+model empleados {
+  id                        Int                         @id @default(autoincrement())
+  numero_empleado           String?                     @unique(map: "numero_empleado") @db.VarChar(50)
+  nombres                   String                      @db.VarChar(100)
+  apellidos                 String                      @db.VarChar(100)
+  email_personal            String?                     @db.VarChar(100)
+  telefono                  String?                     @db.VarChar(20)
+  puesto                    String?                     @db.VarChar(100)
+  fecha_nacimiento          DateTime?                   @db.Date
+  fecha_ingreso             DateTime?                   @db.Date
+  id_empresa                Int?
+  id_sucursal               Int?
+  id_area                   Int?
+  fecha_actualizacion       DateTime?                   @default(now()) @db.Timestamp(0)
+  fecha_registro            DateTime?                   @default(now()) @db.Timestamp(0)
+  id_status                 Int                         @default(1)
+  asignaciones              asignaciones[]
+  cuentas_email_corporativo cuentas_email_corporativo[]
+  areas                     areas?                      @relation(fields: [id_area], references: [id], map: "fk_empleados_areas")
+  empresas                  empresas?                   @relation(fields: [id_empresa], references: [id], map: "fk_empleados_empresas")
+  status                    status                      @relation(fields: [id_status], references: [id], map: "fk_empleados_status")
+  sucursales                sucursales?                 @relation(fields: [id_sucursal], references: [id], map: "fk_empleados_sucursales")
+  usuarios_sistema          usuarios_sistema?
+
+  @@index([id_area], map: "fk_empleados_areas")
+  @@index([id_empresa], map: "fk_empleados_empresas")
+  @@index([id_status], map: "fk_empleados_status")
+  @@index([id_sucursal], map: "fk_empleados_sucursales")
+}
+
+model empresas {
+  id                  Int          @id @default(autoincrement())
+  nombre              String       @unique(map: "nombre") @db.VarChar(100)
+  fecha_registro      DateTime?    @default(now()) @db.Timestamp(0)
+  fecha_actualizacion DateTime?    @default(now()) @db.Timestamp(0)
+  id_status           Int          @default(1)
+  areas               areas[]
+  empleados           empleados[]
+  status              status       @relation(fields: [id_status], references: [id], map: "fk_empresas_status")
+  sucursales          sucursales[]
+
+  @@index([id_status], map: "fk_empresas_status")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model equipos {
+  id                                                 Int              @id @default(autoincrement())
+  numero_serie                                       String           @unique(map: "numero_serie") @db.VarChar(100)
+  nombre_equipo                                      String?          @db.VarChar(100)
+  marca                                              String?          @db.VarChar(100)
+  modelo                                             String?          @db.VarChar(100)
+  id_tipo_equipo                                     Int
+  id_sucursal_actual                                 Int
+  procesador                                         String?          @db.VarChar(100)
+  ram                                                String?          @db.VarChar(50)
+  disco_duro                                         String?          @db.VarChar(50)
+  sistema_operativo                                  String?          @db.VarChar(100)
+  mac_address                                        String?          @unique(map: "mac_address") @db.VarChar(20)
+  otras_caracteristicas                              String?          @db.Text
+  fecha_compra                                       DateTime?        @db.Date
+  fecha_registro                                     DateTime?        @default(now()) @db.Timestamp(0)
+  fecha_actualizacion                                DateTime?        @default(now()) @db.Timestamp(0)
+  id_status                                          Int              @default(1)
+  qr_token                                           String?          @unique(map: "qr_token") @db.VarChar(64)
+  frecuencia_mant                                    Int?             @default(6)
+  proxima_fecha_mant                                 DateTime?        @db.Date
+  frecuencia_mantenimiento_meses                     Int?
+  ultima_fecha_mantenimiento                         DateTime?        @db.Date
+  proxima_fecha_mantenimiento                        DateTime?        @db.Date
+  asignaciones_asignaciones_id_equipo_padreToequipos asignaciones[]   @relation("asignaciones_id_equipo_padreToequipos")
+  asignaciones_asignaciones_id_equipoToequipos       asignaciones[]   @relation("asignaciones_id_equipoToequipos")
+  status                                             status           @relation(fields: [id_status], references: [id], map: "fk_equipos_status")
+  sucursales                                         sucursales       @relation(fields: [id_sucursal_actual], references: [id], map: "fk_equipos_sucursales")
+  tipos_equipo                                       tipos_equipo     @relation(fields: [id_tipo_equipo], references: [id], map: "fk_equipos_tipos_equipo")
+  mantenimientos                                     mantenimientos[]
+  notas                                              notas[]
+  tickets                                            tickets[]
+
+  @@index([id_status], map: "fk_equipos_status")
+  @@index([id_sucursal_actual], map: "fk_equipos_sucursales")
+  @@index([id_tipo_equipo], map: "fk_equipos_tipos_equipo")
+}
+
+model logs_sistema {
+  id                 Int                 @id @default(autoincrement())
+  id_usuario         Int?
+  accion             logs_sistema_accion
+  tabla_afectada     String              @db.VarChar(50)
+  id_registro        Int
+  valores_anteriores String?             @db.LongText
+  valores_nuevos     String?             @db.LongText
+  ip_origen          String?             @db.VarChar(45)
+  user_agent         String?             @db.VarChar(255)
+  fecha              DateTime?           @default(now()) @db.DateTime(0)
+  usuarios_sistema   usuarios_sistema?   @relation(fields: [id_usuario], references: [id], onUpdate: Restrict, map: "logs_sistema_ibfk_1")
+
+  @@index([fecha], map: "idx_log_fecha")
+  @@index([tabla_afectada], map: "idx_log_tabla")
+  @@index([id_usuario], map: "idx_log_usuario")
+}
+
+model mantenimiento_archivos {
+  id               Int                                  @id @default(autoincrement())
+  id_mantenimiento Int
+  url_archivo      String                               @db.VarChar(255)
+  tipo_archivo     mantenimiento_archivos_tipo_archivo? @default(DOCUMENTO)
+  nombre_original  String?                              @db.VarChar(150)
+  uploaded_at      DateTime?                            @default(now()) @db.DateTime(0)
+  mantenimientos   mantenimientos                       @relation(fields: [id_mantenimiento], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "mantenimiento_archivos_ibfk_1")
+
+  @@index([id_mantenimiento], map: "id_mantenimiento")
+}
+
+model mantenimiento_evidencias {
+  id               Int                           @id @default(autoincrement())
+  id_mantenimiento Int
+  url_archivo      String                        @db.VarChar(255)
+  tipo             mantenimiento_evidencias_tipo
+  descripcion      String?                       @db.VarChar(255)
+  nombre_original  String?                       @db.VarChar(255)
+  mime_type        String?                       @db.VarChar(100)
+  tamano_bytes     Int?
+  fecha_subida     DateTime?                     @default(now()) @db.DateTime(0)
+  mantenimientos   mantenimientos                @relation(fields: [id_mantenimiento], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "mantenimiento_evidencias_ibfk_1")
+
+  @@index([id_mantenimiento], map: "id_mantenimiento")
+}
+
+model mantenimientos {
+  id                       Int                        @id @default(autoincrement())
+  id_equipo                Int
+  fecha_inicio             DateTime                   @db.Date
+  fecha_fin                DateTime?                  @db.Date
+  diagnostico              String?                    @db.Text
+  solucion                 String?                    @db.Text
+  costo                    Decimal?                   @db.Decimal(10, 2)
+  proveedor                String?                    @db.VarChar(100)
+  fecha_registro           DateTime?                  @default(now()) @db.Timestamp(0)
+  fecha_actualizacion      DateTime?                  @default(now()) @db.Timestamp(0)
+  id_status                Int                        @default(1)
+  tipo                     mantenimientos_tipo        @default(PREVENTIVO)
+  titulo                   String                     @default("Mantenimiento") @db.VarChar(150)
+  descripcion              String?                    @db.Text
+  fecha_programada         DateTime?                  @db.Date
+  estatus                  mantenimientos_estatus?    @default(PENDIENTE)
+  id_tecnico_asignado      Int?
+  created_at               DateTime?                  @default(now()) @db.DateTime(0)
+  mantenimiento_archivos   mantenimiento_archivos[]
+  mantenimiento_evidencias mantenimiento_evidencias[]
+  equipos                  equipos                    @relation(fields: [id_equipo], references: [id], onDelete: Cascade, map: "fk_mantenimientos_equipos")
+  status                   status                     @relation(fields: [id_status], references: [id], map: "fk_mantenimientos_status")
+  notas                    notas[]
+
+  @@index([id_equipo], map: "fk_mantenimientos_equipos")
+  @@index([id_status], map: "fk_mantenimientos_status")
+}
+
+model notas {
+  id                        Int                        @id @default(autoincrement())
+  titulo                    String?                    @db.VarChar(100)
+  contenido                 String                     @db.Text
+  id_equipo                 Int?
+  id_mantenimiento          Int?
+  id_cuenta_email           Int?
+  id_usuario_creacion       Int?
+  fecha_creacion            DateTime?                  @default(now()) @db.Timestamp(0)
+  fecha_actualizacion       DateTime?                  @default(now()) @db.Timestamp(0)
+  cuentas_email_corporativo cuentas_email_corporativo? @relation(fields: [id_cuenta_email], references: [id], onDelete: Cascade, map: "fk_notas_cuentas_email")
+  equipos                   equipos?                   @relation(fields: [id_equipo], references: [id], onDelete: Cascade, map: "fk_notas_equipos")
+  mantenimientos            mantenimientos?            @relation(fields: [id_mantenimiento], references: [id], onDelete: Cascade, map: "fk_notas_mantenimientos")
+  usuarios_sistema          usuarios_sistema?          @relation(fields: [id_usuario_creacion], references: [id], map: "fk_notas_usuarios_sistema")
+
+  @@index([id_cuenta_email], map: "fk_notas_cuentas_email")
+  @@index([id_equipo], map: "fk_notas_equipos")
+  @@index([id_mantenimiento], map: "fk_notas_mantenimientos")
+  @@index([id_usuario_creacion], map: "fk_notas_usuarios_sistema")
+}
+
+model roles {
+  id               Int                @id @default(autoincrement())
+  nombre_rol       String             @unique(map: "nombre_rol") @db.VarChar(50)
+  fecha_registro   DateTime?          @default(now()) @db.Timestamp(0)
+  usuarios_sistema usuarios_sistema[]
+}
+
+model status {
+  id                        Int                         @id @default(autoincrement())
+  nombre_status             String                      @unique(map: "nombre_status") @db.VarChar(50)
+  descripcion               String?                     @db.VarChar(255)
+  fecha_creacion            DateTime?                   @default(now()) @db.Timestamp(0)
+  fecha_actualizacion       DateTime?                   @default(now()) @db.Timestamp(0)
+  areas                     areas[]
+  asignaciones              asignaciones[]
+  cuentas_email_corporativo cuentas_email_corporativo[]
+  direcciones_ip            direcciones_ip[]
+  empleados                 empleados[]
+  empresas                  empresas[]
+  equipos                   equipos[]
+  mantenimientos            mantenimientos[]
+  sucursales                sucursales[]
+  usuarios_sistema          usuarios_sistema[]
+}
+
+model sucursales {
+  id                  Int              @id @default(autoincrement())
+  nombre              String           @db.VarChar(100)
+  direccion           String?          @db.VarChar(255)
+  numero_telefono     String?          @db.VarChar(20)
+  id_empresa          Int
+  id_tipo_sucursal    Int
+  fecha_registro      DateTime?        @default(now()) @db.Timestamp(0)
+  fecha_actualizacion DateTime?        @default(now()) @db.Timestamp(0)
+  id_status           Int              @default(1)
+  asignaciones        asignaciones[]
+  direcciones_ip      direcciones_ip[]
+  empleados           empleados[]
+  equipos             equipos[]
+  empresas            empresas         @relation(fields: [id_empresa], references: [id], map: "fk_sucursales_empresas")
+  status              status           @relation(fields: [id_status], references: [id], map: "fk_sucursales_status")
+  tipos_sucursal      tipos_sucursal   @relation(fields: [id_tipo_sucursal], references: [id], map: "fk_sucursales_tipos_sucursal")
+
+  @@unique([nombre, id_empresa], map: "uq_sucursal_nombre_empresa")
+  @@index([id_empresa], map: "fk_sucursales_empresas")
+  @@index([id_status], map: "fk_sucursales_status")
+  @@index([id_tipo_sucursal], map: "fk_sucursales_tipos_sucursal")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ticket_comentarios {
+  id               Int               @id @default(autoincrement())
+  id_ticket        Int
+  id_usuario       Int?
+  contenido        String            @db.Text
+  es_interno       Boolean?          @default(false)
+  fecha_creacion   DateTime?         @default(now()) @db.DateTime(0)
+  tickets          tickets           @relation(fields: [id_ticket], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "ticket_comentarios_ibfk_1")
+  usuarios_sistema usuarios_sistema? @relation(fields: [id_usuario], references: [id], onUpdate: Restrict, map: "ticket_comentarios_ibfk_2")
+
+  @@index([id_ticket], map: "id_ticket")
+  @@index([id_usuario], map: "id_usuario")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tickets {
+  id                                                            Int                  @id @default(autoincrement())
+  id_equipo                                                     Int
+  id_usuario_reporta                                            Int?
+  token_acceso                                                  String               @unique(map: "token_acceso") @db.VarChar(64)
+  tipo_falla                                                    tickets_tipo_falla
+  descripcion                                                   String               @db.Text
+  prioridad                                                     tickets_prioridad?   @default(MEDIA)
+  estatus                                                       tickets_estatus?     @default(ABIERTO)
+  evidencia_url                                                 String?              @db.VarChar(255)
+  id_asignado_a                                                 Int?
+  fecha_creacion                                                DateTime?            @default(now()) @db.DateTime(0)
+  fecha_actualizacion                                           DateTime?            @default(now()) @db.DateTime(0)
+  fecha_cierre                                                  DateTime?            @db.DateTime(0)
+  email_reporta                                                 String?              @db.VarChar(255)
+  nombre_reporta                                                String?              @db.VarChar(100)
+  ticket_comentarios                                            ticket_comentarios[]
+  equipos                                                       equipos              @relation(fields: [id_equipo], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tickets_ibfk_1")
+  usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema usuarios_sistema?    @relation("tickets_id_usuario_reportaTousuarios_sistema", fields: [id_usuario_reporta], references: [id], onUpdate: Restrict, map: "tickets_ibfk_2")
+  usuarios_sistema_tickets_id_asignado_aTousuarios_sistema      usuarios_sistema?    @relation("tickets_id_asignado_aTousuarios_sistema", fields: [id_asignado_a], references: [id], onUpdate: Restrict, map: "tickets_ibfk_3")
+
+  @@index([id_asignado_a], map: "id_asignado_a")
+  @@index([id_usuario_reporta], map: "id_usuario_reporta")
+  @@index([id_equipo], map: "idx_ticket_equipo")
+  @@index([estatus], map: "idx_ticket_estatus")
+  @@index([token_acceso], map: "idx_ticket_token")
+}
+
+model tipos_equipo {
+  id                  Int       @id @default(autoincrement())
+  nombre_tipo         String    @unique(map: "nombre_tipo") @db.VarChar(100)
+  descripcion         String?   @db.Text
+  fecha_registro      DateTime? @default(now()) @db.Timestamp(0)
+  fecha_actualizacion DateTime? @default(now()) @db.Timestamp(0)
+  equipos             equipos[]
+}
+
+model tipos_sucursal {
+  id          Int          @id @default(autoincrement())
+  nombre_tipo String       @unique(map: "nombre_tipo") @db.VarChar(50)
+  descripcion String?      @db.VarChar(255)
+  sucursales  sucursales[]
+}
+
+model usuarios_sistema {
+  id                                                   Int                  @id @default(autoincrement())
+  username                                             String               @unique(map: "username") @db.VarChar(50)
+  email                                                String?              @unique(map: "email") @db.VarChar(100)
+  password_hash                                        String               @db.VarChar(255)
+  reset_password_token                                 String?              @db.VarChar(255)
+  reset_password_expires                               DateTime?            @db.DateTime(0)
+  id_empleado                                          Int?                 @unique(map: "id_empleado")
+  id_rol                                               Int
+  fecha_registro                                       DateTime?            @default(now()) @db.Timestamp(0)
+  fecha_ultimo_login                                   DateTime?            @db.Timestamp(0)
+  fecha_actualizacion                                  DateTime?            @default(now()) @db.Timestamp(0)
+  id_status                                            Int                  @default(1)
+  logs_sistema                                         logs_sistema[]
+  notas                                                notas[]
+  ticket_comentarios                                   ticket_comentarios[]
+  tickets_tickets_id_usuario_reportaTousuarios_sistema tickets[]            @relation("tickets_id_usuario_reportaTousuarios_sistema")
+  tickets_tickets_id_asignado_aTousuarios_sistema      tickets[]            @relation("tickets_id_asignado_aTousuarios_sistema")
+  empleados                                            empleados?           @relation(fields: [id_empleado], references: [id], map: "fk_usuarios_sistema_empleados")
+  roles                                                roles                @relation(fields: [id_rol], references: [id], map: "fk_usuarios_sistema_roles")
+  status                                               status               @relation(fields: [id_status], references: [id], map: "fk_usuarios_sistema_status")
+
+  @@index([id_rol], map: "fk_usuarios_sistema_roles")
+  @@index([id_status], map: "fk_usuarios_sistema_status")
+}
+
+enum logs_sistema_accion {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+enum mantenimiento_evidencias_tipo {
+  ANTES
+  DESPUES
+  DIAGNOSTICO
+}
+
+enum mantenimiento_archivos_tipo_archivo {
+  FOTO_ANTES
+  FOTO_DESPUES
+  DOCUMENTO
+  FACTURA
+}
+
+enum tickets_tipo_falla {
+  HARDWARE
+  SOFTWARE
+  RED
+  IMPRESORA
+  OTRO
+}
+
+enum tickets_prioridad {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum tickets_estatus {
+  ABIERTO
+  EN_PROGRESO
+  PENDIENTE
+  RESUELTO
+  CERRADO
+}
+
+enum mantenimientos_tipo {
+  PREVENTIVO
+  CORRECTIVO
+  ACTUALIZACION
+}
+
+enum mantenimientos_estatus {
+  PENDIENTE
+  EN_PROGRESO
+  COMPLETADO
+  CANCELADO
+  VENCIDO
+}

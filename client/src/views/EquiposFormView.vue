@@ -61,7 +61,9 @@ const form = ref({
     mac_address: '',
     fecha_compra: null,
     id_status: null,
-    otras_caracteristicas: ''
+    otras_caracteristicas: '',
+    frecuencia_mantenimiento_meses: null,
+    proxima_fecha_mantenimiento: null
 })
 
 // Monitorear cambios para marcar como 'sucio'
@@ -141,6 +143,8 @@ const populateForm = (data) => {
     form.value.fecha_compra = data.fecha_compra ? new Date(data.fecha_compra) : null
     form.value.id_status = data.id_status
     form.value.otras_caracteristicas = data.otras_caracteristicas
+    form.value.frecuencia_mantenimiento_meses = data.frecuencia_mantenimiento_meses || 6
+    form.value.proxima_fecha_mantenimiento = data.proxima_fecha_mantenimiento ? new Date(data.proxima_fecha_mantenimiento) : null
 
     // Lógica para campos con "OTRO"
     handlePopulateSelectWithOther('marca', data.marca, brandsList)
@@ -219,6 +223,9 @@ const handleSubmit = async () => {
         // Formato fecha (YYYY-MM-DD) para enviar backend
         if (payload.fecha_compra) {
             payload.fecha_compra = payload.fecha_compra.toISOString().split('T')[0]
+        }
+        if (payload.proxima_fecha_mantenimiento) {
+            payload.proxima_fecha_mantenimiento = payload.proxima_fecha_mantenimiento.toISOString().split('T')[0]
         }
 
         if (isEditing.value) {
@@ -397,6 +404,19 @@ const goBack = async () => {
                     <div class="md:col-span-2">
                         <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Otras Características / Notas</label>
                         <Textarea v-model="form.otras_caracteristicas" @input="toUpperCase('otras_caracteristicas')" rows="4" placeholder="Describa características adicionales..." class="!bg-gray-50 dark:!bg-dark-bg w-full" />
+                    </div>
+
+                    <!-- MAINTENANCE CONFIG (NUEVO) -->
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Frecuencia Mantenimiento (Meses)</label>
+                        <InputText v-model="form.frecuencia_mantenimiento_meses" type="number" placeholder="Ej: 6" class="!bg-gray-50 dark:!bg-dark-bg" />
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Próximo Mantenimiento Programado</label>
+                        <div class="relative">
+                            <CalendarIcon class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none" :size="18" />
+                            <DatePicker v-model="form.proxima_fecha_mantenimiento" dateFormat="yy-mm-dd" placeholder="YYYY-MM-DD" class="w-full" :inputClass="'!bg-gray-50 dark:!bg-dark-bg !pr-10 w-full'" />
+                        </div>
                     </div>
 
                  </div>

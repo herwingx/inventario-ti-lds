@@ -12,25 +12,32 @@ const router = express.Router();
 // * Importo las funciones controladoras de tipos de sucursal
 const tiposSucursalController = require('../controllers/tipos_sucursal.controller');
 
-// ===============================================================
-// DEFINICIÓN DE RUTAS
-// Estas rutas se montarán bajo el prefijo /api/tipos-sucursal en server.js.
-// ===============================================================
-
-// * [GET] /api/tipos-sucursal - Trae todos los tipos de sucursal
+/**
+ * @openapi
+ * /api/tipos-sucursal:
+ *   get:
+ *     summary: Listar categorías de sucursales
+ *     tags: [Catálogos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de tipos de sucursal.
+ */
 router.get('/', tiposSucursalController.getAllTiposSucursal);
 
-// * [GET] /api/tipos-sucursal/:id - Trae un tipo de sucursal específico por su ID
-router.get('/:id', tiposSucursalController.getTiposSucursalById);
+/**
+ * @openapi
+ * /api/tipos-sucursal/{id}:
+ *   get:
+ *     summary: Obtener tipo de sucursal por ID
+ *     tags: [Catálogos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Datos de la categoría.
+ */
+router.get('/:id', tiposSucursalController.getTipoSucursalById);
 
-// * [POST] /api/tipos-sucursal - Crea un nuevo tipo de sucursal
-router.post('/', tiposSucursalController.createTiposSucursal);
-
-// * [PUT] /api/tipos-sucursal/:id - Actualiza un tipo de sucursal por su ID
-router.put('/:id', tiposSucursalController.updateTiposSucursal);
-
-// * [DELETE] /api/tipos-sucursal/:id - Elimina un tipo de sucursal por su ID
-router.delete('/:id', tiposSucursalController.deleteTiposSucursal);
-
-// * Exporto el enrutador para usarlo en server.js
 module.exports = router;

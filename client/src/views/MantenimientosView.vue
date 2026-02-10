@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import MaintenanceService from '../services/MaintenanceService'
 import { 
   Calendar, CheckCircle, Clock, AlertTriangle, Plus, Filter, 
-  Archive, Wrench, X 
+  Archive, Wrench, X, Edit, Trash2 
 } from 'lucide-vue-next'
 import { useSwal } from '../composables/useSwal'
 
@@ -13,7 +13,7 @@ import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 
 const router = useRouter()
-const { success, error, confirmSuccess } = useSwal()
+const { success, error, confirmSuccess, confirmWarning } = useSwal()
 
 // Estado
 const mantenimientos = ref([])
@@ -111,6 +111,29 @@ const markCompleted = async (item) => {
     }
   }
 }
+
+const editMantenimiento = (item) => {
+    router.push({ name: 'mantenimientos-editar', params: { id: item.id } })
+}
+
+const deleteMantenimiento = async (item) => {
+    const result = await confirmWarning({
+        title: '¿Eliminar Mantenimiento?',
+        text: `Esta acción no se puede deshacer. Se eliminará el registro de "${item.titulo}".`,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    })
+
+    if (result.isConfirmed) {
+        try {
+            await MaintenanceService.delete(item.id)
+            success('Mantenimiento eliminado exitosamente')
+            loadData()
+        } catch (err) {
+            error(err.response?.data?.message || 'Error al eliminar el mantenimiento')
+        }
+    }
+}
 </script>
 
 <template>
@@ -201,7 +224,7 @@ const markCompleted = async (item) => {
           :key="item.id"
           class="bg-white dark:bg-dark-card rounded-xl shadow-sm hover:shadow-lg hover:border-primary/50 transition-all p-5 border border-gray-200 dark:border-dark-border relative group duration-300"
         >
-          <!-- Badge Estado -->
+          <!-- Header Card -->
           <div class="flex justify-between items-start mb-3">
             <Tag 
               :value="getStatusData(item.estatus).label" 
@@ -212,7 +235,6 @@ const markCompleted = async (item) => {
                 <component :is="getStatusData(item.estatus).icon" :size="12" class="mr-1" />
               </template>
             </Tag>
-            <span class="text-xs font-mono font-bold text-gray-400 dark:text-gray-500">#{{ item.id }}</span>
           </div>
 
           <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-lg line-clamp-1" :title="item.titulo">{{ item.titulo }}</h3>
@@ -239,12 +261,19 @@ const markCompleted = async (item) => {
                 {{ formatDate(item.fecha_programada) }}
               </span>
             </div>
+            <span class="font-mono font-bold opacity-50">#{{ item.id }}</span>
           </div>
 
           <!-- Acciones Hover -->
-          <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all flex gap-2">
             <button v-if="item.estatus === 'PENDIENTE'" @click="markCompleted(item)" class="bg-white dark:bg-dark-bg p-2 rounded-lg shadow-md text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 border border-gray-200 dark:border-dark-border transition-colors" title="Completar">
               <CheckCircle :size="18" />
+            </button>
+            <button @click="editMantenimiento(item)" class="bg-white dark:bg-dark-bg p-2 rounded-lg shadow-md text-primary hover:text-primary/80 hover:bg-primary/5 dark:hover:bg-primary/10 border border-gray-200 dark:border-dark-border transition-colors" title="Editar">
+              <Edit :size="18" />
+            </button>
+            <button @click="deleteMantenimiento(item)" class="bg-white dark:bg-dark-bg p-2 rounded-lg shadow-md text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-gray-200 dark:border-dark-border transition-colors" title="Eliminar">
+              <Trash2 :size="18" />
             </button>
           </div>
         </div>

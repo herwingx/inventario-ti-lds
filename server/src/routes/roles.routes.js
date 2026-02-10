@@ -12,24 +12,44 @@ const router = express.Router();
 // * Importo las funciones controladoras de roles
 const rolesController = require('../controllers/roles.controller');
 
-// ===============================================================
-// DEFINICIÓN DE RUTAS
-// Estas rutas se montarán bajo el prefijo /api/roles en server.js.
-// ===============================================================
+/**
+ * @openapi
+ * tags:
+ *   name: Catálogos
+ *   description: Parámetros y estados globales del sistema
+ */
 
-// * [GET] /api/roles - Trae todos los roles
+/**
+ * @openapi
+ * /api/roles:
+ *   get:
+ *     summary: Listar todos los roles de usuario
+ *     tags: [Catálogos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de roles.
+ */
 router.get('/', rolesController.getAllRoles);
 
-// * [GET] /api/roles/:id - Trae un rol específico por su ID
+/**
+ * @openapi
+ * /api/roles/{id}:
+ *   get:
+ *     summary: Obtener rol por ID
+ *     tags: [Catálogos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Datos del rol.
+ */
 router.get('/:id', rolesController.getRoleById);
-
-// * [POST] /api/roles - Crea un nuevo rol (en la práctica, los roles suelen ser fijos)
-router.post('/', rolesController.createRole);
-
-// * [PUT] /api/roles/:id - Actualiza un rol por su ID (en la práctica, los roles suelen ser fijos)
-router.put('/:id', rolesController.updateRole);
-
-// * [DELETE] /api/roles/:id - Elimina un rol por su ID (no debe eliminarse si está en uso)
-router.delete('/:id', rolesController.deleteRole);
 
 module.exports = router;

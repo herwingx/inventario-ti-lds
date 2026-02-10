@@ -9,12 +9,13 @@ import { useSwal } from '../composables/useSwal'
 import { getStatusSeverity } from '../utils/status'
 import AsignacionesService from '../services/AsignacionesService'
 import EquiposService from '../services/EquiposService'
+import SignaturePad from '../components/ui/SignaturePad.vue'
 
 import Tag from 'primevue/tag'
 import Skeleton from 'primevue/skeleton'
 import Dialog from 'primevue/dialog'
 import MultiSelect from 'primevue/multiselect'
-import { ArrowLeft, CheckSquare } from 'lucide-vue-next'
+import { ArrowLeft, CheckSquare, Printer, PenLine } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,11 +24,12 @@ const { confirmWarning, success: toastSuccess, error: toastError } = useSwal()
 const asignacion = ref(null)
 const componentes = ref([])
 const loading = ref(true)
-// Variables para gestión de componentes
-const showComponentesDialog = ref(false)
-const savingComponentes = ref(false)
-const availableEquipos = ref([])
-const selectedComponentesIds = ref([])
+const downloadingPDF = ref(false)
+const signing = ref(false)
+
+// Variables para firma
+const showSignatureDialog = ref(false)
+const signaturePad = ref(null)
 
 const loadAsignacion = async () => {
     loading.value = true
@@ -44,6 +46,42 @@ const loadAsignacion = async () => {
         router.push({ name: 'asignaciones' })
     } finally {
         loading.value = false
+    }
+}
+
+const openSignature = () => {
+    showSignatureDialog.value = true
+}
+
+const handleSaveSignature = async (base64) => {
+    signing.value = true
+    try {
+        // 1. Guardar la firma y generar el PDF en el servidor
+        await AsignacionesService.signAndGeneratePDF(asignacion.value.id, base64)
+        toastSuccess('Documento firmado y generado correctamente')
+        showSignatureDialog.value = false
+        // 2. Descargar el archivo generado
+        await downloadPDF()
+        // 3. Recargar datos (para ver que ya tiene PDF guardado)
+        await loadAsignacion()
+    } catch (error) {
+        console.error('Error al firmar:', error)
+        toastError('Falló el proceso de firma')
+    } finally {
+        signing.value = false
+    }
+}
+
+const downloadPDF = async () => {
+    downloadingPDF.value = true
+    try {
+        await AsignacionesService.downloadResponsivaPDF(asignacion.value.id)
+        toastSuccess('Documento generado correctamente')
+    } catch (error) {
+        console.error('Error downloading PDF:', error)
+        toastError('No se pudo generar el PDF')
+    } finally {
+        downloadingPDF.value = false
     }
 }
 
@@ -91,16 +129,15 @@ const openManageComponentes = async () => {
         
         // 2. Mapear disponibles a formato del select
         const options = responseDisponibles.map(e => ({
-            label: `${e.nombre_equipo} (${e.numero_serie}) - ${e.tipo_equipo}`,
+            label: `[${e.nombre_tipo_equipo || 'Equipo'}] ${e.nombre_equipo} (${e.numero_serie})`,
             value: e.id,
             status: 'available'
         }))
 
-        // 3. Agregar los componentes que YA tiene asignados (que no saldrán en disponibles porque están asignados a ESTA asignación)
-        // Necesitamos mapearlos igual
+        // 3. Agregar los componentes que YA tiene asignados
         const currentOptions = componentes.value.map(c => ({
-            label: `${c.equipo_nombre} (${c.equipo_numero_serie}) - ${c.tipo_equipo_nombre}`,
-            value: c.id_equipo, // Ojo: en endpoint getComponentes devuelve id_equipo
+            label: `[${c.tipo_equipo_nombre || 'Equipo'}] ${c.equipo_nombre} (${c.equipo_numero_serie})`,
+            value: c.id_equipo,
             status: 'current'
         }))
 
@@ -153,26 +190,78 @@ const formatDate = (date) => {
     <div class="animate-fade-in-up">
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <div class="flex items-center gap-3">
-                <button class="w-10 h-10 rounded-full bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-400 flex items-center justify-center transition-all" @click="goBack" title="Volver">
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <button class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-400 flex items-center justify-center transition-all" @click="goBack" title="Volver">
                     <ArrowLeft :size="18" />
                 </button>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                        <Skeleton v-if="loading" width="15rem" />
-                        <span v-else>Asignación #{{ asignacion?.id }}</span>
-                        <Tag v-if="!loading" :value="isActive ? 'ACTIVA' : 'FINALIZADA'" :severity="getStatusSeverity(isActive ? 'ACTIVA' : 'FINALIZADA')" />
+                <div class="min-w-0">
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white flex flex-wrap items-center gap-2">
+                        <Skeleton v-if="loading" width="10rem" />
+                        <span v-else class="truncate">Asignación #{{ asignacion?.id }}</span>
+                        <Tag v-if="!loading" :value="isActive ? 'ACTIVA' : 'FINALIZADA'" :severity="getStatusSeverity(isActive ? 'ACTIVA' : 'FINALIZADA')" class="text-[10px]" />
                     </h1>
                 </div>
             </div>
             
-            <div v-if="!loading && isActive" class="flex gap-2">
-                <button class="btn-warning" @click="finalizarAsignacion">
-                    <CheckSquare :size="18" />
-                    <span>Finalizar Asignación</span>
+            <div v-if="!loading" class="flex flex-wrap gap-2 w-full md:w-auto">
+                <!-- Botón de Firma Digital -->
+                <button 
+                    v-if="isActive && !asignacion.url_responsiva_pdf"
+                    class="flex-1 md:flex-none bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 text-sm"
+                    @click="openSignature"
+                >
+                    <PenLine :size="16" />
+                    <span>Firmar</span>
+                </button>
+
+                <!-- Botón de Descarga -->
+                <button 
+                    v-if="asignacion.url_responsiva_pdf || isActive"
+                    class="flex-1 md:flex-none font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all border disabled:opacity-50 text-sm"
+                    :class="[
+                        asignacion.url_responsiva_pdf 
+                        ? 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700' 
+                        : 'bg-white dark:bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 border-dashed border-gray-300 dark:border-white/20'
+                    ]"
+                    :disabled="downloadingPDF"
+                    @click="downloadPDF"
+                >
+                    <i v-if="downloadingPDF" class="pi pi-spinner pi-spin"></i>
+                    <Printer v-else :size="16" />
+                    <span class="whitespace-nowrap">{{ asignacion.url_responsiva_pdf ? 'Ver Responsiva' : 'Borrador' }}</span>
+                </button>
+
+                <button v-if="isActive" class="flex-1 md:flex-none btn-warning !py-2.5 !px-4 text-sm justify-center" @click="finalizarAsignacion">
+                    <CheckSquare :size="16" />
+                    <span>Finalizar</span>
                 </button>
             </div>
         </div>
+
+        <!-- Dialog para Firma Digital -->
+        <Dialog v-model:visible="showSignatureDialog" header="Firma Digital de Responsiva" modal class="w-full max-w-lg">
+            <div class="flex flex-col gap-4">
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Al firmar este documento, el receptor acepta la responsabilidad legal del equipo asignado. 
+                    <span class="font-bold text-primary">Esta acción generará el documento final y lo almacenará permanentemente.</span>
+                </p>
+                
+                <SignaturePad ref="signaturePad" @save="handleSaveSignature" />
+            </div>
+            <template #footer>
+                <div class="flex justify-between w-full">
+                    <button class="text-gray-500 font-bold px-4" @click="showSignatureDialog = false">Cancelar</button>
+                    <button 
+                        class="btn-primary" 
+                        :disabled="signing"
+                        @click="signaturePad.save()"
+                    >
+                        <i v-if="signing" class="pi pi-spinner pi-spin"></i>
+                        <span>Confirmar y Generar PDF</span>
+                    </button>
+                </div>
+            </template>
+        </Dialog>
 
         <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Skeleton height="15rem" />
@@ -282,7 +371,7 @@ const formatDate = (date) => {
                     </button>
                  </div>
                  
-                 <div class="p-4">
+                 <div class="p-4 overflow-x-auto">
                     <div v-if="componentes.length === 0" class="text-center py-10">
                         <div class="w-16 h-16 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mx-auto mb-3">
                             <i class="pi pi-box text-2xl text-gray-300"></i>
@@ -290,8 +379,8 @@ const formatDate = (date) => {
                         <p class="text-light-muted dark:text-dark-muted font-medium">No hay componentes adicionales asignados.</p>
                     </div>
 
-                    <!-- Tabla HTML Nativa de Componentes -->
-                    <table v-else class="w-full">
+                    <!-- Tabla HTML Nativa de Componentes con ancho mínimo controlado -->
+                    <table v-else class="w-full min-w-[600px] md:min-w-0">
                         <thead>
                             <tr class="border-b border-gray-200 dark:border-white/10">
                                 <th class="text-left text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 py-3 px-2">Equipo</th>

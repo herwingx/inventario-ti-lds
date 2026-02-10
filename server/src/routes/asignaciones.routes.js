@@ -12,34 +12,189 @@ const router = express.Router();
 // * Importo las funciones controladoras de asignaciones
 const asignacionesController = require('../controllers/asignaciones.controller');
 
-// ===============================================================
-// DEFINICIÓN DE RUTAS
-// Montadas bajo /api/asignaciones en server.js.
-// ===============================================================
+/**
+ * @openapi
+ * tags:
+ *   name: Asignaciones
+ *   description: Gestión de préstamos y vinculación de activos tecnológicos
+ */
 
-// * [GET] /api/asignaciones - Trae todas las asignaciones (puede incluir filtros)
+/**
+ * @openapi
+ * /api/asignaciones:
+ *   get:
+ *     summary: Listar todas las asignaciones
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de asignaciones.
+ */
 router.get('/', asignacionesController.getAllAsignaciones);
 
-// * [GET] /api/asignaciones/:id - Trae una asignación específica por su ID
+/**
+ * @openapi
+ * /api/asignaciones/{id}:
+ *   get:
+ *     summary: Detalles de una asignación
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Datos de la asignación.
+ */
 router.get('/:id', asignacionesController.getAsignacionById);
 
-// * [POST] /api/asignaciones - Crea una nueva asignación (valida reglas de negocio)
+/**
+ * @openapi
+ * /api/asignaciones/{id}/pdf:
+ *   get:
+ *     summary: Descargar Carta Responsiva en PDF
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Archivo PDF generado exitosamente.
+ *         content:
+ *           application/pdf:
+ *             schema: { type: string, format: binary }
+ */
+router.get('/:id/pdf', asignacionesController.getResponsivaPDF);
+
+/**
+ * @openapi
+ * /api/asignaciones/{id}/sign:
+ *   post:
+ *     summary: Firmar digitalmente una asignación y generar PDF final
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [firma]
+ *             properties:
+ *               firma: { type: string, description: "Imagen de la firma en Base64" }
+ *     responses:
+ *       200:
+ *         description: Documento firmado y guardado.
+ */
+router.post('/:id/sign', asignacionesController.signAssignment);
+
+/**
+ * @openapi
+ * /api/asignaciones:
+ *   post:
+ *     summary: Crear una nueva asignación simple
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [id_equipo, fecha_asignacion]
+ *             properties:
+ *               id_equipo: { type: integer }
+ *               id_empleado: { type: integer }
+ *               fecha_asignacion: { type: string, format: date }
+ *     responses:
+ *       201:
+ *         description: Asignación creada.
+ */
 router.post('/', asignacionesController.createAsignacion);
 
-// * [POST] /api/asignaciones/con-componentes - Crea una asignación con componentes
+/**
+ * @openapi
+ * /api/asignaciones/con-componentes:
+ *   post:
+ *     summary: Crear una asignación vinculando componentes (periféricos)
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Asignación compleja creada.
+ */
 router.post('/con-componentes', asignacionesController.createAsignacionConComponentes);
 
-// * [GET] /api/asignaciones/:id/componentes - Obtiene componentes de una asignación
+/**
+ * @openapi
+ * /api/asignaciones/{id}/componentes:
+ *   get:
+ *     summary: Ver periféricos asociados a una asignación
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Lista de componentes.
+ */
 router.get('/:id/componentes', asignacionesController.getComponentesAsignacion);
 
-// * [PUT] /api/asignaciones/:id/componentes - Actualiza componentes de una asignación
+/**
+ * @openapi
+ * /api/asignaciones/{id}/componentes:
+ *   put:
+ *     summary: Actualizar vinculación de periféricos
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Componentes actualizados.
+ */
 router.put('/:id/componentes', asignacionesController.updateComponentesAsignacion);
 
-// * [PUT] /api/asignaciones/:id - Actualiza una asignación por su ID (valida reglas de negocio)
+/**
+ * @openapi
+ * /api/asignaciones/{id}:
+ *   put:
+ *     summary: Actualizar datos de asignación o finalizarla
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Asignación actualizada.
+ */
 router.put('/:id', asignacionesController.updateAsignacion);
 
-// * [DELETE] /api/asignaciones/:id - Elimina una asignación por su ID
+/**
+ * @openapi
+ * /api/asignaciones/{id}:
+ *   delete:
+ *     summary: Eliminar registro de asignación
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Asignación eliminada.
+ */
 router.delete('/:id', asignacionesController.deleteAsignacion);
 
-// * Exporto el enrutador para usarlo en server.js
 module.exports = router;
