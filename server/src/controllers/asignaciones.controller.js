@@ -77,10 +77,17 @@ const getComponentesAsignacion = async (req, res) => {
 };
 
 const updateComponentesAsignacion = async (req, res) => {
-    // Implementación mínima para evitar crash, o implementar lógica si el servicio la tiene
-    // El servicio original de mysql tenía lógica compleja aquí. 
-    // Por ahora, devolvemos error de no implementado o éxito vacío para prevenir crash.
-    res.status(501).json({ message: 'Actualización de componentes no implementada aún en la capa de servicio Prisma.' });
+    const { id } = req.params;
+    try {
+        await AsignacionService.updateComponentes(id, req.body.componentes || []);
+        logger.info(`Componentes actualizados para Asignación ID ${id}.`);
+        res.status(200).json({ message: 'Componentes actualizados exitosamente' });
+    } catch (error) {
+        if (error.message.includes('NOT_FOUND')) {
+            return res.status(404).json({ message: error.message });
+        }
+        throw error;
+    }
 };
 
 module.exports = {
