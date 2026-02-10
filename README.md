@@ -17,22 +17,26 @@ El sistema actúa como el núcleo de verdad para el departamento de TI, interact
 
 ```mermaid
 graph TD
+    %% Nodos
+    Admin(Administrador TI)
+    Empleado(Usuario Final)
+    Sistema(Sistema Inventario y Helpdesk)
+    EmailSys(Servidor SMTP / Email)
+    
+    %% Relaciones
+    Admin -- "Gestiona Activos y Soporte" --> Sistema
+    Empleado -- "Escanea QR y Reporta Fallas" --> Sistema
+    Sistema -- "Envía Alertas" --> EmailSys
+    Sistema -- "Registro de Auditoría" --> Sistema
+
     %% Estilos
     classDef person fill:#08427b,stroke:#052e56,color:#fff
     classDef system fill:#1168bd,stroke:#0b4884,color:#fff
     classDef external fill:#999,stroke:#666,color:#fff
 
-    %% Nodos
-    Admin(Administrador TI):::person
-    Empleado(Empleado / Usuario):::person
-    Sistema(Sistema Inventario & Helpdesk):::system
-    EmailSys(Servidor SMTP / Email):::external
-    
-    %% Relaciones
-    Admin -- "Gestiona Activos, Asignaciones y Mantenimientos" --> Sistema
-    Empleado -- "Escanea QR / Reporta Fallas / Consulta Asignaciones" --> Sistema
-    Sistema -- "Envía Notificaciones y Alertas" --> EmailSys
-    Sistema -- "Autenticación & Auditoría" --> Sistema
+    class Admin,Empleado person
+    class Sistema system
+    class EmailSys external
 ```
 
 ---
