@@ -1,0 +1,22 @@
+{
+  "name": "inventario-ti-lds-monorepo",
+  "version": "1.0.0",
+  "description": "Orquestador del Sistema de Inventario TI & Soporte",
+  "private": true,
+  "scripts": {
+    "setup": "echo '📦 Instalando Backend...' && cd server && npm install && echo '🔧 Generando Prisma Client...' && npx prisma generate && echo '📦 Instalando Frontend...' && cd ../client && npm install && echo '✅ Setup Completado. Ejecuta npm run dev'",
+    "dev": "echo '🚀 Iniciando en modo desarrollo... (Requiere dos terminales o concurrently)' && echo 'Ejecuta: npm run dev:server y npm run dev:client'",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "test": "echo 'Error: no test specified' && exit 1"
+  },
+  "keywords": [
+    "inventory",
+    "mevn",
+    "vue3",
+    "express"
+  ],
+  "author": "herwingx",
+  "license": "ISC"
+}
