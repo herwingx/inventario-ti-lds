@@ -1,180 +1,60 @@
-// src/controllers/roles.controller.js
-// ! Controlador para la entidad Roles
-// * Aquí gestiono todo lo relacionado con los roles de usuario del sistema: creación, consulta, actualización y eliminación.
-// * Este módulo valida duplicados y asegura la integridad referencial.
-
-const { query } = require('../config/db'); // * Utilizo la función personalizada para consultas a la base de datos.
-
-// ===============================================================
-// * Funciones controladoras para cada endpoint de roles
-// ===============================================================
-
 /**
- * Obtiene el listado de todos los roles de usuario disponibles.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
+ * @module Controllers/Roles
+ * @description Controlador para la gestión de roles de usuario.
  */
-const getAllRoles = async (req, res, next) => {
+const RolService = require('../services/roles.service');
+const { rolesSchema, updateRolesSchema } = require('../schemas/rol.schema');
+
+const getAllRoles = async (req, res) => {
+  const roles = await RolService.findAll();
+  res.status(200).json(roles);
+};
+
+const getRoleById = async (req, res) => {
+  const { id } = req.params;
+  const rol = await RolService.findById(id);
+  if (!rol) return res.status(404).json({ message: 'Rol no encontrado' });
+  res.status(200).json(rol);
+};
+
+const createRole = async (req, res) => {
+  const validation = rolesSchema.parse({ body: req.body });
   try {
-    // * Consulta SQL para traer todos los roles
-    const sql = 'SELECT id, nombre_rol, fecha_registro FROM roles';
-    const roles = await query(sql);
-    res.status(200).json(roles);
+    const newRol = await RolService.create(validation.body);
+    res.status(201).json(newRol);
   } catch (error) {
-    // ! Si hay error, lo paso al middleware global
-    console.error('Error al obtener todos los roles:', error);
-    next(error);
+    if (error.message.includes('DUPLICATE_ENTRY')) return res.status(409).json({ message: error.message });
+    throw error;
   }
 };
 
-/**
- * Busca un rol específico por su ID.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const getRoleById = async (req, res, next) => {
+const updateRole = async (req, res) => {
+  const validation = updateRolesSchema.parse({ params: req.params, body: req.body });
   try {
-    const { id } = req.params;
-    const sql = 'SELECT id, nombre_rol, fecha_registro FROM roles WHERE id = ?';
-    const params = [id];
-    const roles = await query(sql, params);
-    if (roles.length === 0) {
-      res.status(404).json({ message: `Rol con ID ${id} no encontrado.` });
-    } else {
-      res.status(200).json(roles[0]);
-    }
+    const updated = await RolService.update(validation.params.id, validation.body);
+    if (!updated) return res.status(404).json({ message: 'Rol no encontrado' });
+    res.status(200).json({ message: 'Rol actualizado exitosamente' });
   } catch (error) {
-    // ! Si hay error, lo paso al middleware global
-    console.error(`Error al obtener rol con ID ${req.params.id}:`, error);
-    next(error);
+    if (error.message.includes('DUPLICATE_ENTRY')) return res.status(409).json({ message: error.message });
+    throw error;
   }
 };
 
-/**
- * Registra un nuevo rol en el sistema.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const createRole = async (req, res, next) => {
+const deleteRole = async (req, res) => {
   try {
-    const { nombre_rol } = req.body;
-    if (!nombre_rol) {
-      return res.status(400).json({ message: 'El campo nombre_rol es obligatorio.' });
-    }
-    if (nombre_rol.trim() === '') {
-      return res.status(400).json({ message: 'El campo nombre_rol no puede estar vacío.' });
-    }
-    const sql = 'INSERT INTO roles (nombre_rol) VALUES (?)';
-    const params = [nombre_rol];
-    const result = await query(sql, params);
-    const newRoleId = result.insertId;
-    res.status(201).json({
-      message: 'Rol creado exitosamente',
-      id: newRoleId,
-      nombre_rol: nombre_rol
-    });
+    const deleted = await RolService.delete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Rol no encontrado' });
+    res.status(200).json({ message: 'Rol eliminado exitosamente' });
   } catch (error) {
-    // ! Si hay error, lo paso al middleware global
-    console.error('Error al crear rol:', error);
-    if (error.code === 'ER_DUP_ENTRY') {
-      res.status(409).json({
-        message: `El nombre de rol "${req.body.nombre_rol}" ya existe.`,
-        error: error.message
-      });
-    } else {
-      next(error);
-    }
+    if (error.message.includes('REFERENTIAL_INTEGRITY')) return res.status(409).json({ message: error.message });
+    throw error;
   }
 };
 
-/**
- * Actualiza el nombre de un rol existente.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const updateRole = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { nombre_rol } = req.body;
-    if (nombre_rol === undefined) {
-      return res.status(400).json({ message: 'Se debe proporcionar el campo nombre_rol para actualizar.' });
-    }
-    if (nombre_rol !== null && nombre_rol.trim() === '') {
-      return res.status(400).json({ message: 'El campo nombre_rol no puede estar vacío.' });
-    }
-    const sql = 'UPDATE roles SET nombre_rol = ? WHERE id = ?';
-    const params = [nombre_rol, id];
-    const result = await query(sql, params);
-    if (result.affectedRows === 0) {
-      res.status(404).json({ message: `Rol con ID ${id} no encontrado.` });
-    } else {
-      res.status(200).json({ message: `Rol con ID ${id} actualizado exitosamente.` });
-    }
-  } catch (error) {
-    // ! Si hay error, lo paso al middleware global
-    console.error(`Error al actualizar rol con ID ${req.params.id}:`, error);
-    if (error.code === 'ER_DUP_ENTRY') {
-      res.status(409).json({
-        message: `El nombre de rol "${req.body.nombre_rol}" ya existe.`,
-        error: error.message
-      });
-    } else {
-      next(error);
-    }
-  }
-};
-
-/**
- * Elimina un rol del sistema.
- * Valida que no tenga usuarios asignados.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const deleteRole = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const sql = 'DELETE FROM roles WHERE id = ?';
-    const params = [id];
-    const result = await query(sql, params);
-    if (result.affectedRows === 0) {
-      res.status(404).json({ message: `Rol con ID ${id} no encontrado.` });
-    } else {
-      res.status(200).json({ message: `Rol con ID ${id} eliminado exitosamente.` });
-    }
-  } catch (error) {
-    // ! Si hay error, lo paso al middleware global
-    console.error(`Error al eliminar rol con ID ${req.params.id}:`, error);
-    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-      res.status(409).json({
-        message: `No se puede eliminar el rol con ID ${req.params.id} porque tiene usuarios del sistema asociados.`,
-        error: error.message
-      });
-    } else {
-      next(error);
-    }
-  }
-};
-
-// * Exporto todas las funciones del controlador para usarlas en las rutas
 module.exports = {
   getAllRoles,
   getRoleById,
   createRole,
   updateRole,
-  deleteRole,
+  deleteRole
 };

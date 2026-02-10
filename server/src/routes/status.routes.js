@@ -13,7 +13,7 @@ const statusController = require('../controllers/status.controller');
 // * Defino las rutas y les asigno la función del controlador correspondiente
 
 // * [GET] /api/status - Trae todos los estados
-router.get('/', statusController.getAllStatuses);
+router.get('/', statusController.getAllStatus);
 
 // * [GET] /api/status/:id - Trae un estado específico por su ID
 router.get('/:id', statusController.getStatusById);

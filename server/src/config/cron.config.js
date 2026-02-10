@@ -1,138 +1,131 @@
 /**
  * @module Config/Cron
- * @description Configuración de tareas programadas con node-cron.
+ * @description Configuración de tareas programadas con node-cron usando Prisma.
  * Incluye alertas de mantenimiento preventivo.
  */
 const cron = require('node-cron');
-const { query } = require('./db');
+const prisma = require('./prisma');
 const nodemailer = require('nodemailer');
 
-/**
- * Transporter de nodemailer (reutiliza configuración existente).
- * @type {nodemailer.Transporter}
- */
-let transporter = null;
+const COLORS = {
+  primary: '#13B497',
+  background: '#f8fafa',
+  cardBg: '#ffffff',
+  text: '#333333',
+  textLight: '#666666',
+  border: '#e8e8e8'
+};
 
 /**
- * Inicializa el transporter de email si no está configurado.
+ * Transporter de nodemailer (reutiliza configuración existente de Fase 2).
  */
-const initTransporter = () => {
-  if (!transporter && process.env.SMTP_HOST) {
-    transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT || 587,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-    });
-  }
-  return transporter;
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: parseInt(process.env.EMAIL_PORT) || 587,
+    secure: process.env.EMAIL_PORT === '465',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    },
+    tls: { rejectUnauthorized: false }
+  });
 };
 
 /**
  * Envía alerta de mantenimiento próximo por email.
- * @param {Object[]} equipos - Lista de equipos con mantenimiento próximo
  */
 const sendMaintenanceAlert = async (equipos) => {
-  const mail = initTransporter();
-  if (!mail || !process.env.ALERT_EMAIL) {
-    console.log('[CRON] No hay configuración de email para alertas.');
+  const alertEmail = process.env.ALERT_EMAIL || process.env.EMAIL_FROM;
+  if (!alertEmail) {
+    console.log('[CRON] No hay email configurado para alertas.');
     return;
   }
 
-  const equiposList = equipos.map(e =>
-    `- ${e.marca} ${e.modelo} (${e.numero_serie}) - Fecha: ${e.proxima_fecha_mant}`
-  ).join('\n');
-
   try {
-    await mail.sendMail({
-      from: process.env.SMTP_FROM || 'soporte@empresa.com',
-      to: process.env.ALERT_EMAIL,
-      subject: `⚠️ Alerta: ${equipos.length} equipo(s) requieren mantenimiento próximamente`,
-      text: `Los siguientes equipos tienen mantenimiento programado en los próximos 7 días:\n\n${equiposList}\n\nPor favor, coordina los servicios necesarios.`,
-      html: `
-        <h2>⚠️ Alerta de Mantenimiento Preventivo</h2>
-        <p>Los siguientes equipos tienen mantenimiento programado en los próximos 7 días:</p>
-        <ul>
-          ${equipos.map(e => `<li><strong>${e.marca} ${e.modelo}</strong> (${e.numero_serie}) - Fecha programada: <em>${e.proxima_fecha_mant}</em></li>`).join('')}
-        </ul>
-        <p>Por favor, coordina los servicios necesarios.</p>
-      `
-    });
-    console.log(`[CRON] Alerta de mantenimiento enviada para ${equipos.length} equipo(s).`);
-  } catch (error) {
-    console.error('[CRON] Error al enviar alerta de mantenimiento:', error.message);
-  }
-};
+    const transporter = createTransporter();
 
-/**
- * Tarea: Verificar equipos con mantenimiento próximo (en 7 días).
- * Se ejecuta diariamente a las 8:00 AM.
- */
-const checkMaintenanceAlerts = async () => {
-  console.log('[CRON] Verificando alertas de mantenimiento...');
-
-  try {
-    // Verificar si la columna existe antes de ejecutar
-    const [columnCheck] = await query(`
-      SELECT COUNT(*) as existe 
-      FROM information_schema.COLUMNS 
-      WHERE TABLE_SCHEMA = DATABASE() 
-        AND TABLE_NAME = 'equipos' 
-        AND COLUMN_NAME = 'proxima_fecha_mant'
-    `);
-
-    if (!columnCheck || columnCheck.existe === 0) {
-      console.log('[CRON] La columna proxima_fecha_mant no existe aún. Saltando verificación.');
-      return;
-    }
-
-    const sql = `
-      SELECT id, marca, modelo, numero_serie, proxima_fecha_mant
-      FROM equipos
-      WHERE proxima_fecha_mant IS NOT NULL
-        AND proxima_fecha_mant BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-        AND id_status != 2
-      ORDER BY proxima_fecha_mant ASC
+    const htmlContent = `
+      <div style="font-family: sans-serif; background: ${COLORS.background}; padding: 40px 20px;">
+        <div style="max-width: 600px; margin: 0 auto; background: ${COLORS.cardBg}; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+          <div style="background: ${COLORS.primary}; padding: 30px; text-align: center; color: white;">
+            <h2 style="margin: 0;">⚠️ Alerta de Mantenimiento</h2>
+          </div>
+          <div style="padding: 30px;">
+            <p>Los siguientes equipos requieren mantenimiento preventivo en los próximos 7 días:</p>
+            <ul style="padding-left: 20px;">
+              ${equipos.map(e => `
+                <li style="margin-bottom: 10px;">
+                  <strong>${e.marca} ${e.modelo}</strong><br>
+                  <span style="color: ${COLORS.textLight}; font-size: 13px;">S/N: ${e.numero_serie} | Fecha: ${e.proxima_fecha_mant?.toLocaleDateString()}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
     `;
 
-    const equipos = await query(sql);
+    await transporter.sendMail({
+      from: `"Sistema Inventario" <${process.env.EMAIL_FROM}>`,
+      to: alertEmail,
+      subject: `⚠️ Alerta: ${equipos.length} mantenimiento(s) próximos`,
+      html: htmlContent
+    });
 
-    if (equipos.length > 0) {
-      console.log(`[CRON] Encontrados ${equipos.length} equipo(s) con mantenimiento próximo.`);
-      await sendMaintenanceAlert(equipos);
-    } else {
-      console.log('[CRON] No hay equipos con mantenimiento próximo en los siguientes 7 días.');
-    }
+    console.log(`[CRON] Alerta enviada para ${equipos.length} equipos.`);
   } catch (error) {
-    console.error('[CRON] Error al verificar mantenimientos:', error.message);
+    console.error('[CRON] Error al enviar email:', error.message);
   }
 };
 
 /**
- * Inicializa todos los cron jobs del sistema.
+ * Tarea: Verificar equipos con mantenimiento próximo.
  */
-const initCronJobs = () => {
-  console.log('⏰ Inicializando tareas programadas (Cron Jobs)...');
+const checkMaintenanceAlerts = async () => {
+  console.log('[CRON] Verificando mantenimientos próximos...');
 
-  // * Alerta de mantenimiento: Diariamente a las 8:00 AM
+  try {
+    const hoy = new Date();
+    const proximaSemana = new Date();
+    proximaSemana.setDate(hoy.getDate() + 7);
+
+    const equipos = await prisma.equipos.findMany({
+      where: {
+        proxima_fecha_mant: {
+          gte: hoy,
+          lte: proximaSemana
+        },
+        id_status: { not: 2 } // No dados de baja
+      },
+      orderBy: { proxima_fecha_mant: 'asc' }
+    });
+
+    if (equipos.length > 0) {
+      await sendMaintenanceAlert(equipos);
+    } else {
+      console.log('[CRON] Sin mantenimientos próximos.');
+    }
+  } catch (error) {
+    console.error('[CRON] Error en checkMaintenanceAlerts:', error.message);
+  }
+};
+
+const initCronJobs = () => {
+  console.log('⏰ Inicializando Cron Jobs...');
+
+  // Diariamente a las 8:00 AM
   cron.schedule('0 8 * * *', checkMaintenanceAlerts, {
     scheduled: true,
     timezone: 'America/Mexico_City'
   });
 
-  console.log('   ✅ Alerta de mantenimiento: Diario a las 8:00 AM');
-
-  // ? Opcional: Ejecutar verificación inicial al arrancar (solo en desarrollo)
   if (process.env.NODE_ENV === 'development') {
-    console.log('   📋 Ejecutando verificación inicial de mantenimientos...');
     checkMaintenanceAlerts();
   }
 };
 
 module.exports = {
   initCronJobs,
-  checkMaintenanceAlerts // Exportar para testing manual
+  checkMaintenanceAlerts
 };

@@ -2,7 +2,7 @@ const { z } = require('zod');
 
 const ipSchema = z.object({
   body: z.object({
-    direccion_ip: z.string().ip({ version: 'v4', message: 'Formato IPv4 inválido' }),
+    direccion_ip: z.string().regex(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/, 'Formato IPv4 inválido'),
     id_sucursal: z.number().int().optional().nullable(),
     comentario: z.string().trim().optional().nullable(),
     id_status: z.number().int().optional().default(1)
@@ -14,7 +14,7 @@ const updateIpSchema = z.object({
     id: z.string().regex(/^\d+$/, 'ID debe ser un número').transform(Number)
   }),
   body: z.object({
-    direccion_ip: z.string().ip({ version: 'v4' }).optional(),
+    direccion_ip: z.string().regex(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/, 'Formato IPv4 inválido').optional(),
     id_sucursal: z.number().int().optional().nullable(),
     comentario: z.string().trim().optional().nullable(),
     id_status: z.number().int().optional()

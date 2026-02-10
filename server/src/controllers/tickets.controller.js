@@ -22,7 +22,7 @@ const createTicket = async (req, res) => {
   const userId = req.user?.userId;
 
   const newTicket = await TicketService.create(validation.body, userId);
-  logger.info(`Ticket creado: "${newTicket.titulo}" (ID: ${newTicket.id}) por usuario ID ${userId}`);
+  logger.info(`Ticket creado: ID ${newTicket.id} por usuario ID ${userId}`);
 
   res.status(201).json({
     message: 'Ticket creado exitosamente',
@@ -48,10 +48,32 @@ const deleteTicket = async (req, res) => {
   res.status(200).json({ message: 'Ticket eliminado exitosamente' });
 };
 
+const getTecnicos = async (req, res) => {
+  const tecnicos = await TicketService.getTecnicos();
+  res.status(200).json(tecnicos);
+};
+
+const getComments = async (req, res) => {
+  const { id } = req.params;
+  const { incluir_internos } = req.query;
+  const comments = await TicketService.getComments(id, incluir_internos === 'true');
+  res.status(200).json(comments);
+};
+
+const addComment = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.userId;
+  const comment = await TicketService.addComment(id, userId, req.body);
+  res.status(201).json(comment);
+};
+
 module.exports = {
   getAllTickets,
   getTicketById,
   createTicket,
   updateTicket,
-  deleteTicket
+  deleteTicket,
+  getTecnicos,
+  getComments,
+  addComment
 };
