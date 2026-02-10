@@ -25,15 +25,19 @@ const loading = ref(true)
 // Construir la URL pública del equipo para el QR
 const publicUrl = computed(() => {
   if (!equipo.value?.qr_token) return ''
-  const baseUrl = window.location.origin
-  return `${baseUrl}/soporte/q/${equipo.value.qr_token}`
+  // En producción window.location.origin será https://erp.linea-digital.com
+  return `${window.location.origin}/soporte/q/${equipo.value.qr_token}`
 })
 
 // Función para imprimir etiqueta de activo
 const printLabel = () => {
   const printWindow = window.open('', '_blank', 'width=400,height=600')
   const closeScript = '</' + 'script>'
-  const supportUrl = window.location.origin + '/soporte/ayuda'
+  
+  // Construir URL base de soporte (ej: erp.linea-digital.com/soporte/ayuda)
+  // Eliminamos el protocolo http/https para que sea más corta y legible en la etiqueta
+  const cleanOrigin = window.location.origin.replace(/^https?:\/\//, '')
+  const supportUrl = `${cleanOrigin}/soporte/ayuda`
   
   printWindow.document.write(`
     <html>

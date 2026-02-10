@@ -64,6 +64,16 @@ Para garantizar la operatividad en casos donde el hardware de captura (cámara/c
 - **Etiqueta Híbrida:** La etiqueta impresa incluye tanto el QR como el código corto e instrucciones paso a paso.
 - **Interfaz Adaptativa:** El sistema detecta el dispositivo y ajusta el layout (Vertical para móviles, Split-View para escritorio).
 
+### 4.2 Mapa de Rutas Públicas (Endpoints)
+El sistema expone los siguientes puntos de acceso que no requieren autenticación JWT:
+
+| Propósito | URL Interna (Router) | URL Pública (Producción) |
+| :--- | :--- | :--- |
+| **Landing QR** | `/q/:token` | `.../soporte/q/:token` |
+| **Ayuda Manual** | `/ayuda` | `.../soporte/ayuda` |
+| **Seguimiento** | `/q/ticket/:token` | `.../soporte/q/ticket/:token` |
+| **Acceso Admin** | `/login` | `.../soporte/login` |
+
 ---
 
 ## 5. ✍️ Firma Digital y Documentos Legales

@@ -109,20 +109,20 @@ app.use((req, res, next) => {
 });
 
 
-// * Middleware para manejar el prefijo /soporte y /soporte/ en producción
+// * Middleware para manejar el prefijo /soporte y servir el frontend correctamente
 app.use((req, res, next) => {
-  // Si la URL comienza exactamente con /soporte (sin slash), redirigir a /soporte/
+  // Ignorar peticiones que ya vienen para la API
+  if (req.url.startsWith('/api')) return next();
+
+  // Si la URL es exactamente /soporte (sin slash), redirigir a /soporte/
   if (req.url === '/soporte') {
     return res.redirect(301, '/soporte/');
   }
 
-  // Si la URL comienza con /soporte/, la procesamos removiendo el prefijo
+  // Para el resto de las rutas, si vienen con /soporte/, remover el prefijo para el ruteo interno
   if (req.url.startsWith('/soporte/')) {
-    req.url = req.url.replace('/soporte', '');
-    // Si queda solo /, lo convertimos a /
-    if (req.url === '') {
-      req.url = '/';
-    }
+    req.url = req.url.replace('/soporte/', '/');
+    if (req.url === '') req.url = '/';
   }
   next();
 });

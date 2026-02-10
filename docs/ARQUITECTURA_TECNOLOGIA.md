@@ -49,6 +49,7 @@ graph LR
 
 ### 2. Backend: Node.js + Express
 *   **Modelo de Concurrencia:** Non-blocking I/O. Ideal para una aplicación intensiva en I/O (lectura de inventario, reportes) más que en CPU.
+*   **Routing Inteligente:** Implementación de un **Middleware de Prefijos** que permite al servidor ser "Sub-directory Aware", traduciendo peticiones externas (vía Proxy) a ruteo interno limpio.
 *   **Seguridad:** Implementación de **Helmet** para cabeceras HTTP seguras, **Rate Limiting** para mitigar DDoS y **CORS** estricto.
 
 ### 3. Capa de Datos: MySQL + Prisma ORM
@@ -91,9 +92,13 @@ A diferencia de un MVC tradicional, se ha optado por un enfoque orientado a serv
 
 ## 🔒 Estrategia de Seguridad
 
-1.  **Autenticación Stateless:** Tokens JWT firmados (HS256) con expiración. No se almacena estado de sesión en el servidor, permitiendo escalabilidad horizontal fácil.
-2.  **Principio de Menor Privilegio:** La conexión a la BD usa un usuario específico, no `root` (en producción).
-3.  **Sanitización:** Validación estricta de entradas en controladores para evitar XSS y SQL Injection.
+1.  **Autenticación Stateless:** Tokens JWT firmados (HS256) con expiración. No se almacena estado de sesión en el servidor.
+2.  **Hardening de Rutas Públicas (QR/Ayuda):**
+    *   **Rate Limiting Estricto:** Implementación de `express-rate-limit` específico para endpoints públicos, mitigando ataques de denegación de servicio (DoS) y fuerza bruta.
+    *   **Entropía de Tokens:** Uso de identificadores hexadecimales de 16 caracteres para activos, haciendo matemáticamente imposible la adivinación de recursos (Insecure Direct Object Reference - IDOR).
+    *   **Data Masking (Privacidad):** Los servicios públicos aplican un filtro de "Menor Privilegio", ocultando IDs de base de datos, números de serie y direcciones IP reales.
+3.  **Principio de Menor Privilegio:** La conexión a la BD usa un usuario específico, no `root`.
+4.  **Sanitización:** Validación estricta de entradas vía **Zod** para evitar XSS y SQL Injection.
 
 ---
 

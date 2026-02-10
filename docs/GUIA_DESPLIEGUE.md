@@ -10,6 +10,24 @@
 - **Gestor de Procesos:** PM2.
 - **Proxy Inverso:** Nginx o Apache.
 
+## ⚙️ Configuración de Red y Base URL
+
+El sistema está arquitecturado para funcionar bajo el sub-directorio `/soporte/`. Esto es crítico para la resolución de rutas en el frontend y la API.
+
+### Requerimientos de Dominio
+- **Base URL:** `/soporte/` (Definido en `vite.config.js` y `router/index.js`).
+- **Proxy Inverso:** El servidor (Nginx/Apache) debe redirigir el tráfico de `erp.linea-digital.com/soporte` hacia el puerto interno de la API (ej. 3000).
+
+### Ejemplo de Configuración Nginx (Snippet):
+```nginx
+location /soporte/ {
+    proxy_pass http://localhost:3000/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Prefix /soporte;
+}
+```
+
 ---
 
 ## 🛠️ Pasos de Despliegue (Fresh Install)
