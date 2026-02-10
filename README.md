@@ -1,417 +1,119 @@
-# 🚀 Inventario TI & Soporte LDS
+# 🏢 Sistema de Gestión de Activos TI & Helpdesk
 
-> **Gestión Inteligente de Activos** — Sistema integral para el control de inventario tecnológico, asignaciones y mantenimientos de soporte técnico.
+> **Enterprise Resource Planning (ERP) para Departamentos de TI**
+>
+> Gestión centralizada del ciclo de vida de activos tecnológicos, asignaciones a empleados, control de red y soporte técnico mediante flujos QR.
 
-[![Tech](https://img.shields.io/badge/Stack-MEVN-green?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
-
-
-[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow?style=flat-square&logo=javascript&logoColor=white)](https://developer.mozilla.org/es/docs/Web/JavaScript)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
-[![Express](https://img.shields.io/badge/Express-5.0-black?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![License](https://img.shields.io/badge/License-ISC-green?style=flat-square)](LICENSE)
+[![Maintenance](https://img.shields.io/badge/Maintenance-Active-2EA44F?style=for-the-badge)](https://github.com/herwingx/inventario-ti-lds/graphs/commit-activity)
+[![Stack](https://img.shields.io/badge/Stack-MEVN-3FB950?style=for-the-badge&logo=vuedotjs&logoColor=white)](docs/ARQUITECTURA_TECNOLOGIA.md)
+[![Docs](https://img.shields.io/badge/Docs-Enterprise_Grade-007EC6?style=for-the-badge&logo=confluence&logoColor=white)](docs/)
 
 ---
 
-## ✨ Características
+## 🏗️ Arquitectura de Alto Nivel (C4 Context)
 
-| Característica           | Descripción                                                         |
-| :----------------------- | :------------------------------------------------------------------ |
-| 💻 **Gestión de Activos** | Control detallado de equipos, periféricos y direcciones IP.         |
-| 👥 **Asignaciones**       | Vinculación de activos a empleados con historial de movimientos.    |
-| 🔧 **Mantenimientos**     | Registro y seguimiento de mantenimientos preventivos y correctivos. |
-| 🎫 **Helpdesk/Tickets**  | Sistema de tickets de soporte con flujo QR público. *(Fase 2)*      |
-| 📱 **Acceso QR Público**  | Escaneo de equipos y reporte de fallas sin login. *(Fase 2)*        |
-| 📝 **Auditoría**         | Logs automáticos de operaciones (quién hizo qué). *(Fase 2)*        |
-| 📝 **Notas y Documentación** | Sistema de notas técnicas y documentación centralizada.          |
-| 🔐 **Seguridad JWT**      | Autenticación robusta basada en tokens para protección de API.      |
-| 🏢 **Multisucursal**      | Soporte para múltiples empresas, sucursales y áreas.                |
-| 🎫 **Helpdesk QR**        | Sistema de tickets con reporte público mediante escaneo de código QR. |
-| 🔍 **Auditoría**          | Registro detallado de cambios (quién, qué, cuándo) en tablas críticas. |
-| 📧 **Notificaciones**     | Alertas por correo electrónico para seguimiento de tickets. |
-| 🌓 **Modo Oscuro**        | Interfaz adaptable con tema claro y oscuro.                         |
-| 📱 **Responsive**         | Diseño adaptativo para escritorio, tablet y móvil.                  |
-| 👤 **Perfil de Usuario**  | Gestión de perfil con actualización de email y contraseña.          |
-
----
-
-## 🏗️ Arquitectura del Sistema
-
-### Arquitectura General
+El sistema actúa como el núcleo de verdad para el departamento de TI, interactuando con empleados internos y usuarios externos para reportes de fallas.
 
 ```mermaid
-graph TB
-    subgraph "Cliente"
-        A[Navegador Web]
-        B[Vue.js 3 + Vite]
-        C[PrimeVue UI]
-        D[Pinia Store]
-    end
-    
-    subgraph "Servidor"
-        E[Express.js]
-        F[JWT Middleware]
-        G[Controllers]
-        H[Routes]
-    end
-    
-    subgraph "Base de Datos"
-        I[(MySQL 8.0)]
-    end
-    
-    A --> B
-    B --> C
-    B --> D
-    B -->|HTTP/JSON| E
-    E --> F
-    F --> G
-    G --> H
-    H --> I
-    
-    style A fill:#4FC08D
-    style B fill:#4FC08D
-    style E fill:#68A063
-    style I fill:#00758F
-```
+graph TD
+    %% Estilos
+    classDef person fill:#08427b,stroke:#052e56,color:#fff
+    classDef system fill:#1168bd,stroke:#0b4884,color:#fff
+    classDef external fill:#999,stroke:#666,color:#fff
 
-### Flujo de Autenticación
-
-```mermaid
-sequenceDiagram
-    participant U as Usuario
-    participant C as Cliente (Vue)
-    participant S as Servidor (Express)
-    participant DB as Base de Datos
+    %% Nodos
+    Admin(Administrador TI):::person
+    Empleado(Empleado / Usuario):::person
+    Sistema(Sistema Inventario & Helpdesk):::system
+    EmailSys(Servidor SMTP / Email):::external
     
-    U->>C: Ingresa credenciales
-    C->>S: POST /api/auth/login
-    S->>DB: Verificar usuario
-    DB-->>S: Datos del usuario
-    S->>S: Generar JWT
-    S-->>C: Token + Datos de usuario
-    C->>C: Guardar en localStorage
-    C->>C: Actualizar Pinia Store
-    C-->>U: Redirigir a /home
-    
-    Note over C,S: Todas las peticiones subsecuentes<br/>incluyen el token en headers
-    
-    C->>S: GET /api/profile<br/>Authorization: Bearer {token}
-    S->>S: Validar JWT
-    S->>DB: Obtener datos
-    DB-->>S: Datos del perfil
-    S-->>C: Respuesta JSON
-```
-
-### Estructura de Módulos
-
-```mermaid
-graph LR
-    subgraph "Frontend Modules"
-        A[Auth]
-        B[Equipos]
-        C[Empleados]
-        D[Asignaciones]
-        E[Mantenimientos]
-        F[Notas]
-        G[Perfil]
-    end
-    
-    subgraph "Backend Controllers"
-        H[auth.controller]
-        I[equipos.controller]
-        J[empleados.controller]
-        K[asignaciones.controller]
-        L[mantenimientos.controller]
-        M[notas.controller]
-        N[profile.controller]
-    end
-    
-    A -.-> H
-    B -.-> I
-    C -.-> J
-    D -.-> K
-    E -.-> L
-    F -.-> M
-    G -.-> N
+    %% Relaciones
+    Admin -- "Gestiona Activos, Asignaciones y Mantenimientos" --> Sistema
+    Empleado -- "Escanea QR / Reporta Fallas / Consulta Asignaciones" --> Sistema
+    Sistema -- "Envía Notificaciones y Alertas" --> EmailSys
+    Sistema -- "Autenticación & Auditoría" --> Sistema
 ```
 
 ---
 
-## 🚀 Inicio Rápido
+## ⚡ Quick Start (Onboarding)
 
-### Requisitos Previos
+Diseñado para iniciar el entorno de desarrollo en menos de 5 minutos.
 
-- **Node.js** v18 o superior
-- **MySQL Server** 8.0 o superior
-- **NPM** o **Yarn**
+### Prerrequisitos
+*   **Node.js** v18+ (LTS)
+*   **MySQL** 8.0+
+*   **Git**
 
-### 1. Clonar el Repositorio
+### Instalación Automática
+Hemos creado un script de orquestación en la raíz del proyecto:
 
 ```bash
+# 1. Clonar repositorio
 git clone https://github.com/herwingx/inventario-ti-lds.git
 cd inventario-ti-lds
+
+# 2. Configuración de Variables de Entorno
+cp server/.env.example server/.env
+# IMPORTANTE: Edita server/.env con tus credenciales de MySQL (DB_USER, DB_PASSWORD)
+
+# 3. Instalación de Dependencias y Generación de Clientes (Backend & Frontend)
+npm run setup
 ```
 
-### 2. Configurar Backend
+### Ejecución
+Para desarrollo, recomendamos abrir dos terminales:
+
+**Terminal 1 (Backend API):**
+```bash
+npm run dev:server
+# API disponible en http://localhost:3000
+```
+
+**Terminal 2 (Frontend SPA):**
+```bash
+npm run dev:client
+# UI disponible en http://localhost:5173
+```
+
+---
+
+## 🧩 Módulos del Sistema
+
+| Módulo | Descripción Técnica |
+| :--- | :--- |
+| **📦 Inventario Core** | CRUD transaccional de hardware (`Equipos`, `Periféricos`) con validación de unicidad (Serie, MAC). |
+| **🔗 Asignaciones** | Lógica de negocio para préstamos con trazabilidad histórica (Quién tuvo qué y cuándo). |
+| **🌐 Control IP** | Gestión de direcciones IP (`Redes`) para evitar conflictos en la LAN corporativa. |
+| **🎫 Helpdesk QR** | Sistema público/privado para reporte de incidentes mediante escaneo de tokens QR únicos. |
+| **🔧 Mantenimientos** | Registro de intervenciones técnicas, costos y evidencias (archivos adjuntos). |
+| **👮 Auth & Audit** | JWT (Stateless) para autenticación y Logs de Auditoría para trazabilidad forense. |
+
+---
+
+## 📚 Documentación de Ingeniería
+
+Para una comprensión profunda de las decisiones técnicas:
+
+*   [🏛️ Arquitectura & Stack](docs/ARQUITECTURA_TECNOLOGIA.md) - Diagramas C4 Container y justificación tecnológica.
+*   [⚖️ ADRs (Decision Records)](docs/ADR/) - Registro de decisiones arquitectónicas clave (ej. Prisma vs Raw SQL).
+*   [📘 Manual Técnico](docs/MANUAL_TECNICO.md) - Guías de despliegue, backups y troubleshooting.
+*   [🗂️ Diccionario de Datos](docs/DICCIONARIO_DATOS.md) - Esquema de base de datos y enumeraciones.
+*   [📘 Manual de Funcionamiento](docs/MANUAL_FUNCIONAMIENTO.md) - Lógica interna y flujos de datos detallados.
+
+---
+
+## 🤝 Contribución
+
+Este proyecto sigue el estándar **Conventional Commits** para el historial de cambios.
 
 ```bash
-cd server
-cp .env.example .env
+git commit -m "feat(auth): implementar refresh token rotativo"
+git commit -m "fix(equipos): corregir validación de numero de serie duplicado"
 ```
 
-Edita el archivo `.env` con tus credenciales:
-
-```env
-PORT=3000
-NODE_ENV=development
-
-# Base de Datos
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=tu_password
-DB_NAME=inventario_soporte
-DB_PORT=3306
-
-# Seguridad
-JWT_SECRET=tu_secreto_super_seguro_aqui
-```
-
-> 📘 **Generar JWT_SECRET seguro:**
-> ```bash
-> node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-> ```
-
-Instalar dependencias:
-
-```bash
-npm install
-```
-
-### 3. Configurar Frontend
-
-```bash
-cd ../client
-npm install
-```
-
-### 4. Iniciar la Aplicación
-
-**Terminal 1 - Backend:**
-```bash
-cd server
-npm run dev
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd client
-npm run dev
-```
-
-La aplicación estará disponible en:
-- **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:3000/api
+Consulte el [CHANGELOG.md](CHANGELOG.md) para ver el historial de versiones.
 
 ---
 
-## 📁 Estructura del Proyecto
-
-```
-inventario-ti-lds/
-├── client/                    # Frontend Vue.js
-│   ├── src/
-│   │   ├── assets/           # Recursos estáticos
-│   │   ├── components/       # Componentes reutilizables
-│   │   │   ├── dashboard/   # Componentes del dashboard
-│   │   │   └── layout/      # Layout (Header, Sidebar)
-│   │   ├── layouts/         # Layouts principales
-│   │   ├── router/          # Configuración de rutas
-│   │   ├── services/        # Servicios de API
-│   │   ├── stores/          # Pinia stores
-│   │   ├── views/           # Vistas/Páginas
-│   │   ├── App.vue
-│   │   └── main.js
-│   ├── package.json
-│   └── vite.config.js
-│
-├── server/                    # Backend Express
-│   ├── src/
-│   │   ├── config/          # Configuración (DB, etc)
-│   │   ├── controllers/     # Lógica de negocio
-│   │   ├── middleware/      # Middlewares (auth, etc)
-│   │   └── routes/          # Definición de rutas
-│   ├── public/              # Archivos estáticos
-│   ├── .env.example
-│   ├── package.json
-│   └── server.js
-│
-├── docs/                      # Documentación
-├── .gitignore
-└── README.md
-```
-
----
-
-## 🌐 Endpoints de la API
-
-### Autenticación
-
-| Método | Endpoint        | Descripción          | Auth |
-|:-------|:----------------|:---------------------|:----:|
-| POST   | `/api/auth/login` | Iniciar sesión     | ❌   |
-
-### Perfil de Usuario
-
-| Método | Endpoint          | Descripción                | Auth |
-|:-------|:------------------|:---------------------------|:----:|
-| GET    | `/api/profile`    | Obtener perfil actual      | ✅   |
-| PUT    | `/api/profile`    | Actualizar email/password  | ✅   |
-
-### Módulos Principales
-
-| Módulo           | Endpoint Base       | Descripción                  |
-|:-----------------|:--------------------|:-----------------------------|
-| **Equipos**      | `/api/equipos`      | CRUD de equipos de cómputo   |
-| **Empleados**    | `/api/empleados`    | Gestión de personal          |
-| **Asignaciones** | `/api/asignaciones` | Préstamos y devoluciones     |
-| **IPs**          | `/api/direcciones-ip` | Control de direccionamiento |
-| **Mantenimientos** | `/api/mantenimientos` | Registro de mantenimientos |
-| **Tickets**      | `/api/tickets`      | Helpdesk y soporte *(Fase 2)* |
-| **Notas**        | `/api/notas`        | Notas técnicas               |
-| **Empresas**     | `/api/empresas`     | Gestión de empresas          |
-| **Áreas**        | `/api/areas`        | Gestión de áreas             |
-| **Sucursales**   | `/api/sucursales`   | Gestión de sucursales        |
-
-### Endpoints Públicos (Fase 2)
-
-| Método | Endpoint | Descripción | Auth |
-|:-------|:---------|:------------|:----:|
-| GET    | `/q/:token` | Info del equipo por QR | ❌ |
-| POST   | `/q/:token/report` | Reportar falla desde QR | ❌ |
-| GET    | `/q/ticket/:ticketToken` | Estado del ticket | ❌ |
-| POST   | `/q/ticket/:ticketToken/comment` | Comentar ticket | ❌ |
-
-> 📘 Todas las rutas `/api/*` (excepto `/api/auth/login`) requieren autenticación JWT.
-
----
-
-## 🛠️ Stack Tecnológico
-
-### Frontend
-
-| Tecnología | Versión | Propósito |
-|:-----------|:--------|:----------|
-| Vue.js     | 3.5     | Framework principal |
-| Vite       | 6.0     | Build tool y dev server |
-| Vue Router | 4.5     | Enrutamiento SPA |
-| Pinia      | 2.3     | State management |
-| PrimeVue   | 4.2     | Librería de componentes UI |
-| Axios      | 1.7     | Cliente HTTP |
-
-### Backend
-
-| Tecnología | Versión | Propósito |
-|:-----------|:--------|:----------|
-| Node.js    | 18+     | Runtime de JavaScript |
-| Express.js | 5.1     | Framework web |
-| MySQL2     | 3.14    | Driver de MySQL |
-| JWT        | 9.0     | Autenticación |
-| bcrypt     | 6.0     | Hash de contraseñas |
-| CORS       | 2.8     | Cross-Origin Resource Sharing |
-
----
-
-## 🔧 Comandos Útiles
-
-### Backend
-
-```bash
-npm run dev      # Iniciar con nodemon (desarrollo)
-npm start        # Iniciar en producción
-```
-
-### Frontend
-
-```bash
-npm run dev      # Servidor de desarrollo
-npm run build    # Build para producción
-npm run preview  # Preview del build
-```
-
----
-
-## 🔒 Seguridad
-
-- ✅ Autenticación JWT con tokens de 30 días
-- ✅ Middleware de protección de rutas
-- ✅ Hash de contraseñas con bcrypt (10 rounds)
-- ✅ Prepared statements para prevenir SQL injection
-- ✅ Variables de entorno para credenciales sensibles
-- ✅ CORS configurado para origen específico
-- ✅ Validación de contraseña actual antes de cambios
-
----
-
-## 📚 Documentación Adicional
-
-| Documento | Descripción |
-|:----------|:------------|
-| [Backend README](server/README.md) | Documentación detallada del backend |
-| [Frontend README](client/README.md) | Documentación detallada del frontend |
-| [Reglas de Negocio](docs/REGLAS_NEGOCIO.md) | Ciclo de vida de activos y reglas lógicas |
-| [Plan de Red](docs/PLAN_SEGMENTACION_RED.md) | Estructura de red corporativa /20 |
-| [Stack Tecnológico](docs/ARQUITECTURA_TECNOLOGIA.md) | **¿Por qué Vue? ¿Por qué MySQL?** Explicación de arquitectura. |
-| [Arquitectura Fase 2](docs/ARQUITECTURA_FASE2.md) | **Nuevo:** Diagramas y flujos de Helpdesk, QR y Auditoría |
-
-### 📚 Documentación de Mantenimiento y Desarrollo
-Guías esenciales para la continuidad del proyecto:
-
-*   [🛠️ Guía de Desarrollo](docs/GUIA_DESARROLLO.md) - **"Receta de Cocina"** para crear nuevos módulos.
-*   [🚀 Guía de Despliegue](docs/GUIA_DESPLIEGUE.md) - Instrucciones de puesta en producción.
-*   [📘 Manual Técnico](docs/MANUAL_TECNICO.md) - Backups, restauración y solución de problemas.
-*   [🗂️ Diccionario de Datos](docs/DICCIONARIO_DATOS.md) - Referencia de IDs, roles y estados.
-
-
-### Estándar de Documentación
-El proyecto sigue estrictamente el estándar **JSDoc/DocBlock** para garantizar la mantenibilidad:
-- **Backend:** Rutas, Controladores y Middleware documentados con `@module` y Typedefs.
-- **Frontend:** Vistas, Componentes y Servicios documentados con `@fileoverview` y prop/method docs.
-
-
----
-
-## 🤝 Contribuir
-
-1. Fork del repositorio
-2. Crear rama: `git checkout -b feat/nueva-feature`
-3. Commit: `git commit -m "feat(modulo): descripción"`
-4. Push: `git push origin feat/nueva-feature`
-5. Crear Pull Request
-
-### Convenciones de Commits
-
-Seguimos [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-feat(scope): descripción corta
-fix(scope): descripción del fix
-docs(scope): cambios en documentación
-style(scope): formato, sin cambios de lógica
-refactor(scope): refactorización de código
-test(scope): añadir o corregir tests
-chore(scope): tareas de mantenimiento
-```
-
----
-
-## 📄 Licencia
-
-Este proyecto está bajo la licencia ISC.
-
----
-
-## 👨‍💻 Autor
-
-Desarrollado con ❤️ por [herwingx](https://github.com/herwingx)
+**© 2026 Departamento de TI** - Desarrollado bajo estándares ISO/IEC 25010 de Calidad de Software.
