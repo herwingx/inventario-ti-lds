@@ -1,359 +1,84 @@
-// src/controllers/empleados.controller.js
-// ! Controlador para la entidad Empleados
-// * Aquí gestiono todo lo relacionado con empleados: creación, consulta, actualización y eliminación.
-// * Incluye validaciones de negocio y relaciones con sucursales, áreas y status.
-
-// * Importo la función query para ejecutar consultas a la base de datos
-const { query } = require('../config/db');
-
 /**
- * Obtiene el listado de todos los empleados con sus relaciones (empresa, área, sucursal, status).
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
+ * @module Controllers/Empleados
+ * @description Controlador para la gestión de empleados.
  */
-const getAllEmpleados = async (req, res, next) => {
-  try {
-    const sql = `
-      SELECT
-        e.id,
-        e.numero_empleado,
-        e.nombres,
-        e.apellidos,
-        e.email_personal,
-        e.telefono,
-        e.puesto,
-        e.fecha_nacimiento,
-        e.fecha_ingreso,
-        e.id_empresa,
-        em.nombre AS nombre_empresa,
-        e.id_area,
-        a.nombre AS nombre_area,
-        e.fecha_registro,
-        e.fecha_actualizacion,
-        e.id_status,
-        st.nombre_status AS status_nombre,
-        (SELECT email FROM cuentas_email_corporativo WHERE id_empleado_asignado = e.id LIMIT 1) AS email_corporativo
-      FROM empleados AS e
-      LEFT JOIN empresas AS em ON e.id_empresa = em.id
-      LEFT JOIN areas AS a ON e.id_area = a.id
-      JOIN status AS st ON e.id_status = st.id
-    `;
-    const empleados = await query(sql);
-    res.status(200).json(empleados);
-  } catch (error) {
-    // * Si ocurre un error, lo paso al middleware global para manejo centralizado
-    console.error('Error al obtener todos los empleados:', error);
-    next(error);
-  }
+const EmpleadoService = require('../services/empleados.service');
+const { createEmpleadoSchema, updateEmpleadoSchema } = require('../schemas/empleado.schema');
+const logger = require('../utils/logger');
+
+const getAllEmpleados = async (req, res) => {
+  const empleados = await EmpleadoService.findAll();
+  res.status(200).json(empleados);
 };
 
-/**
- * Busca un empleado específico por su ID.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const getEmpleadoById = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const sql = `
-      SELECT
-        e.id,
-        e.numero_empleado,
-        e.nombres,
-        e.apellidos,
-        e.email_personal,
-        e.telefono,
-        e.puesto,
-        e.fecha_nacimiento,
-        e.fecha_ingreso,
-        e.id_sucursal,
-        s.nombre AS nombre_sucursal,
-        e.id_area,
-        a.nombre AS nombre_area,
-        e.fecha_registro,
-        e.fecha_actualizacion,
-        e.id_status,
-        st.nombre_status AS status_nombre,
-        (SELECT email FROM cuentas_email_corporativo WHERE id_empleado_asignado = e.id LIMIT 1) AS email_corporativo
-      FROM empleados AS e
-      LEFT JOIN sucursales AS s ON e.id_sucursal = s.id
-      LEFT JOIN areas AS a ON e.id_area = a.id
-      JOIN status AS st ON e.id_status = st.id
-      WHERE e.id = ?
-    `;
-    const params = [id];
-    const empleados = await query(sql, params);
-    if (empleados.length === 0) {
-      res.status(404).json({ message: `Empleado con ID ${id} no encontrado.` });
-    } else {
-      res.status(200).json(empleados[0]);
-    }
-  } catch (error) {
-    // * Si ocurre un error, lo paso al middleware global para manejo centralizado
-    console.error(`Error al obtener empleado con ID ${req.params.id}:`, error);
-    next(error);
+const getEmpleadoById = async (req, res) => {
+  const { id } = req.params;
+  const empleado = await EmpleadoService.findById(id);
+
+  if (!empleado) {
+    return res.status(404).json({ message: `Empleado con ID ${id} no encontrado.` });
   }
+
+  res.status(200).json(empleado);
 };
 
-/**
- * Registra un nuevo empleado en el sistema.
- * Realiza validaciones de campos obligatorios, formatos de fecha y unicidad.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const createEmpleado = async (req, res, next) => {
+const createEmpleado = async (req, res) => {
+  const validation = createEmpleadoSchema.parse({ body: req.body });
+
   try {
-    const {
-      numero_empleado, nombres, apellidos, email_personal,
-      telefono, puesto, fecha_nacimiento, fecha_ingreso,
-      id_empresa, id_area, id_status
-    } = req.body;
-    // * Validación de campos obligatorios (nombres y apellidos)
-    if (!nombres || !apellidos) {
-      return res.status(400).json({ message: 'Los campos nombres y apellidos son obligatorios.' });
-    }
-    // * Validar que numero_empleado no esté vacío si se envía
-    if (numero_empleado !== undefined && numero_empleado !== null && numero_empleado.trim() === '') {
-      return res.status(400).json({ message: 'El campo numero_empleado no puede estar vacío si se proporciona.' });
-    }
-    // * Validar formato de email si se proporciona
-    if (email_personal !== undefined && email_personal !== null && email_personal.trim() !== '') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email_personal)) {
-        return res.status(400).json({ message: 'El formato del campo email_personal no es válido.' });
-      }
-    }
-    // * Validar formato de fechas si se proporcionan (YYYY-MM-DD)
-    if (fecha_nacimiento !== undefined && fecha_nacimiento !== null && fecha_nacimiento.trim() !== '') {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha_nacimiento)) {
-        return res.status(400).json({ message: 'El formato de fecha_nacimiento debe ser YYYY-MM-DD.' });
-      }
-    }
-    if (fecha_ingreso !== undefined && fecha_ingreso !== null && fecha_ingreso.trim() !== '') {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha_ingreso)) {
-        return res.status(400).json({ message: 'El formato de fecha_ingreso debe ser YYYY-MM-DD.' });
-      }
-    }
-    // * Validar existencia de empresa si se envía
-    if (id_empresa !== undefined && id_empresa !== null) {
-      const empresaExists = await query('SELECT id FROM empresas WHERE id = ?', [id_empresa]);
-      if (empresaExists.length === 0) {
-        return res.status(400).json({ message: `El ID de empresa ${id_empresa} no es válido.` });
-      }
-    }
-    // * Validar existencia de área si se envía
-    if (id_area !== undefined && id_area !== null) {
-      const areaExists = await query('SELECT id FROM areas WHERE id = ?', [id_area]);
-      if (areaExists.length === 0) {
-        return res.status(400).json({ message: `El ID de área ${id_area} no es válido.` });
-      }
-    }
-    // * Validar existencia de status si se envía
-    if (id_status !== undefined && id_status !== null) {
-      const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
-      if (statusExists.length === 0) {
-        return res.status(400).json({ message: `El ID de status ${id_status} no es válido.` });
-      }
-    } else if (id_status === null) {
-      return res.status(400).json({ message: 'El campo id_status no puede ser nulo.' });
-    }
-    // * Construcción dinámica de la consulta para insertar solo los campos presentes
-    let sql = 'INSERT INTO empleados (nombres, apellidos';
-    const values = [nombres, apellidos];
-    const placeholders = ['?', '?'];
-    if (numero_empleado !== undefined && numero_empleado !== null) { sql += ', numero_empleado'; placeholders.push('?'); values.push(numero_empleado); }
-    if (email_personal !== undefined && email_personal !== null) { sql += ', email_personal'; placeholders.push('?'); values.push(email_personal); }
-    if (telefono !== undefined && telefono !== null) { sql += ', telefono'; placeholders.push('?'); values.push(telefono); }
-    if (puesto !== undefined && puesto !== null) { sql += ', puesto'; placeholders.push('?'); values.push(puesto); }
-    if (fecha_nacimiento !== undefined && fecha_nacimiento !== null) { sql += ', fecha_nacimiento'; placeholders.push('?'); values.push(fecha_nacimiento); }
-    if (fecha_ingreso !== undefined && fecha_ingreso !== null) { sql += ', fecha_ingreso'; placeholders.push('?'); values.push(fecha_ingreso); }
-    if (id_empresa !== undefined && id_empresa !== null) { sql += ', id_empresa'; placeholders.push('?'); values.push(id_empresa); }
-    if (id_area !== undefined && id_area !== null) { sql += ', id_area'; placeholders.push('?'); values.push(id_area); }
-    if (id_status !== undefined && id_status !== null) { sql += ', id_status'; placeholders.push('?'); values.push(id_status); }
-    sql += ') VALUES (' + placeholders.join(', ') + ')';
-    const result = await query(sql, values);
-    const newEmpleadoId = result.insertId;
-
-    // * Asignación de correo si se envía
-    if (req.body.asignar_id_correo) {
-      await query('UPDATE cuentas_email_corporativo SET id_empleado_asignado = ? WHERE id = ?', [newEmpleadoId, req.body.asignar_id_correo]);
-    }
-
+    const newEmpleado = await EmpleadoService.create(validation.body);
+    logger.info(`Empleado creado: ${newEmpleado.nombres} ${newEmpleado.apellidos} (ID: ${newEmpleado.id})`);
     res.status(201).json({
       message: 'Empleado creado exitosamente',
-      id: newEmpleadoId,
-      nombres: nombres,
-      apellidos: apellidos
+      id: newEmpleado.id
     });
   } catch (error) {
-    console.error('Error al crear empleado:', error);
-    if (error.code === 'ER_DUP_ENTRY') {
-      res.status(409).json({
-        message: `Ya existe un empleado con este número o datos únicos.`,
-        error: error.message
-      });
-    } else {
-      next(error);
+    if (error.message.includes('DUPLICATE_ENTRY')) {
+      return res.status(409).json({ message: error.message });
     }
+    throw error;
   }
 };
 
-/**
- * Actualiza los datos de un empleado existente.
- * Valida formatos y referencias a otras tablas.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const updateEmpleado = async (req, res, next) => {
+const updateEmpleado = async (req, res) => {
+  const validation = updateEmpleadoSchema.parse({ params: req.params, body: req.body });
+
   try {
-    const { id } = req.params;
-    const {
-      numero_empleado, nombres, apellidos, email_personal,
-      telefono, puesto, fecha_nacimiento, fecha_ingreso,
-      id_empresa, id_area, id_status, asignar_id_correo
-    } = req.body;
-    // * Validación: al menos un campo a actualizar (incluyendo asignar_id_correo)
-    if (
-      numero_empleado === undefined && nombres === undefined && apellidos === undefined &&
-      email_personal === undefined && telefono === undefined && puesto === undefined &&
-      fecha_nacimiento === undefined && fecha_ingreso === undefined &&
-      id_empresa === undefined && id_area === undefined && id_status === undefined &&
-      asignar_id_correo === undefined
-    ) {
-      return res.status(400).json({ message: 'Se debe proporcionar al menos un campo para actualizar.' });
+    const updated = await EmpleadoService.update(validation.params.id, validation.body);
+    if (!updated) {
+      return res.status(404).json({ message: `Empleado con ID ${validation.params.id} no encontrado.` });
     }
-    // * Validar existencia de empresa si se envía
-    if (id_empresa !== undefined && id_empresa !== null) {
-      const empresaExists = await query('SELECT id FROM empresas WHERE id = ?', [id_empresa]);
-      if (empresaExists.length === 0) {
-        return res.status(400).json({ message: `El ID de empresa ${id_empresa} no es válido.` });
-      }
-    }
-    // * Validar existencia de área si se envía
-    if (id_area !== undefined && id_area !== null) {
-      const areaExists = await query('SELECT id FROM areas WHERE id = ?', [id_area]);
-      if (areaExists.length === 0) {
-        return res.status(400).json({ message: `El ID de área ${id_area} no es válido.` });
-      }
-    }
-    // * Validar existencia de status si se envía
-    if (id_status !== undefined && id_status !== null) {
-      const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
-      if (statusExists.length === 0) {
-        return res.status(400).json({ message: `El ID de status ${id_status} no es válido.` });
-      }
-    }
-    // * Construcción dinámica de la consulta para actualizar solo los campos presentes
-    let sql = 'UPDATE empleados SET ';
-    const params = [];
-    const updates = [];
-    if (numero_empleado !== undefined) { updates.push('numero_empleado = ?'); params.push(numero_empleado); }
-    if (nombres !== undefined) { updates.push('nombres = ?'); params.push(nombres); }
-    if (apellidos !== undefined) { updates.push('apellidos = ?'); params.push(apellidos); }
-    if (email_personal !== undefined) { updates.push('email_personal = ?'); params.push(email_personal); }
-    if (telefono !== undefined) { updates.push('telefono = ?'); params.push(telefono); }
-    if (puesto !== undefined) { updates.push('puesto = ?'); params.push(puesto); }
-    if (fecha_nacimiento !== undefined) { updates.push('fecha_nacimiento = ?'); params.push(fecha_nacimiento); }
-    if (fecha_ingreso !== undefined) { updates.push('fecha_ingreso = ?'); params.push(fecha_ingreso); }
-    if (id_empresa !== undefined) { updates.push('id_empresa = ?'); params.push(id_empresa); }
-    if (id_area !== undefined) { updates.push('id_area = ?'); params.push(id_area); }
-    if (id_status !== undefined) { updates.push('id_status = ?'); params.push(id_status); }
-
-    // Solo ejecutar update de empleado si hay campos para actualizar
-    if (updates.length > 0) {
-      sql += updates.join(', ');
-      sql += ' WHERE id = ?';
-      params.push(id);
-      const result = await query(sql, params);
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: `Empleado con ID ${id} no encontrado.` });
-      }
-    } else {
-      // Verificar si existe el empleado si solo estamos actualizando correo
-      const empExists = await query('SELECT id FROM empleados WHERE id = ?', [id]);
-      if (empExists.length === 0) {
-        return res.status(404).json({ message: `Empleado con ID ${id} no encontrado.` });
-      }
-    }
-
-    // * Actualización de Correo Corporativo
-    if (asignar_id_correo !== undefined) {
-      // 1. Desasignar cualquier correo que tenga este empleado actualmente
-      await query('UPDATE cuentas_email_corporativo SET id_empleado_asignado = NULL WHERE id_empleado_asignado = ?', [id]);
-
-      // 2. Si se seleccionó un correo (no es null/0), asignarlo
-      if (asignar_id_correo) {
-        // Verificar si el correo ya está asignado a otro (opcional, pero buena práctica)
-        // En este caso confiamos en que el frontend filtre, pero un UPDATE sobrescribirá si ya tenía otro asignado, lo cual es correcto.
-        await query('UPDATE cuentas_email_corporativo SET id_empleado_asignado = ? WHERE id = ?', [id, asignar_id_correo]);
-      }
-    }
-
-    res.status(200).json({ message: `Empleado con ID ${id} actualizado exitosamente.` });
-
+    logger.info(`Empleado ID ${validation.params.id} actualizado.`);
+    res.status(200).json({ message: 'Empleado actualizado exitosamente' });
   } catch (error) {
-    console.error(`Error al actualizar empleado con ID ${req.params.id}:`, error);
-    if (error.code === 'ER_DUP_ENTRY') {
-      res.status(409).json({
-        message: `Ya existe un empleado con este número o datos únicos.`,
-        error: error.message
-      });
-    } else {
-      next(error);
+    if (error.message.includes('DUPLICATE_ENTRY')) {
+      return res.status(409).json({ message: error.message });
     }
+    throw error;
   }
 };
 
-/**
- * Elimina un empleado del sistema.
- * Valida integridad referencial antes de eliminar.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const deleteEmpleado = async (req, res, next) => {
+const deleteEmpleado = async (req, res) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
-    const sql = 'DELETE FROM empleados WHERE id = ?';
-    const params = [id];
-    const result = await query(sql, params);
-    if (result.affectedRows === 0) {
-      res.status(404).json({ message: `Empleado con ID ${id} no encontrado.` });
-    } else {
-      res.status(200).json({ message: `Empleado con ID ${id} eliminado exitosamente.` });
+    const deleted = await EmpleadoService.delete(id);
+    if (!deleted) {
+      return res.status(404).json({ message: `Empleado con ID ${id} no encontrado.` });
     }
+    logger.info(`Empleado ID ${id} eliminado.`);
+    res.status(200).json({ message: 'Empleado eliminado exitosamente' });
   } catch (error) {
-    console.error(`Error al eliminar empleado con ID ${req.params.id}:`, error);
-    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-      res.status(409).json({
-        message: `No se puede eliminar el empleado con ID ${req.params.id} porque está siendo utilizado por otras tablas (ej. asignaciones, equipos, etc.).`,
-        error: error.message
-      });
-    } else {
-      next(error);
+    if (error.message.includes('REFERENTIAL_INTEGRITY')) {
+      return res.status(409).json({ message: error.message });
     }
+    throw error;
   }
 };
 
-// * Exporto todas las funciones del controlador para usarlas en las rutas
 module.exports = {
   getAllEmpleados,
   getEmpleadoById,
   createEmpleado,
   updateEmpleado,
-  deleteEmpleado,
+  deleteEmpleado
 };

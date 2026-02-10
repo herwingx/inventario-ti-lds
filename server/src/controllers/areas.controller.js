@@ -1,322 +1,89 @@
-// ! Controlador para la entidad Áreas
-// * Importo la función query para ejecutar consultas a la base de datos personalizada.
-const { query } = require('../config/db');
-
-// * [GET] /api/areas - Trae todas las áreas con información de empresa y status
-// * Opcionalmente filtra por sucursal usando query parameter ?id_sucursal=X
 /**
- * Obtiene todas las áreas del sistema, incluyendo datos de empresa y estado.
- * Soporta filtrado opcional por ID de sucursal.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
+ * @module Controllers/Areas
+ * @description Controlador para la gestión de áreas.
  */
-const getAllAreas = async (req, res, next) => {
-  try {
-    const { id_sucursal } = req.query;
+const AreaService = require('../services/areas.service');
+const { createAreaSchema, updateAreaSchema } = require('../schemas/area.schema');
+const logger = require('../utils/logger');
 
-    let sql = `
-      SELECT
-        a.id,
-        a.nombre,
-        e.nombre AS nombre_empresa,
-        a.id_empresa,
-        (
-            SELECT s.id 
-            FROM sucursales s 
-            JOIN tipos_sucursal ts ON s.id_tipo_sucursal = ts.id 
-            WHERE s.id_empresa = a.id_empresa AND ts.nombre_tipo = 'Corporativo' 
-            LIMIT 1
-        ) AS id_sucursal,
-        a.fecha_registro,
-        a.fecha_actualizacion,
-        a.id_status,
-        st.nombre_status AS status_nombre
-      FROM areas AS a
-      JOIN empresas AS e ON a.id_empresa = e.id
-      JOIN status AS st ON a.id_status = st.id
-    `;
-
-    let params = [];
-
-    // Si se proporciona id_sucursal, filtrar áreas por la empresa de esa sucursal
-    // Nota: Si el área es global por empresa, filtramos por la empresa de la sucursal.
-    if (id_sucursal) {
-      const sucursalRes = await query('SELECT id_empresa FROM sucursales WHERE id = ?', [id_sucursal]);
-      if (sucursalRes.length > 0) {
-        sql += ` WHERE a.id_empresa = ?`;
-        params.push(sucursalRes[0].id_empresa);
-      } else {
-        // Si la sucursal no existe, no devolvemos nada o error, aquí optamos por lista vacía seguro
-        sql += ` WHERE 1=0`;
-      }
-    }
-
-    sql += ` ORDER BY a.nombre`;
-
-    const areas = await query(sql, params);
-    res.status(200).json(areas);
-  } catch (error) {
-    // * Si ocurre un error, lo paso al middleware global para manejo centralizado
-    console.error('Error al obtener todas las áreas:', error);
-    next(error);
-  }
+const getAllAreas = async (req, res) => {
+  const { id_sucursal } = req.query;
+  const areas = await AreaService.findAll(id_sucursal);
+  res.status(200).json(areas);
 };
 
-/**
- * Busca un área específica por su ID.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const getAreaById = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const sql = `
-      SELECT
-        a.id,
-        a.nombre,
-        e.nombre AS nombre_empresa,
-        a.id_empresa,
-        (
-            SELECT s.id 
-            FROM sucursales s 
-            JOIN tipos_sucursal ts ON s.id_tipo_sucursal = ts.id 
-            WHERE s.id_empresa = a.id_empresa AND ts.nombre_tipo = 'Corporativo' 
-            LIMIT 1
-        ) AS id_sucursal,
-        a.fecha_registro,
-        a.fecha_actualizacion,
-        a.id_status,
-        st.nombre_status AS status_nombre
-      FROM areas AS a
-      JOIN empresas AS e ON a.id_empresa = e.id
-      JOIN status AS st ON a.id_status = st.id
-      WHERE a.id = ?
-    `;
-    const params = [id];
-    const areas = await query(sql, params);
-    if (areas.length === 0) {
-      res.status(404).json({ message: `Área con ID ${id} no encontrada.` });
-    } else {
-      res.status(200).json(areas[0]);
-    }
-  } catch (error) {
-    // * Si ocurre un error, lo paso al middleware global para manejo centralizado
-    console.error(`Error al obtener área con ID ${req.params.id}:`, error);
-    next(error);
+const getAreaById = async (req, res) => {
+  const { id } = req.params;
+  const area = await AreaService.findById(id);
+
+  if (!area) {
+    return res.status(404).json({ message: `Área con ID ${id} no encontrada.` });
   }
+
+  res.status(200).json(area);
 };
 
-/**
- * Crea una nueva área.
- * Validación: Solo permite crear áreas para sucursales de tipo 'Corporativo'.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const createArea = async (req, res, next) => {
+const createArea = async (req, res) => {
+  const validation = createAreaSchema.parse({ body: req.body });
+
   try {
-    const { nombre, id_sucursal, id_status } = req.body;
-    // * Validación de campos obligatorios (nombre e id_sucursal)
-    if (!nombre || id_sucursal === undefined) {
-      return res.status(400).json({ message: 'Los campos nombre e id_sucursal son obligatorios.' });
-    }
-    // * Validar existencia de sucursal y que sea de tipo 'Corporativo'
-    const sucursalResult = await query(
-      `SELECT s.id, s.id_empresa, ts.nombre_tipo 
-         FROM sucursales s
-         JOIN tipos_sucursal ts ON s.id_tipo_sucursal = ts.id
-         WHERE s.id = ?`,
-      [id_sucursal]
-    );
-
-    if (sucursalResult.length === 0) {
-      return res.status(400).json({ message: `El ID de sucursal ${id_sucursal} no es válido.` });
-    }
-    const sucursal = sucursalResult[0];
-
-    // * Regla de negocio: solo se puede crear área en sucursal de tipo 'Corporativo'
-    // * Usamos comparación case-insensitive por seguridad
-    if (sucursal.nombre_tipo.toUpperCase() !== 'CORPORATIVO') {
-      return res.status(400).json({ message: `Las áreas solo pueden ser creadas para sucursales de tipo 'Corporativo'. La sucursal con ID ${id_sucursal} no es de este tipo.` });
-    }
-
-    const id_empresa = sucursal.id_empresa;
-
-    // * Validar existencia de status si se envió
-    if (id_status !== undefined) {
-      const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
-      if (statusExists.length === 0) {
-        return res.status(400).json({ message: `El ID de status ${id_status} no es válido.` });
-      }
-    }
-    // * Construcción dinámica de la consulta para insertar solo los campos presentes
-    let sql = 'INSERT INTO areas (nombre, id_empresa';
-    let placeholders = ['?', '?'];
-    const values = [nombre, id_empresa];
-
-    // NOTA: No insertamos id_sucursal porque la tabla no lo tiene. 
-    // asociamos el área a la EMPRESA de la sucursal.
-
-    if (id_status !== undefined) {
-      sql += ', id_status';
-      placeholders.push('?');
-      values.push(id_status);
-    }
-    sql += ') VALUES (' + placeholders.join(', ') + ')';
-    const result = await query(sql, values);
-    const newAreaId = result.insertId;
+    const newArea = await AreaService.create(validation.body);
+    logger.info(`Área creada: ${newArea.nombre} (ID: ${newArea.id})`);
     res.status(201).json({
       message: 'Área creada exitosamente',
-      id: newAreaId,
-      nombre: nombre,
-      id_sucursal: id_sucursal // Devolvemos el id_sucursal original para referencia del frontend
+      id: newArea.id,
+      nombre: newArea.nombre,
+      id_sucursal: validation.body.id_sucursal
     });
   } catch (error) {
-    // * Si ocurre un error, lo paso al middleware global para manejo centralizado
-    console.error('Error al crear área:', error);
-    if (error.code === 'ER_DUP_ENTRY') {
-      res.status(409).json({
-        message: `Ya existe un área con el nombre "${req.body.nombre}" para esa empresa.`,
-        error: error.message
-      });
-    } else {
-      next(error);
+    if (error.message.includes('NOT_FOUND')) return res.status(404).json({ message: error.message });
+    if (error.message.includes('BUSINESS_RULE') || error.message.includes('DUPLICATE_ENTRY')) {
+      return res.status(409).json({ message: error.message });
     }
+    throw error;
   }
 };
 
-// * [PUT] /api/areas/:id - Actualiza un área por su ID (solo en sucursales de tipo 'Corporativo')
-/**
- * Actualiza la información de un área existente.
- * Mantiene la regla de negocio de solo permitir áreas en sucursales 'Corporativo'.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const updateArea = async (req, res, next) => {
+const updateArea = async (req, res) => {
+  const validation = updateAreaSchema.parse({ params: req.params, body: req.body });
+
   try {
-    const { id } = req.params;
-    const { nombre, id_sucursal, id_status } = req.body;
-    // * Validación: al menos un campo a actualizar
-    if (nombre === undefined && id_sucursal === undefined && id_status === undefined) {
-      return res.status(400).json({ message: 'Se debe proporcionar al menos un campo para actualizar (nombre, id_sucursal, id_status).' });
+    const updated = await AreaService.update(validation.params.id, validation.body);
+    if (!updated) {
+      return res.status(404).json({ message: `Área con ID ${validation.params.id} no encontrada.` });
     }
-
-    let id_empresa = undefined;
-
-    // * Validar que la sucursal objetivo es de tipo 'Corporativo' si se actualiza
-    if (id_sucursal !== undefined) {
-      const sucursalResult = await query(
-        `SELECT s.id, s.id_empresa, ts.nombre_tipo 
-             FROM sucursales s
-             JOIN tipos_sucursal ts ON s.id_tipo_sucursal = ts.id
-             WHERE s.id = ?`,
-        [id_sucursal]
-      );
-      if (sucursalResult.length === 0) {
-        return res.status(400).json({ message: `El ID de sucursal ${id_sucursal} no es válido.` });
-      }
-      const sucursal = sucursalResult[0];
-
-      if (sucursal.nombre_tipo.toUpperCase() !== 'CORPORATIVO') {
-        return res.status(400).json({ message: `Las áreas solo pueden estar en sucursales de tipo 'Corporativo'.` });
-      }
-      id_empresa = sucursal.id_empresa;
-    }
-
-    if (id_status !== undefined) {
-      const statusExists = await query('SELECT id FROM status WHERE id = ?', [id_status]);
-      if (statusExists.length === 0) {
-        return res.status(400).json({ message: `El ID de status ${id_status} no es válido.` });
-      }
-    }
-
-    let sql = 'UPDATE areas SET ';
-    const params = [];
-    const updates = [];
-    if (nombre !== undefined) {
-      updates.push('nombre = ?');
-      params.push(nombre);
-    }
-    if (id_empresa !== undefined) {
-      updates.push('id_empresa = ?');
-      params.push(id_empresa);
-    }
-    if (id_status !== undefined) {
-      updates.push('id_status = ?');
-      params.push(id_status);
-    }
-    sql += updates.join(', ');
-    sql += ' WHERE id = ?';
-    params.push(id);
-    const result = await query(sql, params);
-    if (result.affectedRows === 0) {
-      res.status(404).json({ message: `Área con ID ${id} no encontrada.` });
-    } else {
-      res.status(200).json({ message: `Área con ID ${id} actualizada exitosamente.` });
-    }
+    logger.info(`Área ID ${validation.params.id} actualizada.`);
+    res.status(200).json({ message: 'Área actualizada exitosamente' });
   } catch (error) {
-    // * Si ocurre un error, lo paso al middleware global para manejo centralizado
-    console.error(`Error al actualizar área con ID ${req.params.id}:`, error);
-    if (error.code === 'ER_DUP_ENTRY') {
-      res.status(409).json({
-        message: `Ya existe un área con el nombre "${req.body.nombre}" para esa empresa.`,
-        error: error.message
-      });
-    } else {
-      next(error);
+    if (error.message.includes('NOT_FOUND')) return res.status(404).json({ message: error.message });
+    if (error.message.includes('BUSINESS_RULE') || error.message.includes('DUPLICATE_ENTRY')) {
+      return res.status(409).json({ message: error.message });
     }
+    throw error;
   }
 };
 
-/**
- * Elimina (físicamente) un área de la base de datos.
- *
- * @param {import('express').Request} req - Objeto de solicitud Express.
- * @param {import('express').Response} res - Objeto de respuesta Express.
- * @param {import('express').NextFunction} next - Función middleware next.
- * @returns {Promise<void>}
- */
-const deleteArea = async (req, res, next) => {
+const deleteArea = async (req, res) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
-    const sql = 'DELETE FROM areas WHERE id = ?';
-    const params = [id];
-    const result = await query(sql, params);
-    if (result.affectedRows === 0) {
-      res.status(404).json({ message: `Área con ID ${id} no encontrada.` });
-    } else {
-      res.status(200).json({ message: `Área con ID ${id} eliminada exitosamente.` });
+    const deleted = await AreaService.delete(id);
+    if (!deleted) {
+      return res.status(404).json({ message: `Área con ID ${id} no encontrada.` });
     }
+    logger.info(`Área ID ${id} eliminada.`);
+    res.status(200).json({ message: 'Área eliminada exitosamente' });
   } catch (error) {
-    // * Si ocurre un error, lo paso al middleware global para manejo centralizado
-    console.error(`Error al eliminar área con ID ${req.params.id}:`, error);
-    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-      res.status(409).json({
-        message: `No se puede eliminar el área con ID ${req.params.id} porque está siendo utilizada por otras tablas (ej. empleados, equipos, etc.).`,
-        error: error.message
-      });
-    } else {
-      next(error);
+    if (error.message.includes('REFERENTIAL_INTEGRITY')) {
+      return res.status(409).json({ message: error.message });
     }
+    throw error;
   }
 };
 
-// * Exporto todas las funciones del controlador para usarlas en las rutas
 module.exports = {
   getAllAreas,
   getAreaById,
   createArea,
   updateArea,
-  deleteArea,
+  deleteArea
 };
