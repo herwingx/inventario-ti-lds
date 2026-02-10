@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.3.0](https://github.com/herwingx/inventario-ti-lds/compare/v2.2.1...v2.3.0) (2026-02-10)
+
+
+### Features
+
+* **support:** implementar comunicación bidireccional y mapeo de categorías inteligente ([8fe9da8](https://github.com/herwingx/inventario-ti-lds/commit/8fe9da824b99b9cfeaaeddb009a4e227625a650c))
+
 ### [2.2.1](https://github.com/herwingx/inventario-ti-lds/compare/v2.2.0...v2.2.1) (2026-02-10)
 
 
