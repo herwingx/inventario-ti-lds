@@ -11,29 +11,115 @@ const router = express.Router(); // * Instancia del enrutador de Express
 // * Importo las funciones controladoras de direcciones IP
 const direccionesIpController = require('../controllers/direcciones_ip.controller');
 
-// ===============================================================
-// DEFINICIÓN DE RUTAS
-// Montadas bajo /api/direcciones-ip en server.js.
-// ===============================================================
+/**
+ * @openapi
+ * tags:
+ *   name: Infraestructura
+ *   description: Gestión de red, IPs y recursos tecnológicos
+ */
 
-// * [GET] /api/direcciones-ip - Trae todas las direcciones IP (con filtros opcionales)
-// * Query params: segmento (0-15), status (ID), disponibles (true/false)
+/**
+ * @openapi
+ * /api/direcciones-ip:
+ *   get:
+ *     summary: Listar direcciones IP
+ *     tags: [Infraestructura]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: segmento
+ *         schema: { type: integer }
+ *         description: Filtrar por segmento (0-15)
+ *     responses:
+ *       200:
+ *         description: Lista de IPs.
+ */
 router.get('/', direccionesIpController.getAllDireccionesIp);
 
-// * [GET] /api/direcciones-ip/segmentos - Obtiene resumen de IPs por segmento para dashboard
+/**
+ * @openapi
+ * /api/direcciones-ip/segmentos:
+ *   get:
+ *     summary: Resumen de IPs por segmento
+ *     tags: [Infraestructura]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Resumen estadístico de segmentos.
+ */
 router.get('/segmentos', direccionesIpController.getSegmentosResumen);
 
-// * [GET] /api/direcciones-ip/:id - Trae una dirección IP específica por su ID
+/**
+ * @openapi
+ * /api/direcciones-ip/{id}:
+ *   get:
+ *     summary: Obtener IP por ID
+ *     tags: [Infraestructura]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Datos de la IP.
+ */
 router.get('/:id', direccionesIpController.getDireccionIpById);
 
-// * [POST] /api/direcciones-ip - Crea una nueva dirección IP
+/**
+ * @openapi
+ * /api/direcciones-ip:
+ *   post:
+ *     summary: Registrar una nueva IP
+ *     tags: [Infraestructura]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [direccion_ip]
+ *             properties:
+ *               direccion_ip: { type: string, example: "10.10.1.50" }
+ *               id_sucursal: { type: integer }
+ *     responses:
+ *       201:
+ *         description: IP creada.
+ */
 router.post('/', direccionesIpController.createDireccionIp);
 
-// * [PUT] /api/direcciones-ip/:id - Actualiza una dirección IP por su ID
+/**
+ * @openapi
+ * /api/direcciones-ip/{id}:
+ *   put:
+ *     summary: Actualizar una IP
+ *     tags: [Infraestructura]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: IP actualizada.
+ */
 router.put('/:id', direccionesIpController.updateDireccionIp);
 
-// * [DELETE] /api/direcciones-ip/:id - Elimina una dirección IP por su ID
+/**
+ * @openapi
+ * /api/direcciones-ip/{id}:
+ *   delete:
+ *     summary: Eliminar una IP
+ *     tags: [Infraestructura]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: IP eliminada.
+ */
 router.delete('/:id', direccionesIpController.deleteDireccionIp);
 
-// * Exporto el enrutador para usarlo en server.js
 module.exports = router;

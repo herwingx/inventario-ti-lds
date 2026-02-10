@@ -12,26 +12,98 @@ const router = express.Router();
 // Importamos las funciones controladoras.
 const notasController = require('../controllers/notas.controller');
 
-// ===============================================================
-// DEFINICIÓN DE RUTAS
-// Montadas bajo /api/notas en server.js.
-// ===============================================================
+/**
+ * @openapi
+ * tags:
+ *   name: Notas
+ *   description: Sistema de observaciones y documentación técnica interna
+ */
 
-// ! Rutas para la entidad Notas
-
-// * [GET] /api/notas - Trae todas las notas
+/**
+ * @openapi
+ * /api/notas:
+ *   get:
+ *     summary: Listar todas las notas
+ *     tags: [Notas]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de notas.
+ */
 router.get('/', notasController.getAllNotas);
 
-// * [GET] /api/notas/:id - Trae una nota específica por su ID
+/**
+ * @openapi
+ * /api/notas/{id}:
+ *   get:
+ *     summary: Obtener nota por ID
+ *     tags: [Notas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Datos de la nota.
+ */
 router.get('/:id', notasController.getNotaById);
 
-// * [POST] /api/notas - Crea una nueva nota
+/**
+ * @openapi
+ * /api/notas:
+ *   post:
+ *     summary: Crear una nueva nota vinculada a un recurso
+ *     tags: [Notas]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [contenido]
+ *             properties:
+ *               titulo: { type: string }
+ *               contenido: { type: string }
+ *               id_equipo: { type: integer }
+ *               id_mantenimiento: { type: integer }
+ *     responses:
+ *       201:
+ *         description: Nota creada.
+ */
 router.post('/', notasController.createNota);
 
-// * [PUT] /api/notas/:id - Actualiza una nota por su ID
+/**
+ * @openapi
+ * /api/notas/{id}:
+ *   put:
+ *     summary: Actualizar una nota
+ *     tags: [Notas]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Nota actualizada.
+ */
 router.put('/:id', notasController.updateNota);
 
-// * [DELETE] /api/notas/:id - Elimina una nota por su ID
+/**
+ * @openapi
+ * /api/notas/{id}:
+ *   delete:
+ *     summary: Eliminar una nota
+ *     tags: [Notas]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Nota eliminada.
+ */
 router.delete('/:id', notasController.deleteNota);
 
 module.exports = router;

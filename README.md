@@ -7,6 +7,7 @@
 [![Maintenance](https://img.shields.io/badge/Maintenance-Active-2EA44F?style=for-the-badge)](https://github.com/herwingx/inventario-ti-lds/graphs/commit-activity)
 [![Stack](https://img.shields.io/badge/Stack-MEVN-3FB950?style=for-the-badge&logo=vuedotjs&logoColor=white)](docs/ARQUITECTURA_TECNOLOGIA.md)
 [![Docs](https://img.shields.io/badge/Docs-Enterprise_Grade-007EC6?style=for-the-badge&logo=confluence&logoColor=white)](docs/)
+[![API Docs](https://img.shields.io/badge/API_Docs-Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](http://localhost:3000/api-docs)
 
 ---
 
