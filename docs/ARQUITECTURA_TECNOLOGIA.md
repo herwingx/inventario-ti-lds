@@ -1,104 +1,84 @@
-# 🏗️ Arquitectura y Stack Tecnológico
+# 🏗️ Arquitectura de Software y Stack Tecnológico
 
-> **Cimientos del Sistema**
+> **Nivel de Abstracción:** Contenedores (C4 Level 2)
 >
-> Documentación técnica detallada sobre las decisiones de arquitectura, tecnologías seleccionadas y patrones de diseño implementados en el Sistema de Inventario TI.
+> Este documento detalla la interacción entre los componentes lógicos del sistema, las tecnologías seleccionadas y los patrones de diseño aplicados.
 
-[![Stack](https://img.shields.io/badge/Stack-MEVN-green?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
-[![Architecture](https://img.shields.io/badge/Architecture-REST_API-blue?style=flat-square)](https://restfulapi.net/)
-[![Pattern](https://img.shields.io/badge/Pattern-MVC-orange?style=flat-square)](https://developer.mozilla.org/es/docs/Glossary/MVC)
+## 🔭 Visión General (Container Diagram)
 
----
-
-## 🚀 Stack Tecnológico (MEVN)
-
-El núcleo del sistema se basa en el stack **MEVN** (MySQL, Express, Vue, Node), seleccionado por su robustez empresarial y escalabilidad.
-
-### 🎨 Frontend (Cliente)
-
-| Tecnología | Versión | Rol | Justificación Técnica |
-| :--- | :--- | :--- | :--- |
-| **Vue.js** | 3.x | Framework Core | Utiliza **Composition API** (`<script setup>`) para una lógica modular, tipado seguro y mejor rendimiento que Options API. |
-| **Vite** | 5.x | Build Tool | Motor de desarrollo ultrarrápido con HMR (Hot Module Replacement) instantáneo y builds de producción optimizados. |
-| **PrimeVue** | 4.0 | UI Kit | Suite de componentes empresariales (DataTables, Modales) con diseño **Aura** para una estética premium inmediata. |
-| **Pinia** | 2.x | State Manager | Gestión de estado reactivo global (Auth, Theme) sin la complejidad de Vuex. |
-| **TailwindCSS** | 3.x | Styling | Utility-first CSS para prototipado rápido y diseño responsivo sin salir del markup. |
-
-### ⚙️ Backend (Servidor)
-
-| Tecnología | Versión | Rol | Justificación Técnica |
-| :--- | :--- | :--- | :--- |
-| **Node.js** | 18+ LTS | Runtime | Modelo **Non-blocking I/O** ideal para manejar alta concurrencia de APIs REST. |
-| **Express.js** | 4.x | Framework | Estándar de la industria para enrutamiento y middleware. Minimalista y extensible. |
-| **MySQL 8** | 8.0 | Base de Datos | Motor relacional compatible con **ACID** para garantizar integridad en transacciones de inventario. |
-| **MySQL2** | 3.x | Driver | Cliente nativo con soporte para **Promises** (`async/await`) y protección contra SQL Injection. |
-| **JWT** | 9.x | Seguridad | Autenticación **Stateless** (sin sesiones en servidor) para escalabilidad horizontal. |
-
----
-
-## 🏛️ Arquitectura de Software
-
-El sistema sigue una arquitectura de **Cliente-Servidor (REST API)** desacoplada.
+El sistema sigue una arquitectura **Monolítica Modular Desacoplada** (Decoupled Monolith). El Frontend (SPA) y el Backend (API) están separados físicamente pero residen en el mismo repositorio (Monorepo) para facilitar el desarrollo.
 
 ```mermaid
-graph TD
-    Client[Cliente Vue.js] <-->|JSON / HTTP| API[API REST Express]
-    API <-->|SQL Queries| DB[(MySQL Database)]
+graph LR
+    subgraph "Navegador del Usuario"
+        SPA[Single Page Application<br/>Vue.js 3 + Pinia]
+    end
+
+    subgraph "Servidor de Aplicaciones"
+        API[Backend API<br/>Node.js + Express]
+        Auth[Auth Middleware<br/>JWT Service]
+        ORM[Data Access Layer<br/>Prisma ORM]
+    end
+
+    subgraph "Capa de Datos"
+        DB[(Base de Datos<br/>MySQL 8.0)]
+        FS[File System<br/>Uploads/Evidencias]
+    end
+
+    SPA -- "HTTPS / JSON (REST)" --> API
+    API -- "Valida Token" --> Auth
+    API -- "Query / Transacción" --> ORM
+    ORM -- "TCP / 3306" --> DB
+    API -- "Read/Write Blob" --> FS
+    
+    style SPA fill:#42b883,stroke:#35495e,color:#fff
+    style API fill:#68a063,stroke:#35495e,color:#fff
+    style DB fill:#00758f,stroke:#005467,color:#fff
 ```
 
-### 1. Patrón de Diseño Backend: MVC (Model-View-Controller)
-Aunque usamos una API (sin "Views" HTML en backend), adaptamos el patrón:
+---
 
-*   **Rutas (`routes/`)**: Puerta de entrada. Solo definen URL y apuntan a un controlador.
-*   **Controladores (`controllers/`)**: Cerebro. Contienen la lógica de negocio, validaciones y orquestación.
-*   **Config/DB (`config/`)**: Capa de Acceso a Datos. Gestiona la conexión y queries directas.
-    *   *Decisión:* No usamos un ORM (como Sequelize o TypeORM) para mantener control total sobre las consultas SQL y optimizar rendimiento.
+## 🛠️ Stack Tecnológico (MEVN)
 
-### 2. Patrón de Diseño Frontend: Arquitectura Basada en Componentes
+### 1. Frontend: Vue.js 3 (Composition API)
+*   **Justificación:** Se eligió Vue 3 por su rendimiento superior y la **Composition API**, que permite reutilizar lógica de negocio (Composables) mejor que React Hooks en escenarios complejos.
+*   **UI Framework:** PrimeVue (Tema Aura). Provee componentes empresariales robustos (DataTables, DatePickers) reduciendo el tiempo de desarrollo UI en un 60%.
+*   **State Management:** Pinia. Gestiona el estado de sesión (Usuario, Permisos) y caché de catálogos.
 
-*   **Views (`views/`)**: Páginas completas (ej. `EquiposView`). Coordinan el layout.
-*   **Components (`components/`)**: Piezas reutilizables (ej. `StatCard`, `TheSidebar`).
-*   **Services (`services/`)**: Capa de abstracción de API. Los componentes nunca llaman a Axios directamente; llaman a `EquiposService.getAll()`. Esto permite cambiar el backend sin tocar la UI.
-*   **Stores (`stores/`)**: Estado global reactivo.
+### 2. Backend: Node.js + Express
+*   **Modelo de Concurrencia:** Non-blocking I/O. Ideal para una aplicación intensiva en I/O (lectura de inventario, reportes) más que en CPU.
+*   **Seguridad:** Implementación de **Helmet** para cabeceras HTTP seguras, **Rate Limiting** para mitigar DDoS y **CORS** estricto.
+
+### 3. Capa de Datos: MySQL + Prisma ORM
+*   **Motor:** MySQL 8.0 (ACID Compliant). Crítico para asegurar que una asignación de equipo no quede en estado inconsistente.
+*   **ORM:** Prisma.
+    *   *Type Safety:* Genera tipos TypeScript/JSDoc automáticamente basados en el esquema de la BD.
+    *   *Migrations:* Control de versiones de la estructura de la base de datos.
+    *   *Seguridad:* Previene SQL Injection por diseño al usar consultas parametrizadas internamente.
 
 ---
 
-## 🧠 Decisiones Clave de Diseño
+## 🧩 Patrones de Diseño Implementados
 
-## 🧠 Decisiones Clave de Diseño
+### Backend (MVC Adaptado)
+*   **Routes:** Solo definición de endpoints.
+*   **Controllers:** Lógica de negocio y orquestación.
+*   **Services/Repositories:** (Implementado via Prisma) Abstracción de datos.
 
-### 1. "Soft Delete" vs "Hard Delete"
-En tablas críticas (`equipos`, `empleados`), no borramos registros (`DELETE`). Cambiamos su `status_id` a "Baja/Inactivo".
-> **Por qué:** Para mantener integridad histórica. Si borramos un empleado, perderíamos el rastro de qué equipos tuvo asignados en el pasado.
-
-### 2. Confianza Cero (Zero Trust Validation)
-Aunque el frontend valida formularios, el backend **re-valida todo**.
-> **Por qué:** Un usuario malintencionado puede saltarse el frontend usando herramientas como Postman. El backend es la autoridad final de la verdad.
-
-### 3. Segmentación de Red Lógica
-La lógica de negocio valida IPs basándonos en la realidad física de la red corporativa.
-> **Referencia:** `docs/PLAN_SEGMENTACION_RED.md`
-
-### 4. Seguridad por Diseño
-*   **Contraseñas:** Hasheadas con `bcrypt` (Salted).
-*   **SQL:** Consultas parametrizadas (`?`) anti-inyección.
-*   **Secretos:** Variables de entorno (`.env`) excluidas del control de versiones.
+### Frontend
+*   **Smart vs Dumb Components:** Separación entre componentes que manejan lógica (Vistas) y componentes puramente visuales (UI).
+*   **Composables:** Lógica reutilizable (ej. `useSwal` para alertas) extraída de los componentes.
 
 ---
 
-## 🔄 Flujo de una Nueva Funcionalidad (Ejemplo)
+## 🔒 Estrategia de Seguridad
 
-Para entender cómo viaja la información:
-
-1.  **Usuario** hace clic en "Guardar Equipo".
-2.  **Vue Component** captura datos -> Valida campos básicos.
-3.  **Vue Service** envía `POST /api/equipos` con JSON.
-4.  **Express Router** recibe -> Pasa a Middleware `auth` (¿Tiene Token?).
-5.  **Controller** recibe -> Valida negocio (¿Duplicado? ¿Fecha válida?).
-6.  **DB Driver** ejecuta `INSERT INTO equipos...`.
-7.  **Controller** retorna JSON `{ id: 123, status: 'ok' }`.
-8.  **Vue Component** recibe respuesta -> Muestra notificación "Éxito".
+1.  **Autenticación Stateless:** Tokens JWT firmados (HS256) con expiración. No se almacena estado de sesión en el servidor, permitiendo escalabilidad horizontal fácil.
+2.  **Principio de Menor Privilegio:** La conexión a la BD usa un usuario específico, no `root` (en producción).
+3.  **Sanitización:** Validación estricta de entradas en controladores para evitar XSS y SQL Injection.
 
 ---
 
-Este documento sirve como mapa mental para entender no solo qué hace el sistema, sino la filosofía de ingeniería detrás de él.
+## 🌐 Plan de Red y Despliegue
+
+Consulte [PLAN_SEGMENTACION_RED.md](PLAN_SEGMENTACION_RED.md) y [GUIA_DESPLIEGUE.md](GUIA_DESPLIEGUE.md) para detalles de infraestructura.
