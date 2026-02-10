@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.2.1](https://github.com/herwingx/inventario-ti-lds/compare/v2.2.0...v2.2.1) (2026-02-10)
+
+
+### Features
+
+* **infra:** sincronización de rutas para sub-directorio /soporte y hardening de seguridad ([cbdd919](https://github.com/herwingx/inventario-ti-lds/commit/cbdd91987cef9868f2c53f70cb8738470b5e7d7a))
+
 ## [2.2.0](https://github.com/herwingx/inventario-ti-lds/compare/v2.1.1...v2.2.0) (2026-02-10)
 
 
