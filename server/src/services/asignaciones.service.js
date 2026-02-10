@@ -10,15 +10,49 @@ const STATUS_ASIGNACION_ACTIVA = 1;
 const STATUS_ASIGNACION_FINALIZADA = 6;
 
 class AsignacionService {
+  /**
+   * Obtiene todos los datos relacionados para generar el PDF de la carta responsiva.
+   */
+  static async getDetailsForPDF(id) {
+    const a = await prisma.asignaciones.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        equipos_asignaciones_id_equipoToequipos: {
+          include: { tipos_equipo: true }
+        },
+        empleados: {
+          include: {
+            areas: true,
+            empresas: true,
+            sucursales: true
+          }
+        },
+        sucursales: true,
+        areas: true
+      }
+    });
+
+    if (!a) return null;
+
+    return {
+      asignacion: a,
+      empleado: a.empleados,
+      equipo: a.equipos_asignaciones_id_equipoToequipos,
+      empresa: a.empleados?.empresas,
+      sucursal: a.sucursales,
+      area: a.areas
+    };
+  }
+
   static async findAll(filters) {
     const { equipoId, empleadoId, activa, sucursalId, areaId, ipId } = filters;
 
     let where = {};
-    if (equipoId) where.id_equipo = parseInt(equipoId);
-    if (empleadoId) where.id_empleado = parseInt(empleadoId);
-    if (sucursalId) where.id_sucursal_asignado = parseInt(sucursalId);
-    if (areaId) where.id_area_asignado = parseInt(areaId);
-    if (ipId) where.id_ip = parseInt(ipId);
+    if (equipoId && !isNaN(equipoId)) where.id_equipo = parseInt(equipoId);
+    if (empleadoId && !isNaN(empleadoId)) where.id_empleado = parseInt(empleadoId);
+    if (sucursalId && !isNaN(sucursalId)) where.id_sucursal_asignado = parseInt(sucursalId);
+    if (areaId && !isNaN(areaId)) where.id_area_asignado = parseInt(areaId);
+    if (ipId && !isNaN(ipId)) where.id_ip = parseInt(ipId);
 
     if (activa === 'true') where.fecha_fin_asignacion = null;
     else if (activa === 'false') where.fecha_fin_asignacion = { not: null };
@@ -57,6 +91,9 @@ class AsignacionService {
   }
 
   static async findById(id) {
+    const fs = require('fs');
+    const path = require('path');
+
     const a = await prisma.asignaciones.findUnique({
       where: { id: parseInt(id) },
       include: {
@@ -73,6 +110,20 @@ class AsignacionService {
     });
 
     if (!a) return null;
+
+    // Validación de integridad de archivos
+    if (a.url_responsiva_pdf) {
+      const filePath = path.join(__dirname, '../../storage/responsivas', a.url_responsiva_pdf);
+      if (!fs.existsSync(filePath)) {
+        // El archivo fue borrado manualmente, limpiamos la base de datos
+        await prisma.asignaciones.update({
+          where: { id: a.id },
+          data: { url_responsiva_pdf: null, firma_receptor: null }
+        });
+        a.url_responsiva_pdf = null;
+        a.firma_receptor = null;
+      }
+    }
 
     return {
       ...a,

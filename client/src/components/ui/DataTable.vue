@@ -252,8 +252,8 @@ const rowsOptions = computed(() => {
       />
     </div>
 
-    <!-- Table -->
-    <div class="overflow-x-auto">
+    <!-- Table (Desktop View) -->
+    <div class="hidden sm:block overflow-x-auto">
       <table class="data-table">
         <!-- Header -->
         <thead>
@@ -333,6 +333,40 @@ const rowsOptions = computed(() => {
           </template>
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile View (Cards) -->
+    <div class="block sm:hidden space-y-4">
+      <template v-if="loading">
+        <div v-for="n in 3" :key="'skeleton-card-' + n" class="bg-gray-50 dark:bg-dark-bg p-4 rounded-xl border border-gray-200 dark:border-white/5 space-y-3">
+          <div class="skeleton h-5 w-1/2"></div>
+          <div class="skeleton h-4 w-3/4"></div>
+          <div class="skeleton h-10 w-full rounded-lg"></div>
+        </div>
+      </template>
+      
+      <template v-else-if="!data.length">
+        <slot name="empty"></slot>
+      </template>
+
+      <template v-else>
+        <div 
+          v-for="(row, index) in paginatedData" 
+          :key="'card-' + (row[rowKey] || index)"
+          class="bg-white dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm"
+        >
+          <div class="space-y-4">
+            <div v-for="col in columns" :key="'card-col-' + col.field" class="flex flex-col gap-1">
+              <span v-if="col.field !== 'actions'" class="text-[10px] font-bold uppercase text-gray-400 tracking-widest">{{ col.header }}</span>
+              <div :class="{'flex justify-end pt-2 border-t border-gray-50 dark:border-white/5 mt-2': col.field === 'actions'}">
+                <slot :name="col.field" :data="row" :value="row[col.field]">
+                  <span class="text-sm font-medium text-gray-900 dark:text-gray-200">{{ row[col.field] }}</span>
+                </slot>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
     </div>
 
     <!-- Paginator (BOTTOM) -->

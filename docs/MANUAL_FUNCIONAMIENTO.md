@@ -61,7 +61,25 @@ Una de las características innovadoras es el flujo de soporte desacoplado.
 
 ---
 
-## 5. 🗄️ Gestión de Base de Datos y Auditoría
+## 5. ✍️ Firma Digital y Documentos Legales
+
+El sistema cierra el ciclo administrativo mediante la generación de documentos con validez institucional.
+
+### Flujo de Firma Autógrafa
+1.  **Captura:** El frontend utiliza un componente `SignaturePad` basado en **Canvas HTML5** para registrar el trazo del usuario.
+2.  **Transmisión:** La firma se envía al servidor como una cadena **Base64 (image/png)**.
+3.  **Persistencia Física:** El servidor convierte el Base64 en un archivo `.png` físico y lo almacena en `/storage/firmas/`.
+4.  **Incrustación:** El motor `pdfmake` toma la imagen del disco y la estampa en las coordenadas exactas sobre el nombre del receptor en la Hoja de Resguardo.
+
+### Almacenamiento Privado (Vault)
+A diferencia de las fotos de perfil, las firmas y los PDFs firmados se guardan en la carpeta `/server/storage/`, la cual:
+- **No es pública:** No se puede acceder via URL directa.
+- **Acceso Controlado:** Solo los usuarios autenticados con JWT pueden solicitar la descarga a través del servidor.
+- **Resiliencia:** Si el archivo se elimina del disco, el backend limpia el registro en la DB automáticamente para permitir una nueva firma.
+
+---
+
+## 6. 🗄️ Gestión de Base de Datos y Auditoría
 
 ### Integridad Referencial
 El sistema utiliza claves foráneas estrictas. Por ejemplo, no se puede eliminar una `Empresa` si tiene `Sucursales` activas, protegiendo la consistencia de los reportes.

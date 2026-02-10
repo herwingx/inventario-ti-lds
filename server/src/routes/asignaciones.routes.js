@@ -54,6 +54,51 @@ router.get('/:id', asignacionesController.getAsignacionById);
 
 /**
  * @openapi
+ * /api/asignaciones/{id}/pdf:
+ *   get:
+ *     summary: Descargar Carta Responsiva en PDF
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Archivo PDF generado exitosamente.
+ *         content:
+ *           application/pdf:
+ *             schema: { type: string, format: binary }
+ */
+router.get('/:id/pdf', asignacionesController.getResponsivaPDF);
+
+/**
+ * @openapi
+ * /api/asignaciones/{id}/sign:
+ *   post:
+ *     summary: Firmar digitalmente una asignación y generar PDF final
+ *     tags: [Asignaciones]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [firma]
+ *             properties:
+ *               firma: { type: string, description: "Imagen de la firma en Base64" }
+ *     responses:
+ *       200:
+ *         description: Documento firmado y guardado.
+ */
+router.post('/:id/sign', asignacionesController.signAssignment);
+
+/**
+ * @openapi
  * /api/asignaciones:
  *   post:
  *     summary: Crear una nueva asignación simple

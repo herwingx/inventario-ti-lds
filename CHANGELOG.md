@@ -7,6 +7,22 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-02-10
+### Added (Añadido)
+- **Firma Digital:** Implementación de un Pad de Firma (Canvas HTML5) para captura de firmas autógrafas digitales.
+- **Motor de PDF (pdfmake):** Generación dinámica de "Hojas de Resguardo" con formato institucional de Línea Digital del Sureste.
+- **Almacenamiento Privado:** Capa de almacenamiento fuera de la carpeta pública para documentos legales y firmas (.pdf y .png).
+- **Incrustación de SVG:** Integración de logos corporativos vectoriales en documentos PDF.
+
+### Changed (Cambiado)
+- **UX/UI Mobile-First:** El componente `DataTable` ahora se transforma automáticamente en tarjetas (Cards) en dispositivos móviles.
+- **Resiliencia de Archivos:** El sistema detecta automáticamente si un PDF fue borrado del disco y permite volver a firmar.
+- **Naming Dinámico:** Los archivos PDF se generan con nombres descriptivos basados en el empleado y equipo.
+
+### Fixed (Corregido)
+- Error de desbordamiento horizontal en el detalle de asignaciones.
+- Validación de filtros en la API para evitar errores de tipo `NaN`.
+
 ## [1.1.0] - 2026-02-10
 ### Added (Añadido)
 - **Helpdesk QR (Fase 2):** Implementación completa del módulo de tickets con acceso público mediante tokens QR.

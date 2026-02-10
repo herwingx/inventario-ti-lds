@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "setup": "echo '📦 Instalando Backend...' && cd server && npm install && echo '🔧 Generando Prisma Client...' && npx prisma generate && echo '📦 Instalando Frontend...' && cd ../client && npm install && echo '✅ Setup Completado. Ejecuta npm run dev'",
+    "release": "standard-version",
     "dev": "echo '🚀 Iniciando en modo desarrollo... (Requiere dos terminales o concurrently)' && echo 'Ejecuta: npm run dev:server y npm run dev:client'",
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
@@ -18,5 +19,8 @@
     "express"
   ],
   "author": "herwingx",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "standard-version": "^9.5.0"
+  }
 }
