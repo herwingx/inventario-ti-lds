@@ -115,6 +115,23 @@ const infoSections = computed(() => {
       ]
     },
     {
+      title: 'Mantenimiento Preventivo',
+      icon: 'pi-calendar',
+      color: 'text-cyan-500',
+      fields: [
+        { label: 'Frecuencia', value: equipo.value.frecuencia_mantenimiento_meses ? `${equipo.value.frecuencia_mantenimiento_meses} meses` : 'No definida' },
+        { 
+            label: 'Último Mantenimiento', 
+            value: equipo.value.ultima_fecha_mantenimiento ? new Date(equipo.value.ultima_fecha_mantenimiento).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Ninguno registrado' 
+        },
+        { 
+            label: 'Próximo Mantenimiento', 
+            value: equipo.value.proxima_fecha_mantenimiento ? new Date(equipo.value.proxima_fecha_mantenimiento).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' }) : 'No programado',
+            isWarning: equipo.value.proxima_fecha_mantenimiento && new Date(equipo.value.proxima_fecha_mantenimiento) < new Date()
+        }
+      ]
+    },
+    {
       title: 'Información Adicional',
       icon: 'pi-file',
       color: 'text-orange-500',
@@ -216,7 +233,8 @@ const infoSections = computed(() => {
               v-else
               :class="[
                 field.mono ? 'detail-value-mono' : 'detail-value',
-                field.fullWidth ? 'detail-content-box' : ''
+                field.fullWidth ? 'detail-content-box' : '',
+                field.isWarning ? 'text-red-500 font-bold animate-pulse' : ''
               ]"
             >
               {{ field.value }}
