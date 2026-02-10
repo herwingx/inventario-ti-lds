@@ -91,16 +91,15 @@ const openManageComponentes = async () => {
         
         // 2. Mapear disponibles a formato del select
         const options = responseDisponibles.map(e => ({
-            label: `${e.nombre_equipo} (${e.numero_serie}) - ${e.tipo_equipo}`,
+            label: `[${e.nombre_tipo_equipo || 'Equipo'}] ${e.nombre_equipo} (${e.numero_serie})`,
             value: e.id,
             status: 'available'
         }))
 
-        // 3. Agregar los componentes que YA tiene asignados (que no saldrán en disponibles porque están asignados a ESTA asignación)
-        // Necesitamos mapearlos igual
+        // 3. Agregar los componentes que YA tiene asignados
         const currentOptions = componentes.value.map(c => ({
-            label: `${c.equipo_nombre} (${c.equipo_numero_serie}) - ${c.tipo_equipo_nombre}`,
-            value: c.id_equipo, // Ojo: en endpoint getComponentes devuelve id_equipo
+            label: `[${c.tipo_equipo_nombre || 'Equipo'}] ${c.equipo_nombre} (${c.equipo_numero_serie})`,
+            value: c.id_equipo,
             status: 'current'
         }))
 
