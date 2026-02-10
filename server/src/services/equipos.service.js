@@ -46,7 +46,10 @@ class EquipoService {
       fecha_registro: e.fecha_registro,
       fecha_actualizacion: e.fecha_actualizacion,
       id_status: e.id_status,
-      status_nombre: e.status?.nombre_status
+      status_nombre: e.status?.nombre_status,
+      frecuencia_mantenimiento_meses: e.frecuencia_mantenimiento_meses,
+      proxima_fecha_mantenimiento: e.proxima_fecha_mantenimiento,
+      ultima_fecha_mantenimiento: e.ultima_fecha_mantenimiento
     }));
   }
 
@@ -86,7 +89,10 @@ class EquipoService {
       fecha_registro: e.fecha_registro,
       fecha_actualizacion: e.fecha_actualizacion,
       id_status: e.id_status,
-      status_nombre: e.status?.nombre_status
+      status_nombre: e.status?.nombre_status,
+      frecuencia_mantenimiento_meses: e.frecuencia_mantenimiento_meses,
+      proxima_fecha_mantenimiento: e.proxima_fecha_mantenimiento,
+      ultima_fecha_mantenimiento: e.ultima_fecha_mantenimiento
     };
   }
 
