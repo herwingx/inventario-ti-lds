@@ -1,7 +1,7 @@
 /**
  * @module Config/Cron
  * @description Configuración de tareas programadas con node-cron usando Prisma.
- * Incluye alertas de mantenimiento preventivo.
+ * Incluye alertas de mantenimiento preventivo y correctivo programado.
  */
 const cron = require('node-cron');
 const prisma = require('./prisma');
@@ -17,7 +17,7 @@ const COLORS = {
 };
 
 /**
- * Transporter de nodemailer (reutiliza configuración existente de Fase 2).
+ * Transporter de nodemailer (reutiliza configuración existente).
  */
 const createTransporter = () => {
   return nodemailer.createTransport({
@@ -35,7 +35,7 @@ const createTransporter = () => {
 /**
  * Envía alerta de mantenimiento próximo por email.
  */
-const sendMaintenanceAlert = async (equipos) => {
+const sendMaintenanceAlert = async (alertas) => {
   const alertEmail = process.env.ALERT_EMAIL || process.env.EMAIL_FROM;
   if (!alertEmail) {
     console.log('[CRON] No hay email configurado para alertas.');
@@ -52,59 +52,98 @@ const sendMaintenanceAlert = async (equipos) => {
             <h2 style="margin: 0;">⚠️ Alerta de Mantenimiento</h2>
           </div>
           <div style="padding: 30px;">
-            <p>Los siguientes equipos requieren mantenimiento preventivo en los próximos 7 días:</p>
+            <p>Los siguientes equipos tienen mantenimientos pendientes o programados para los próximos 7 días:</p>
             <ul style="padding-left: 20px;">
-              ${equipos.map(e => `
-                <li style="margin-bottom: 10px;">
-                  <strong>${e.marca} ${e.modelo}</strong><br>
-                  <span style="color: ${COLORS.textLight}; font-size: 13px;">S/N: ${e.numero_serie} | Fecha: ${e.proxima_fecha_mant?.toLocaleDateString()}</span>
+              ${alertas.map(a => `
+                <li style="margin-bottom: 15px; list-style: none; border-left: 4px solid ${COLORS.primary}; padding-left: 15px;">
+                  <strong style="color: ${COLORS.text}; font-size: 16px;">${a.titulo || 'Mantenimiento Preventivo'}</strong><br>
+                  <span style="color: ${COLORS.textLight}; font-size: 14px;">
+                    <strong>Equipo:</strong> ${a.equipo_nombre} (S/N: ${a.numero_serie})<br>
+                    <strong>Fecha:</strong> ${a.fecha_texto}<br>
+                    <strong>Tipo:</strong> ${a.tipo_manto}
+                  </span>
                 </li>
               `).join('')}
             </ul>
+            <div style="margin-top: 30px; text-align: center;">
+              <a href="${process.env.APP_URL}/mantenimientos" style="background: ${COLORS.primary}; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">Ver en el Sistema</a>
+            </div>
           </div>
         </div>
       </div>
     `;
 
     await transporter.sendMail({
-      from: `"Sistema Inventario" <${process.env.EMAIL_FROM}>`,
+      from: `"Eduardo Macías | Soporte" <${process.env.EMAIL_FROM}>`,
       to: alertEmail,
-      subject: `⚠️ Alerta: ${equipos.length} mantenimiento(s) próximos`,
+      subject: `⚠️ Alerta: ${alertas.length} mantenimiento(s) próximos`,
       html: htmlContent
     });
 
-    console.log(`[CRON] Alerta enviada para ${equipos.length} equipos.`);
+    console.log(`[CRON] Alerta enviada para ${alertas.length} eventos de mantenimiento.`);
   } catch (error) {
     console.error('[CRON] Error al enviar email:', error.message);
   }
 };
 
 /**
- * Tarea: Verificar equipos con mantenimiento próximo.
+ * Tarea: Verificar equipos y eventos de mantenimiento próximo.
  */
 const checkMaintenanceAlerts = async () => {
   console.log('[CRON] Verificando mantenimientos próximos...');
 
   try {
     const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
     const proximaSemana = new Date();
     proximaSemana.setDate(hoy.getDate() + 7);
+    proximaSemana.setHours(23, 59, 59, 999);
 
-    const equipos = await prisma.equipos.findMany({
+    const alertas = [];
+
+    // 1. Buscar en la tabla de Equipos (Mantenimientos Preventivos Automáticos)
+    const equiposAuto = await prisma.equipos.findMany({
       where: {
-        proxima_fecha_mant: {
-          gte: hoy,
-          lte: proximaSemana
-        },
-        id_status: { not: 2 } // No dados de baja
-      },
-      orderBy: { proxima_fecha_mant: 'asc' }
+        proxima_fecha_mantenimiento: { gte: hoy, lte: proximaSemana },
+        id_status: { not: 2 }
+      }
     });
 
-    if (equipos.length > 0) {
-      await sendMaintenanceAlert(equipos);
+    equiposAuto.forEach(e => {
+      alertas.push({
+        titulo: 'Mantenimiento Preventivo (Auto)',
+        equipo_nombre: `${e.marca || ''} ${e.modelo || ''}`,
+        numero_serie: e.numero_serie,
+        fecha_texto: e.proxima_fecha_mantenimiento.toLocaleDateString('es-MX'),
+        tipo_manto: 'PREVENTIVO'
+      });
+    });
+
+    // 2. Buscar en la tabla de Mantenimientos (Eventos Programados Manuales)
+    const mantenimientosManuales = await prisma.mantenimientos.findMany({
+      where: {
+        fecha_programada: { gte: hoy, lte: proximaSemana },
+        estatus: 'PENDIENTE'
+      },
+      include: { equipos: true }
+    });
+
+    mantenimientosManuales.forEach(m => {
+      // Evitar duplicados si el equipo ya está en la lista de auto (opcional, pero mejor ser redundante si son registros diferentes)
+      alertas.push({
+        titulo: m.titulo || 'Mantenimiento Programado',
+        equipo_nombre: m.equipos ? `${m.equipos.marca || ''} ${m.equipos.modelo || ''}` : 'Equipo no especificado',
+        numero_serie: m.equipos?.numero_serie || 'N/A',
+        fecha_texto: m.fecha_programada.toLocaleDateString('es-MX'),
+        tipo_manto: m.tipo || 'MANUAL'
+      });
+    });
+
+    if (alertas.length > 0) {
+      await sendMaintenanceAlert(alertas);
     } else {
-      console.log('[CRON] Sin mantenimientos próximos.');
+      console.log('[CRON] Sin mantenimientos próximos detectados en Equipos ni Mantenimientos.');
     }
   } catch (error) {
     console.error('[CRON] Error en checkMaintenanceAlerts:', error.message);
