@@ -24,6 +24,8 @@ const ROLES = {
     // SOPORTE: Si existe en tu BD, agregar el ID correcto aquí
 };
 
+const logger = require('../utils/logger');
+
 /**
  * Middleware que verifica la presencia y validez de un token JWT en el encabezado Authorization.
  * Si es válido, inyecta la información del usuario en `req.user`.
@@ -56,18 +58,18 @@ const protect = (req, res, next) => {
                 sucursalId: decoded.sucursalId || null  // Para filtrado SUPERVISOR
             };
 
-            console.log(`Middleware: Token válido para usuario ID ${req.user.userId}. Petición autorizada.`);
+            logger.debug(`Usuario autenticado: ID ${req.user.userId}`);
             next(); // * Permito que la petición continúe a la ruta solicitada.
 
         } catch (error) {
-            console.error('Middleware: Token inválido o expirado.', error.message);
+            logger.warn(`Intento de acceso con token inválido: ${error.message}`);
             // Si hay un error en la verificación, el usuario no está autorizado.
             return res.status(401).json({ message: 'No autorizado, token falló.' });
         }
     }
 
     if (!token) {
-        console.warn('Middleware: Petición sin token.');
+        logger.warn(`Intento de acceso sin token desde IP: ${req.ip}`);
         return res.status(401).json({ message: 'No autorizado, no hay token.' });
     }
 };

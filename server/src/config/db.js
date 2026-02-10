@@ -29,7 +29,7 @@ const dbConfig = {
   port: process.env.DB_PORT, // * Puerto de la base de datos (asegúrate que sea número)
   waitForConnections: true, // * Espera si todas las conexiones están ocupadas
   connectionLimit: 25, // * Máximo de conexiones simultáneas en el pool (Aumentado temp)
-  queueLimit: 0 // * Sin límite de peticiones en cola
+  queueLimit: 500 // * Límite de conexiones en cola antes de rechazar (Fail Fast)
 };
 
 /**

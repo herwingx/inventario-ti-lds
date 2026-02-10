@@ -127,3 +127,5 @@ public/uploads/*
 
 .gemini/
 gha-creds-*.json
+
+/src/generated/prisma

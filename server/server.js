@@ -5,7 +5,15 @@
 // ! Archivo principal del servidor Express para el sistema de inventario
 const express = require('express');
 const path = require('path');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const logger = require('./src/utils/logger');
+const cors = require('cors');
+
 require('dotenv').config({ path: path.join(__dirname, '.env') }); // * Cargo las variables de entorno desde .env
+const validateEnv = require('./src/utils/validateEnv');
+validateEnv();
+
 const { pool } = require('./src/config/db'); // * Importo el pool de conexiones a la base de datos
 const statusRoutes = require('./src/routes/status.routes'); // * Rutas para el estado del sistema
 const empresasRoutes = require('./src/routes/empresas.routes'); // * Rutas para empresas
@@ -34,14 +42,33 @@ const { initCronJobs } = require('./src/config/cron.config'); // * Tareas progra
 const app = express();
 const port = process.env.PORT || 3000; // * Puerto del servidor (por defecto 3000 si no hay .env)
 
+// * Middleware de seguridad Helmet
+app.use(helmet());
+
 // * Middleware de CORS
-const cors = require('cors');
 app.use(cors({
   origin: 'http://localhost:5173', // Permitir el frontend de Vue
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// * Rate Limiting (Protección contra DoS y Brute Force)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 500, // Limite de 500 peticiones por IP por ventana
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Demasiadas peticiones desde esta IP, por favor intente nuevamente en 15 minutos.' }
+});
+app.use('/api', limiter);
+
+// * Logger de peticiones HTTP
+app.use((req, res, next) => {
+  logger.http(`${req.method} ${req.url} - IP: ${req.ip}`);
+  next();
+});
+
 
 // * Middleware para manejar el prefijo /soporte y /soporte/ en producción
 app.use((req, res, next) => {
@@ -106,7 +133,7 @@ app.get('/db-test', async (req, res) => {
     });
   } catch (error) {
     // ! Si falla la conexión, muestro el error
-    console.error('Error al conectar o consultar la base de datos:', error);
+    logger.error('Error al conectar o consultar la base de datos:', error);
     res.status(500).json({
       message: 'Error al conectar a la base de datos.',
       error: error.message // * Devuelvo el mensaje de error para depuración
@@ -160,9 +187,9 @@ app.get(/^\/(?!api\/|.*\..*$).*/, (req, res) => {
 // ! Middleware global para manejo de errores
 // * Si ocurre un error en cualquier parte, cae aquí
 app.use((err, req, res, next) => {
-  console.error('-------- ERROR CAPTURADO POR MIDDLEWARE GLOBAL --------');
-  console.error(err.stack);
-  console.error('-----------------------------------------------------');
+  logger.error('-------- ERROR CAPTURADO POR MIDDLEWARE GLOBAL --------');
+  logger.error(err.stack);
+  logger.error('-----------------------------------------------------');
 
   const statusCode = err.status || 500;
 
@@ -174,13 +201,13 @@ app.use((err, req, res, next) => {
 
 // ! Inicio del servidor
 app.listen(port, '0.0.0.0', () => {
-  console.log(`\n🚀 Servidor corriendo en: http://localhost:${port}`);
-  console.log(`🔧 Modo: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`🚀 Servidor corriendo en: http://localhost:${port}`);
+  logger.info(`🔧 Modo: ${process.env.NODE_ENV || 'development'}`);
 
   // * Pruebo la conexión al pool de la base de datos al arrancar
   pool.getConnection()
     .then(connection => {
-      console.log('✅ Base de datos conectada exitosamente.');
+      logger.info('✅ Base de datos conectada exitosamente.');
       connection.release(); // * Libero la conexión de vuelta al pool
 
       // * Inicializar tareas programadas (Fase 2)
@@ -188,7 +215,7 @@ app.listen(port, '0.0.0.0', () => {
     })
     .catch(err => {
       // ! Si falla la conexión inicial, aviso por consola
-      console.error('❌ Error al conectar a la base de datos:', err.message);
-      console.error('   Verifica que las credenciales en .env sean correctas.');
+      logger.error('❌ Error al conectar a la base de datos:', err.message);
+      logger.error('   Verifica que las credenciales en .env sean correctas.');
     });
 });
