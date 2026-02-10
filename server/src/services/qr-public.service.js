@@ -12,7 +12,7 @@ class QrPublicService {
       include: {
         tipos_equipo: true,
         status: true,
-        sucursales_equipos_id_sucursal_actualTosucursales: {
+        sucursales: {
           include: { empresas: true }
         }
       }
@@ -33,17 +33,23 @@ class QrPublicService {
 
     return {
       equipo: {
-        id: e.id,
         marca: e.marca,
         modelo: e.modelo,
-        numero_serie: e.numero_serie,
         tipo: e.tipos_equipo?.nombre_tipo,
         estado: e.status?.nombre_status,
-        sucursal: e.sucursales_equipos_id_sucursal_actualTosucursales?.nombre,
-        empresa: e.sucursales_equipos_id_sucursal_actualTosucursales?.empresas?.nombre
+        sucursal: e.sucursales?.nombre,
+        empresa: e.sucursales?.empresas?.nombre
       },
-      tickets_activos: ticketsActivos,
-      tickets_historial: historial
+      tickets_activos: ticketsActivos.map(t => ({
+        tipo_falla: t.tipo_falla,
+        estatus: t.estatus,
+        fecha_creacion: t.fecha_creacion
+      })),
+      tickets_historial: historial.map(t => ({
+        tipo_falla: t.tipo_falla,
+        estatus: t.estatus,
+        fecha_creacion: t.fecha_creacion
+      }))
     };
   }
 

@@ -82,6 +82,18 @@ const handleLogin = async () => {
         <div class="text-center mt-2">
             <span class="text-sm text-gray-400">¿No tienes una cuenta? <a href="#" class="text-[#1ea97c] hover:underline">Regístrate</a></span>
         </div>
+
+        <!-- Botón de Pánico / Ayuda para Usuarios Finales -->
+        <div class="mt-6 pt-6 border-t border-gray-700/50 text-center">
+          <p class="text-xs text-gray-500 mb-3 uppercase tracking-widest font-bold italic">¿Problemas con tu equipo?</p>
+          <router-link 
+            :to="{ name: 'soporte-manual' }" 
+            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-700/50 hover:bg-gray-700 text-gray-200 rounded-lg text-sm transition-all border border-gray-600 hover:border-gray-500"
+          >
+            <i class="pi pi-question-circle text-[#1ea97c]"></i>
+            Reportar Falla aquí
+          </router-link>
+        </div>
       </form>
     
     </div>

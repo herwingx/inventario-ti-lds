@@ -182,9 +182,15 @@ app.get('/db-test', async (req, res) => {
 // * El login debe ser accesible sin un token.
 app.use('/api/auth', authRoutes);
 
-// * Rutas Públicas QR (Fase 2) - Acceso sin autenticación para escaneo de equipos
-// ! Estas rutas permiten a usuarios externos reportar fallas y dar seguimiento
-app.use('/q', qrPublicRoutes);
+// * Rate Limiting para rutas públicas QR (Más estricto)
+const publicLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  max: 50, // Límite de 50 peticiones por IP por cada 5 minutos
+  message: { message: 'Demasiadas peticiones al servicio de soporte QR. Intente más tarde.' }
+});
+
+// * Rutas Públicas QR (Dentro de /api pero antes del middleware protect)
+app.use('/api/q', publicLimiter, qrPublicRoutes);
 
 // * Middleware de Protección JWT
 // ! Todas las rutas definidas DESPUÉS de esta línea requerirán un token JWT válido.

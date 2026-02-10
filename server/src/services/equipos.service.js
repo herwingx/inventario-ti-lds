@@ -4,6 +4,7 @@
  */
 const prisma = require('../config/prisma');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
 
 class EquipoService {
 
@@ -25,6 +26,7 @@ class EquipoService {
 
     // Mapear al formato que espera el frontend/controlador
     return rawEquipos.map(e => ({
+      ...e, // Incluir todos los campos base, incluido qr_token
       id: e.id,
       numero_serie: e.numero_serie,
       nombre_equipo: e.nombre_equipo,
@@ -36,20 +38,7 @@ class EquipoService {
       nombre_sucursal_actual: e.sucursales?.nombre,
       id_empresa: e.sucursales?.id_empresa,
       nombre_empresa: e.sucursales?.empresas?.nombre,
-      procesador: e.procesador,
-      ram: e.ram,
-      disco_duro: e.disco_duro,
-      sistema_operativo: e.sistema_operativo,
-      mac_address: e.mac_address,
-      otras_caracteristicas: e.otras_caracteristicas,
-      fecha_compra: e.fecha_compra,
-      fecha_registro: e.fecha_registro,
-      fecha_actualizacion: e.fecha_actualizacion,
-      id_status: e.id_status,
-      status_nombre: e.status?.nombre_status,
-      frecuencia_mantenimiento_meses: e.frecuencia_mantenimiento_meses,
-      proxima_fecha_mantenimiento: e.proxima_fecha_mantenimiento,
-      ultima_fecha_mantenimiento: e.ultima_fecha_mantenimiento
+      status_nombre: e.status?.nombre_status
     }));
   }
 
@@ -70,38 +59,24 @@ class EquipoService {
     if (!e) return null;
 
     return {
-      id: e.id,
-      numero_serie: e.numero_serie,
-      nombre_equipo: e.nombre_equipo,
-      marca: e.marca,
-      modelo: e.modelo,
-      id_tipo_equipo: e.id_tipo_equipo,
+      ...e, // Incluir qr_token y otros campos
       nombre_tipo_equipo: e.tipos_equipo?.nombre_tipo,
-      id_sucursal_actual: e.id_sucursal_actual,
       nombre_sucursal_actual: e.sucursales?.nombre,
-      procesador: e.procesador,
-      ram: e.ram,
-      disco_duro: e.disco_duro,
-      sistema_operativo: e.sistema_operativo,
-      mac_address: e.mac_address,
-      otras_caracteristicas: e.otras_caracteristicas,
-      fecha_compra: e.fecha_compra,
-      fecha_registro: e.fecha_registro,
-      fecha_actualizacion: e.fecha_actualizacion,
-      id_status: e.id_status,
-      status_nombre: e.status?.nombre_status,
-      frecuencia_mantenimiento_meses: e.frecuencia_mantenimiento_meses,
-      proxima_fecha_mantenimiento: e.proxima_fecha_mantenimiento,
-      ultima_fecha_mantenimiento: e.ultima_fecha_mantenimiento
+      status_nombre: e.status?.nombre_status
     };
   }
 
   /**
-   * Crea un nuevo equipo.
+   * Crea un nuevo equipo con generación automática de Identidad QR.
    * @param {Object} data - Datos ya validados.
    */
   static async create(data) {
     try {
+      // Generar token QR único si no viene en los datos
+      if (!data.qr_token) {
+        data.qr_token = crypto.randomBytes(8).toString('hex'); // 16 caracteres alfanuméricos
+      }
+
       const newEquipo = await prisma.equipos.create({
         data: data
       });

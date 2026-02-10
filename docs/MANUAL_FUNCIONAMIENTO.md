@@ -53,11 +53,16 @@ El backend está diseñado siguiendo el principio de **Separación de Responsabi
 
 Una de las características innovadoras es el flujo de soporte desacoplado.
 
-1.  **Generación de QR:** Cada equipo registrado tiene un `qr_token` único y aleatorio.
+1.  **Generación de QR:** Cada equipo registrado tiene un `qr_token` único y aleatorio generado automáticamente por el servidor.
 2.  **Acceso Público:** Al escanear el QR, el sistema redirige a una landing page pública (`/q/:token`).
-3.  **Reporte de Falla:** El usuario puede describir un problema y adjuntar su correo. Esto crea un registro en la tabla `tickets`.
-4.  **Notificación:** El sistema (vía Cron Jobs) puede detectar tickets nuevos y alertar al departamento de TI.
-5.  **Seguimiento:** El reportante recibe un token de seguimiento para consultar el estado de su ticket sin tener que loguearse en el sistema administrativo.
+3.  **Reporte de Falla (Wizard):** El usuario interactúa con un asistente paso a paso diseñado con principios de accesibilidad para adultos mayores (iconos grandes, lenguaje no técnico).
+4.  **Seguimiento:** El reportante recibe un token de seguimiento para consultar el estado de su ticket sin loguearse.
+
+### 4.1 Accesibilidad y Entrada Manual (Portal de Ayuda)
+Para garantizar la operatividad en casos donde el hardware de captura (cámara/celular) no esté disponible:
+- **Ruta de Emergencia:** Se habilitó `/ayuda` para entrada manual de códigos.
+- **Etiqueta Híbrida:** La etiqueta impresa incluye tanto el QR como el código corto e instrucciones paso a paso.
+- **Interfaz Adaptativa:** El sistema detecta el dispositivo y ajusta el layout (Vertical para móviles, Split-View para escritorio).
 
 ---
 

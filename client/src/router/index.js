@@ -278,6 +278,12 @@ const routes = [
     meta: { title: 'Seguimiento de Ticket', public: true }
   },
   {
+    path: '/ayuda',
+    name: 'soporte-manual',
+    component: () => import('../views/TicketManualEntryView.vue'),
+    meta: { title: 'Acceso a Soporte', public: true }
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('../views/LoginView.vue'),
