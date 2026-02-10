@@ -38,6 +38,7 @@ const viewMode = ref('active') // 'active' | 'history' | 'all'
 
 // Columnas
 const columns = [
+  { field: 'id', header: 'ID', sortable: true, width: '8%' },
   { field: 'equipo_nombre', header: 'Equipo', sortable: true, width: '25%' },
   { field: 'asignado_a', header: 'Asignado A', sortable: false, width: '25%' },
   { field: 'fecha_asignacion', header: 'Fecha Asignación', sortable: true, width: '15%' },
@@ -211,6 +212,14 @@ const clearFilters = () => {
             <p class="text-gray-500 text-sm max-w-xs mx-auto">No se encontraron registros activos o que coincidan con la búsqueda.</p>
             <button v-if="globalFilter" class="mt-4 text-primary font-medium hover:underline" @click="clearFilters">Limpiar Filtros</button>
           </div>
+        </template>
+
+        <template #id="{ data }">
+          <span class="text-xs font-bold font-mono text-gray-400 dark:text-gray-500">#{{ data.id.toString().padStart(4, '0') }}</span>
+        </template>
+
+        <template #skeleton-id>
+          <div class="skeleton h-4 w-10"></div>
         </template>
 
         <template #equipo_nombre="{ data }">

@@ -38,6 +38,8 @@ model asignaciones {
   fecha_registro                                DateTime?       @default(now()) @db.Timestamp(0)
   fecha_actualizacion                           DateTime?       @default(now()) @db.Timestamp(0)
   id_status_asignacion                          Int             @default(1)
+  firma_receptor                                String?         @db.LongText
+  url_responsiva_pdf                            String?         @db.VarChar(255)
   areas                                         areas?          @relation(fields: [id_area_asignado], references: [id], map: "fk_asignaciones_area_asignado")
   direcciones_ip                                direcciones_ip? @relation(fields: [id_ip], references: [id], map: "fk_asignaciones_direcciones_ip")
   empleados                                     empleados?      @relation(fields: [id_empleado], references: [id], map: "fk_asignaciones_empleados")

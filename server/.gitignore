@@ -125,6 +125,9 @@ public/*
 public/uploads/*
 !public/uploads/.gitkeep
 
+storage/*
+!storage/**/.gitkeep
+
 .gemini/
 gha-creds-*.json
 
