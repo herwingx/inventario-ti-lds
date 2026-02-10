@@ -162,7 +162,7 @@ onMounted(async () => {
 
         // Componentes disponibles
         componentesDisponibles.value = (eqRes || []).map(e => ({
-            label: `${e.nombre_equipo} (${e.numero_serie})`,
+            label: `[${e.nombre_tipo_equipo || 'Equipo'}] ${e.nombre_equipo} (${e.numero_serie})`,
             value: e.id
         }))
 
@@ -185,7 +185,7 @@ const populateFormOptimized = async (data, comps) => {
     // Asegurar equipo actual en lista
     if (!equiposDisponibles.value.find(e => e.value === data.id_equipo)) {
         equiposDisponibles.value.unshift({
-            label: `${data.equipo_nombre} [SN: ${data.equipo_numero_serie}] (Actual)`,
+            label: `${data.equipo_tipo_nombre || 'Equipo'} - ${data.equipo_nombre} [SN: ${data.equipo_numero_serie}] (Actual)`,
             value: data.id_equipo
         })
     }
@@ -216,7 +216,7 @@ const populateFormOptimized = async (data, comps) => {
             const cId = c.id_equipo || c.id_equipo_hijo
             if (!componentesDisponibles.value.find(opt => opt.value === cId)) {
                 componentesDisponibles.value.push({
-                    label: `${c.equipo_nombre || c.equipo_hijo_nombre} [SN: ${c.equipo_numero_serie || c.equipo_hijo_serie || 'N/A'}]`,
+                    label: `[${c.tipo_equipo_nombre || 'Equipo'}] ${c.equipo_nombre || c.equipo_hijo_nombre} [SN: ${c.equipo_numero_serie || c.equipo_hijo_serie || 'N/A'}]`,
                     value: cId
                 })
             }

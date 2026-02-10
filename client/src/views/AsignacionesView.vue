@@ -213,7 +213,6 @@ const clearFilters = () => {
           </div>
         </template>
 
-        <!-- Equipo -->
         <template #equipo_nombre="{ data }">
           <div class="flex flex-col">
             <span class="text-gray-900 dark:text-white font-bold text-sm">{{ data.equipo_nombre }}</span>

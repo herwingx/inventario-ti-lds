@@ -232,13 +232,89 @@ class AsignacionService {
     const a = await prisma.asignaciones.findUnique({ where: { id: parseInt(asignacionId) } });
     if (!a) return null;
 
-    return await prisma.asignaciones.findMany({
+    const raw = await prisma.asignaciones.findMany({
       where: { id_equipo_padre: a.id_equipo, fecha_fin_asignacion: null },
       include: {
         equipos_asignaciones_id_equipoToequipos: {
           include: { tipos_equipo: true }
         }
       }
+    });
+
+    return raw.map(c => ({
+      id: c.id,
+      id_equipo: c.id_equipo,
+      equipo_nombre: c.equipos_asignaciones_id_equipoToequipos?.nombre_equipo,
+      equipo_numero_serie: c.equipos_asignaciones_id_equipoToequipos?.numero_serie,
+      tipo_equipo_nombre: c.equipos_asignaciones_id_equipoToequipos?.tipos_equipo?.nombre_tipo,
+      marca: c.equipos_asignaciones_id_equipoToequipos?.marca,
+      modelo: c.equipos_asignaciones_id_equipoToequipos?.modelo
+    }));
+  }
+
+  /**
+   * Actualiza la lista de componentes de una asignación.
+   * Libera los que ya no están y asigna los nuevos.
+   */
+  static async updateComponentes(asignacionId, componentesIds) {
+    const id = parseInt(asignacionId);
+
+    return await prisma.$transaction(async (tx) => {
+      const a = await tx.asignaciones.findUnique({ where: { id } });
+      if (!a) throw new Error('NOT_FOUND: Asignación no encontrada');
+
+      // 1. Obtener componentes actuales
+      const actuales = await tx.asignaciones.findMany({
+        where: { id_equipo_padre: a.id_equipo, fecha_fin_asignacion: null }
+      });
+      const idsActuales = actuales.map(c => c.id_equipo);
+
+      // 2. Determinar cuáles quitar y cuáles añadir
+      const paraQuitar = idsActuales.filter(id => !componentesIds.includes(id));
+      const paraAnadir = componentesIds.filter(id => !idsActuales.includes(id));
+
+      // 3. Quitar componentes (Finalizar asignación y liberar equipo)
+      if (paraQuitar.length > 0) {
+        await tx.asignaciones.updateMany({
+          where: {
+            id_equipo_padre: a.id_equipo,
+            id_equipo: { in: paraQuitar },
+            fecha_fin_asignacion: null
+          },
+          data: {
+            fecha_fin_asignacion: new Date(),
+            id_status_asignacion: STATUS_ASIGNACION_FINALIZADA
+          }
+        });
+
+        await tx.equipos.updateMany({
+          where: { id: { in: paraQuitar } },
+          data: { id_status: STATUS_DISPONIBLE }
+        });
+      }
+
+      // 4. Añadir nuevos componentes
+      for (const compId of paraAnadir) {
+        await tx.asignaciones.create({
+          data: {
+            id_equipo: compId,
+            id_equipo_padre: a.id_equipo,
+            id_empleado: a.id_empleado,
+            id_sucursal_asignado: a.id_sucursal_asignado,
+            id_area_asignado: a.id_area_asignado,
+            fecha_asignacion: new Date(),
+            id_status_asignacion: STATUS_ASIGNACION_ACTIVA,
+            observacion: `Componente añadido a la asignación #${id}`
+          }
+        });
+
+        await tx.equipos.update({
+          where: { id: compId },
+          data: { id_status: STATUS_ASIGNADO }
+        });
+      }
+
+      return true;
     });
   }
 }
