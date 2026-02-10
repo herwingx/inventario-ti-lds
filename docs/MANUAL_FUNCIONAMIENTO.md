@@ -76,8 +76,9 @@ El sistema expone los siguientes puntos de acceso que no requieren autenticació
 
 ### 4.3 Comunicación Bidireccional
 El sistema permite un hilo de conversación transparente:
-- **Comentarios del Técnico:** Se registran desde el panel administrativo y son visibles para el usuario en la vista de seguimiento.
-- **Comentarios del Usuario:** Se registran desde la vista pública y son inyectados en el panel administrativo con un prefijo de autor (`[Nombre]:`) para su correcta identificación por el técnico.
+- **Interfaz de Mensajería:** Implementación de un diseño basado en burbujas de chat (Chat Bubbles) con diferenciación visual de autoría (Soporte vs. Usuario).
+- **UX Adaptativa (Mobile-First):** Uso de unidades **DVH (Dynamic Viewport Height)** para garantizar que el área de escritura siempre sea visible, adaptándose automáticamente a la barra de direcciones y al teclado virtual de los dispositivos móviles.
+- **Gestión de Scroll:** Bloqueo de scroll global para priorizar el desplazamiento interno de la conversación, emulando el comportamiento de una aplicación nativa.
 
 ---
 

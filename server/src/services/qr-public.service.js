@@ -140,6 +140,7 @@ class QrPublicService {
         }
 
         return {
+          id_usuario: c.id_usuario, // Necesario para la alineación del chat
           contenido,
           fecha_creacion: c.fecha_creacion,
           autor
