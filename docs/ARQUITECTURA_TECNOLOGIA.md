@@ -30,15 +30,17 @@ graph LR
     API -- "Query / Transacción" --> ORM
     ORM -- "TCP / 3306" --> DB
     API -- "Read/Write Blob" --> FS
+    API -- "PDF Engine" --> pdfmake[pdfmake]
     
     style SPA fill:#42b883,stroke:#35495e,color:#fff
     style API fill:#68a063,stroke:#35495e,color:#fff
     style DB fill:#00758f,stroke:#005467,color:#fff
+    style pdfmake fill:#f38633,stroke:#333,color:#fff
 ```
 
 ---
 
-## 🛠️ Stack Tecnológico (MEVN)
+## 🛠️ Stack Tecnológico (MEVN+)
 
 ### 1. Frontend: Vue.js 3 (Composition API)
 *   **Justificación:** Se eligió Vue 3 por su rendimiento superior y la **Composition API**, que permite reutilizar lógica de negocio (Composables) mejor que React Hooks en escenarios complejos.
@@ -56,18 +58,34 @@ graph LR
     *   *Migrations:* Control de versiones de la estructura de la base de datos.
     *   *Seguridad:* Previene SQL Injection por diseño al usar consultas parametrizadas internamente.
 
+### 4. Motor de Documentos: pdfmake
+*   **Propósito:** Generación de archivos binarios PDF desde objetos JSON.
+*   **Ventaja:** Permite incrustar imágenes (firmas) y gráficos vectoriales (logos SVG) con alta precisión para impresión institucional.
+
+### 5. Almacenamiento Privado (Private Vault)
+*   **Seguridad:** Los documentos legales no se sirven como archivos estáticos públicos. Viven en `/server/storage/`, una zona aislada que requiere una ruta de API protegida por JWT para su lectura y transmisión (Stream).
+
 ---
 
-## 🧩 Patrones de Diseño Implementados
+## 🧩 Patrones de Diseño e Ingeniería de Software
 
-### Backend (MVC Adaptado)
-*   **Routes:** Solo definición de endpoints.
-*   **Controllers:** Lógica de negocio y orquestación.
-*   **Services/Repositories:** (Implementado via Prisma) Abstracción de datos.
+El sistema implementa una **Arquitectura de Capas (Layered Architecture)**, lo que permite un desacoplamiento total entre la interfaz de usuario, la lógica de negocio y la persistencia de datos.
 
-### Frontend
-*   **Smart vs Dumb Components:** Separación entre componentes que manejan lógica (Vistas) y componentes puramente visuales (UI).
-*   **Composables:** Lógica reutilizable (ej. `useSwal` para alertas) extraída de los componentes.
+### ⚙️ Backend: Patrón Controller-Service-Repository
+
+A diferencia de un MVC tradicional, se ha optado por un enfoque orientado a servicios para garantizar la escalabilidad:
+
+1.  **Capa de Rutas (`routes/`):** Define los contratos de la API (Endpoints) y delega la ejecución a los controladores.
+2.  **Capa de Controladores (`controllers/`):** Actúa como orquestador de la petición HTTP. Valida la estructura de los datos (vía **Zod**) y maneja las respuestas (`200 OK`, `404 Not Found`, etc.).
+3.  **Capa de Servicios (`services/`):** Contiene la **Lógica de Negocio Pura**. Es independiente de la web; maneja transacciones, cálculos técnicos y reglas de integridad.
+4.  **Capa de Acceso a Datos (Prisma):** Funciona como el repositorio que interactúa con MySQL mediante consultas seguras y tipadas.
+
+### 🎨 Frontend: Arquitectura Basada en Componentes y Componibilidad
+
+1.  **Vistas (`views/`):** Componentes de alto nivel que gestionan el ciclo de vida de una página completa.
+2.  **Componentes UI (`components/ui/`):** Piezas atómicas, reutilizables y sin estado (Dumb Components).
+3.  **Servicios de API (`services/`):** Capa de abstracción que encapsula las llamadas a Axios, permitiendo que el componente ignore los detalles de la red.
+4.  **Gestión de Estado (Pinia):** Centraliza la verdad de la aplicación (Sesión, Preferencias) de forma reactiva.
 
 ---
 

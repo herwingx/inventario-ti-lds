@@ -65,7 +65,29 @@ Una de las características innovadoras es el flujo de soporte desacoplado.
 
 El sistema cierra el ciclo administrativo mediante la generación de documentos con validez institucional.
 
-### Flujo de Firma Autógrafa
+### Flujo de Firma y Generación (Diagrama de Secuencia)
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario (Frontend)
+    participant API as API Express
+    participant FS as File System (Storage)
+    participant PDF as Motor PDF (pdfmake)
+    participant DB as MySQL (Prisma)
+
+    U->>U: Dibuja firma en Canvas
+    U->>API: POST /api/asignaciones/:id/sign { firma: base64 }
+    API->>API: Sanitizar Base64
+    API->>FS: Guardar Firma (.png) en /storage/firmas/
+    API->>PDF: generateResponsiva(data + signaturePath)
+    PDF->>FS: Guardar Documento (.pdf) en /storage/responsivas/
+    API->>DB: update(id, { url_responsiva_pdf, firma_receptor })
+    API-->>U: HTTP 200 OK (Proceso Exitoso)
+    U->>API: GET /api/asignaciones/:id/pdf
+    API-->>U: Descarga de archivo físico firmado
+```
+
+### Mecánica de Captura (SignaturePad)
 1.  **Captura:** El frontend utiliza un componente `SignaturePad` basado en **Canvas HTML5** para registrar el trazo del usuario.
 2.  **Transmisión:** La firma se envía al servidor como una cadena **Base64 (image/png)**.
 3.  **Persistencia Física:** El servidor convierte el Base64 en un archivo `.png` físico y lo almacena en `/storage/firmas/`.

@@ -34,6 +34,11 @@
     pm2 start server.js --name "inventario-api"
     ```
 
+5.  **Permisos de Directorios:**
+    El sistema requiere permisos de escritura para el almacenamiento dinámico:
+    - `server/public/uploads` (Evidencias de tickets/mantenimiento)
+    - `server/storage` (Vault privado de firmas y PDFs)
+
 ---
 
 ## 🔄 Actualizaciones (CI/CD Manual)
@@ -47,7 +52,7 @@ pm2 reload inventario-api
 
 ---
 
-## 📈 Monitoreo y Logs
-- Ver estado: `pm2 status`
-- Ver logs en tiempo real: `pm2 logs inventario-api`
-- Monitoreo de recursos: `pm2 monit`
+## 📈 Monitoreo y Mantenimiento
+- **Estado:** `pm2 status`
+- **Logs:** `pm2 logs inventario-api`
+- **Backups:** Es imperativo respaldar la carpeta `server/storage/` diariamente junto con la base de datos MySQL para garantizar la integridad de los documentos firmados.

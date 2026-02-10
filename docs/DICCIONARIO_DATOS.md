@@ -46,6 +46,8 @@
 | `id_empleado` | `Int` | FK (Opt) | Responsable del activo. |
 | `id_ip` | `Int` | FK (Opt) | Dirección IP asignada al activo. |
 | `fecha_asignacion` | `DateTime` | NOT NULL | Inicio de la custodia. |
+| `firma_receptor` | `LongText` | NULL | Nombre del archivo de imagen de la firma (.png). |
+| `url_responsiva_pdf` | `String` | NULL | Nombre del archivo PDF firmado almacenado. |
 
 ---
 
