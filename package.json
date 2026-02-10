@@ -1,6 +1,6 @@
 {
   "name": "inventario-ti-lds-monorepo",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Orquestador del Sistema de Inventario TI & Soporte",
   "private": true,
   "scripts": {
