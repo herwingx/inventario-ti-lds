@@ -76,12 +76,20 @@ const getComponentesAsignacion = async (req, res) => {
     res.status(200).json(componentes);
 };
 
+const updateComponentesAsignacion = async (req, res) => {
+    // Implementación mínima para evitar crash, o implementar lógica si el servicio la tiene
+    // El servicio original de mysql tenía lógica compleja aquí. 
+    // Por ahora, devolvemos error de no implementado o éxito vacío para prevenir crash.
+    res.status(501).json({ message: 'Actualización de componentes no implementada aún en la capa de servicio Prisma.' });
+};
+
 module.exports = {
     getAllAsignaciones,
     getAsignacionById,
     createAsignacion,
     updateAsignacion,
     deleteAsignacion,
-    createAsignacionConComponentes: createAsignacion, // Usamos la misma lógica en el Servicio
-    getComponentesAsignacion
+    createAsignacionConComponentes: createAsignacion,
+    getComponentesAsignacion,
+    updateComponentesAsignacion
 };

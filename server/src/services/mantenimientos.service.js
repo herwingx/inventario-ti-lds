@@ -28,8 +28,7 @@ class MantenimientoService {
     const raw = await prisma.mantenimientos.findMany({
       where,
       include: {
-        equipos: true,
-        usuarios_sistema_mantenimientos_id_tecnico_asignadoTousuarios_sistema: true
+        equipos: true
       },
       orderBy: proximos === 'true' ? { fecha_programada: 'asc' } : { fecha_programada: 'desc' }
     });
@@ -37,8 +36,7 @@ class MantenimientoService {
     return raw.map(m => ({
       ...m,
       nombre_equipo: m.equipos?.nombre_equipo,
-      numero_serie: m.equipos?.numero_serie,
-      tecnico_asignado: m.usuarios_sistema_mantenimientos_id_tecnico_asignadoTousuarios_sistema?.username
+      numero_serie: m.equipos?.numero_serie
     }));
   }
 
@@ -60,11 +58,13 @@ class MantenimientoService {
   }
 
   static async create(data, userId) {
+    const { tipo, ...rest } = data;
     return await prisma.mantenimientos.create({
       data: {
-        ...data,
-        fecha_programada: new Date(data.fecha_programada),
-        id_creador: userId,
+        ...rest,
+        tipo: tipo ? tipo.toUpperCase() : 'PREVENTIVO',
+        fecha_inicio: new Date(), // Requerido por el esquema Prisma
+        fecha_programada: data.fecha_programada ? new Date(data.fecha_programada) : null,
         estatus: 'PENDIENTE'
       }
     });
@@ -79,41 +79,46 @@ class MantenimientoService {
 
     let updateData = { ...rest };
     if (updateData.fecha_programada) updateData.fecha_programada = new Date(updateData.fecha_programada);
+    if (updateData.tipo) updateData.tipo = updateData.tipo.toUpperCase();
 
-    // Lógica de cambio de estatus a COMPLETADO
-    if (estatus === 'COMPLETADO' && existing.estatus !== 'COMPLETADO') {
-      const fechaFin = fecha_realizada ? new Date(fecha_realizada) : new Date();
-      updateData.estatus = 'COMPLETADO';
-      updateData.fecha_fin = fechaFin;
-      updateData.costo = costo || existing.costo || 0;
+    // Actualizar campos financieros/notas si se proveen
+    if (costo !== undefined) updateData.costo = costo;
 
-      if (notas_cierre) {
-        updateData.descripcion = `${existing.descripcion || ''}\n\n[CIERRE]: ${notas_cierre}`;
-      }
+    // Lógica especial para cambio de estatus a COMPLETADO
+    if (estatus) {
+      const normalizedEstatus = estatus.toUpperCase();
+      updateData.estatus = normalizedEstatus;
 
-      // Si es preventivo, actualizar el equipo
-      if (existing.tipo === 'PREVENTIVO') {
-        const equipo = await prisma.equipos.findUnique({ where: { id: existing.id_equipo } });
-        if (equipo && equipo.frecuencia_mantenimiento_meses) {
-          const nextDate = new Date(fechaFin);
-          nextDate.setMonth(nextDate.getMonth() + equipo.frecuencia_mantenimiento_meses);
+      if (normalizedEstatus === 'COMPLETADO' && existing.estatus !== 'COMPLETADO') {
+        const fechaFin = fecha_realizada ? new Date(fecha_realizada) : new Date();
+        updateData.fecha_fin = fechaFin;
 
-          await prisma.equipos.update({
-            where: { id: existing.id_equipo },
-            data: {
-              ultima_fecha_mantenimiento: fechaFin,
-              proxima_fecha_mantenimiento: nextDate
-            }
-          });
-        } else {
-          await prisma.equipos.update({
-            where: { id: existing.id_equipo },
-            data: { ultima_fecha_mantenimiento: fechaFin }
-          });
+        if (notas_cierre) {
+          updateData.descripcion = `${existing.descripcion || ''}\n\n[CIERRE]: ${notas_cierre}`;
+        }
+
+        // Si es preventivo, actualizar el equipo
+        if (existing.tipo === 'PREVENTIVO') {
+          const equipo = await prisma.equipos.findUnique({ where: { id: existing.id_equipo } });
+          if (equipo && equipo.frecuencia_mantenimiento_meses) {
+            const nextDate = new Date(fechaFin);
+            nextDate.setMonth(nextDate.getMonth() + equipo.frecuencia_mantenimiento_meses);
+
+            await prisma.equipos.update({
+              where: { id: existing.id_equipo },
+              data: {
+                ultima_fecha_mantenimiento: fechaFin,
+                proxima_fecha_mantenimiento: nextDate
+              }
+            });
+          } else {
+            await prisma.equipos.update({
+              where: { id: existing.id_equipo },
+              data: { ultima_fecha_mantenimiento: fechaFin }
+            });
+          }
         }
       }
-    } else if (estatus) {
-      updateData.estatus = estatus;
     }
 
     return await prisma.mantenimientos.update({

@@ -9,23 +9,35 @@ class EmpresaService {
    * Obtiene todas las empresas.
    */
   static async findAll() {
-    return await prisma.empresas.findMany({
+    const empresas = await prisma.empresas.findMany({
       include: {
         status: true
       }
     });
+
+    return empresas.map(e => ({
+      ...e,
+      status_nombre: e.status?.nombre_status
+    }));
   }
 
   /**
    * Busca una empresa por ID.
    */
   static async findById(id) {
-    return await prisma.empresas.findUnique({
+    const e = await prisma.empresas.findUnique({
       where: { id: parseInt(id) },
       include: {
         status: true
       }
     });
+
+    if (!e) return null;
+
+    return {
+      ...e,
+      status_nombre: e.status?.nombre_status
+    };
   }
 
   /**

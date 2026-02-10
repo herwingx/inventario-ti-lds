@@ -21,16 +21,16 @@ const tiposSucursalController = require('../controllers/tipos_sucursal.controlle
 router.get('/', tiposSucursalController.getAllTiposSucursal);
 
 // * [GET] /api/tipos-sucursal/:id - Trae un tipo de sucursal específico por su ID
-router.get('/:id', tiposSucursalController.getTiposSucursalById);
+router.get('/:id', tiposSucursalController.getTipoSucursalById);
 
 // * [POST] /api/tipos-sucursal - Crea un nuevo tipo de sucursal
-router.post('/', tiposSucursalController.createTiposSucursal);
+router.post('/', tiposSucursalController.createTipoSucursal);
 
 // * [PUT] /api/tipos-sucursal/:id - Actualiza un tipo de sucursal por su ID
-router.put('/:id', tiposSucursalController.updateTiposSucursal);
+router.put('/:id', tiposSucursalController.updateTipoSucursal);
 
 // * [DELETE] /api/tipos-sucursal/:id - Elimina un tipo de sucursal por su ID
-router.delete('/:id', tiposSucursalController.deleteTiposSucursal);
+router.delete('/:id', tiposSucursalController.deleteTipoSucursal);
 
 // * Exporto el enrutador para usarlo en server.js
 module.exports = router;

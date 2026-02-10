@@ -8,17 +8,22 @@ class EmailService {
   static async findAll() {
     const raw = await prisma.cuentas_email_corporativo.findMany({
       include: {
-        sucursales: { include: { empresas: true } },
-        empleados: true,
+        empleados: {
+          include: {
+            sucursales: {
+              include: { empresas: true }
+            }
+          }
+        },
         status: true
       }
     });
 
     return raw.map(e => ({
       ...e,
-      nombre_sucursal: e.sucursales?.nombre,
-      id_empresa: e.sucursales?.id_empresa,
-      nombre_empresa: e.sucursales?.empresas?.nombre,
+      nombre_sucursal: e.empleados?.sucursales?.nombre,
+      id_empresa: e.empleados?.sucursales?.id_empresa,
+      nombre_empresa: e.empleados?.sucursales?.empresas?.nombre,
       nombre_empleado: e.empleados ? `${e.empleados.nombres} ${e.empleados.apellidos}` : null,
       status_nombre: e.status?.nombre_status
     }));
@@ -28,17 +33,22 @@ class EmailService {
     const e = await prisma.cuentas_email_corporativo.findUnique({
       where: { id: parseInt(id) },
       include: {
-        sucursales: { include: { empresas: true } },
-        empleados: true,
+        empleados: {
+          include: {
+            sucursales: {
+              include: { empresas: true }
+            }
+          }
+        },
         status: true
       }
     });
     if (!e) return null;
     return {
       ...e,
-      nombre_sucursal: e.sucursales?.nombre,
-      id_empresa: e.sucursales?.id_empresa,
-      nombre_empresa: e.sucursales?.empresas?.nombre,
+      nombre_sucursal: e.empleados?.sucursales?.nombre,
+      id_empresa: e.empleados?.sucursales?.id_empresa,
+      nombre_empresa: e.empleados?.sucursales?.empresas?.nombre,
       nombre_empleado: e.empleados ? `${e.empleados.nombres} ${e.empleados.apellidos}` : null,
       status_nombre: e.status?.nombre_status
     };

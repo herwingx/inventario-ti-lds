@@ -1,9 +1,21 @@
 /**
  * @module Controllers/Notas
- * @description Controlador para la gestión de notas por equipo.
+ * @description Controlador para la gestión de notas.
  */
 const NotaService = require('../services/notas.service');
 const { notaSchema, updateNotaSchema } = require('../schemas/nota.schema');
+
+const getAllNotas = async (req, res) => {
+  const notas = await NotaService.findAll();
+  res.status(200).json(notas);
+};
+
+const getNotaById = async (req, res) => {
+  const { id } = req.params;
+  const nota = await NotaService.findById(id);
+  if (!nota) return res.status(404).json({ message: 'Nota no encontrada' });
+  res.status(200).json(nota);
+};
 
 const getNotasByEquipo = async (req, res) => {
   const { equipoId } = req.params;
@@ -33,6 +45,8 @@ const deleteNota = async (req, res) => {
 };
 
 module.exports = {
+  getAllNotas,
+  getNotaById,
   getNotasByEquipo,
   createNota,
   updateNota,

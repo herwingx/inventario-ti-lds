@@ -5,14 +5,33 @@
 const prisma = require('../config/prisma');
 
 class NotaService {
+  static async findAll() {
+    return await prisma.notas.findMany({
+      include: {
+        usuarios_sistema: { select: { id: true, username: true } },
+        equipos: { select: { id: true, nombre_equipo: true } }
+      },
+      orderBy: { fecha_creacion: 'desc' }
+    });
+  }
+
+  static async findById(id) {
+    return await prisma.notas.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        usuarios_sistema: { select: { id: true, username: true } },
+        equipos: true
+      }
+    });
+  }
+
   static async findAllByEquipo(equipoId) {
     return await prisma.notas.findMany({
       where: { id_equipo: parseInt(equipoId) },
       include: {
-        usuarios_sistema: { select: { id: true, username: true } },
-        status: true
+        usuarios_sistema: { select: { id: true, username: true } }
       },
-      orderBy: { fecha_registro: 'desc' }
+      orderBy: { fecha_creacion: 'desc' }
     });
   }
 
@@ -20,7 +39,7 @@ class NotaService {
     return await prisma.notas.create({
       data: {
         ...data,
-        id_usuario: userId
+        id_usuario_creacion: userId
       }
     });
   }
