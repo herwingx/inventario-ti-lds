@@ -21,12 +21,12 @@ class QrPublicService {
     if (!e) return null;
 
     const ticketsActivos = await prisma.tickets.findMany({
-      where: { id_equipo_relacionado: e.id, estatus: { notIn: ['RESUELTO', 'CERRADO'] } },
+      where: { id_equipo: e.id, estatus: { notIn: ['RESUELTO', 'CERRADO'] } },
       orderBy: { fecha_creacion: 'desc' }
     });
 
     const historial = await prisma.tickets.findMany({
-      where: { id_equipo_relacionado: e.id, estatus: { in: ['RESUELTO', 'CERRADO'] } },
+      where: { id_equipo: e.id, estatus: { in: ['RESUELTO', 'CERRADO'] } },
       orderBy: { fecha_creacion: 'desc' },
       take: 20
     });
@@ -63,34 +63,85 @@ class QrPublicService {
 
     const ticket = await prisma.tickets.create({
       data: {
-        id_equipo_relacionado: equipo.id,
-        titulo: `REPORTE QR: ${tipo_falla}`,
+        id_equipo: equipo.id,
+        token_acceso,
+        tipo_falla: tipo_falla,
         descripcion: descripcionFinal,
         prioridad: 'MEDIA',
         estatus: 'ABIERTO',
-        id_sucursal: equipo.id_sucursal_actual
+        email_reporta,
+        nombre_reporta
       }
     });
 
-    // Nota: El token_acceso no existe en el esquema de tickets de la DB (segun prisma schema anterior)
-    // Pero en el controlador original se usaba. Verificando esquema...
-    // Si no está, lo omito o lo guardo en descripcion.
-
-    return { ticketId: ticket.id, token_acceso };
+    return { ...ticket, equipo_info: equipo };
   }
 
   static async getTicketStatus(token) {
-    // Nota: El token_acceso parece ser un campo que no está mapeado en mi esquema de Prisma
-    // o se llama diferente. En el controlador original se consultaba 'tickets' por 'token_acceso'.
-    // Si el esquema no lo tiene, fallará. 
-    // Dado que estoy refactorizando sobre el esquema existente generado, 
-    // usaré findFirst por id si el token no existe.
-    return await prisma.tickets.findFirst({
-      where: { id: parseInt(token) }, // Placeholder si no hay token_acceso
+    const ticket = await prisma.tickets.findUnique({
+      where: { token_acceso: token },
       include: {
         equipos: true,
-        usuarios_sistema_tickets_id_tecnico_asignadoTousuarios_sistema: true
+        usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: {
+          select: { username: true }
+        },
+        ticket_comentarios: {
+          where: { es_interno: false },
+          orderBy: { fecha_creacion: 'asc' },
+          include: { usuarios_sistema: { select: { username: true } } }
+        }
       }
+    });
+
+    if (!ticket) return null;
+
+    return {
+      ticket: {
+        id: ticket.id,
+        tipo_falla: ticket.tipo_falla,
+        descripcion: ticket.descripcion,
+        prioridad: ticket.prioridad,
+        estatus: ticket.estatus,
+        tecnico: ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema?.username,
+        equipo: `${ticket.equipos?.marca} ${ticket.equipos?.modelo}`,
+        fecha_creacion: ticket.fecha_creacion,
+        fecha_actualizacion: ticket.fecha_actualizacion,
+        fecha_cierre: ticket.fecha_cierre
+      },
+      comentarios: ticket.ticket_comentarios.map(c => ({
+        contenido: c.contenido,
+        fecha_creacion: c.fecha_creacion,
+        autor: c.usuarios_sistema?.username || 'Usuario'
+      })),
+      puede_comentar: ticket.estatus !== 'CERRADO'
+    };
+  }
+
+  static async addPublicComment(token, data) {
+    const { contenido, nombre } = data;
+    const ticket = await prisma.tickets.findUnique({ where: { token_acceso: token } });
+
+    if (!ticket || ticket.estatus === 'CERRADO') return null;
+
+    const autor = ticket.nombre_reporta || nombre || 'Usuario';
+    const contenidoFinal = `[${autor}]: ${contenido.trim()}`;
+
+    return await prisma.ticket_comentarios.create({
+      data: {
+        id_ticket: ticket.id,
+        contenido: contenidoFinal,
+        es_interno: false
+      }
+    });
+  }
+
+  static async uploadEvidence(token, url) {
+    const ticket = await prisma.tickets.findUnique({ where: { token_acceso: token } });
+    if (!ticket || ticket.estatus === 'CERRADO') return null;
+
+    return await prisma.tickets.update({
+      where: { id: ticket.id },
+      data: { evidencia_url: url }
     });
   }
 }

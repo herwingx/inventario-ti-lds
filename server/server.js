@@ -14,7 +14,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') }); // * Cargo las
 const validateEnv = require('./src/utils/validateEnv');
 validateEnv();
 
-const { pool } = require('./src/config/db'); // * Importo el pool de conexiones a la base de datos
+const prisma = require('./src/config/prisma'); // * Importo Prisma Client configurado
 const statusRoutes = require('./src/routes/status.routes'); // * Rutas para el estado del sistema
 const empresasRoutes = require('./src/routes/empresas.routes'); // * Rutas para empresas
 const sucursalesRoutes = require('./src/routes/sucursales.routes'); // * Rutas para sucursales
@@ -125,18 +125,16 @@ app.use(express.urlencoded({ extended: true }));
 // ? Ruta de prueba para verificar conexión a la base de datos
 app.get('/db-test', async (req, res) => {
   try {
-    // * Hago una consulta simple para probar la conexión
-    const [rows] = await pool.execute('SELECT 1 + 1 AS solution');
+    const result = await prisma.$queryRaw`SELECT 1 + 1 AS solution`;
     res.json({
       message: 'Conexión a base de datos exitosa!',
-      solution: rows[0].solution
+      solution: result[0].solution
     });
   } catch (error) {
-    // ! Si falla la conexión, muestro el error
     logger.error('Error al conectar o consultar la base de datos:', error);
     res.status(500).json({
       message: 'Error al conectar a la base de datos.',
-      error: error.message // * Devuelvo el mensaje de error para depuración
+      error: error.message
     });
   }
 });
@@ -204,18 +202,16 @@ app.listen(port, '0.0.0.0', () => {
   logger.info(`🚀 Servidor corriendo en: http://localhost:${port}`);
   logger.info(`🔧 Modo: ${process.env.NODE_ENV || 'development'}`);
 
-  // * Pruebo la conexión al pool de la base de datos al arrancar
-  pool.getConnection()
-    .then(connection => {
-      logger.info('✅ Base de datos conectada exitosamente.');
-      connection.release(); // * Libero la conexión de vuelta al pool
-
+  // * Pruebo la conexión de Prisma al arrancar
+  prisma.$connect()
+    .then(() => {
+      logger.info('✅ Base de datos (Prisma) conectada exitosamente.');
       // * Inicializar tareas programadas (Fase 2)
       initCronJobs();
     })
     .catch(err => {
       // ! Si falla la conexión inicial, aviso por consola
-      logger.error('❌ Error al conectar a la base de datos:', err.message);
+      logger.error('❌ Error al conectar a la base de datos con Prisma:', err.message);
       logger.error('   Verifica que las credenciales en .env sean correctas.');
     });
 });

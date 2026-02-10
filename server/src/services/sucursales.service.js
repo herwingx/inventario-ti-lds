@@ -6,17 +6,24 @@ const prisma = require('../config/prisma');
 
 class SucursalService {
   static async findAll() {
-    return await prisma.sucursales.findMany({
+    const sucursales = await prisma.sucursales.findMany({
       include: {
         empresas: true,
         tipos_sucursal: true,
         status: true
       }
     });
+
+    return sucursales.map(s => ({
+      ...s,
+      nombre_empresa: s.empresas?.nombre,
+      nombre_tipo: s.tipos_sucursal?.nombre_tipo,
+      status_nombre: s.status?.nombre_status
+    }));
   }
 
   static async findById(id) {
-    return await prisma.sucursales.findUnique({
+    const s = await prisma.sucursales.findUnique({
       where: { id: parseInt(id) },
       include: {
         empresas: true,
@@ -24,6 +31,15 @@ class SucursalService {
         status: true
       }
     });
+
+    if (!s) return null;
+
+    return {
+      ...s,
+      nombre_empresa: s.empresas?.nombre,
+      nombre_tipo: s.tipos_sucursal?.nombre_tipo,
+      status_nombre: s.status?.nombre_status
+    };
   }
 
   static async create(data) {

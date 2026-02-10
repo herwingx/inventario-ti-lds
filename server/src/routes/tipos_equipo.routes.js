@@ -21,16 +21,16 @@ const tiposEquipoController = require('../controllers/tipos_equipo.controller');
 router.get('/', tiposEquipoController.getAllTiposEquipo);
 
 // * [GET] /api/tipos-equipo/:id - Trae un tipo de equipo específico por su ID
-router.get('/:id', tiposEquipoController.getTiposEquipoById);
+router.get('/:id', tiposEquipoController.getTipoEquipoById);
 
 // * [POST] /api/tipos-equipo - Crea un nuevo tipo de equipo
-router.post('/', tiposEquipoController.createTiposEquipo);
+router.post('/', tiposEquipoController.createTipoEquipo);
 
 // * [PUT] /api/tipos-equipo/:id - Actualiza un tipo de equipo por su ID
-router.put('/:id', tiposEquipoController.updateTiposEquipo);
+router.put('/:id', tiposEquipoController.updateTipoEquipo);
 
 // * [DELETE] /api/tipos-equipo/:id - Elimina un tipo de equipo por su ID
-router.delete('/:id', tiposEquipoController.deleteTiposEquipo);
+router.delete('/:id', tiposEquipoController.deleteTipoEquipo);
 
 // * Exporto el enrutador para usarlo en server.js
 module.exports = router;
