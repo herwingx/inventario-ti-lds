@@ -74,6 +74,11 @@ El sistema expone los siguientes puntos de acceso que no requieren autenticació
 | **Seguimiento** | `/q/ticket/:token` | `.../soporte/q/ticket/:token` |
 | **Acceso Admin** | `/login` | `.../soporte/login` |
 
+### 4.3 Comunicación Bidireccional
+El sistema permite un hilo de conversación transparente:
+- **Comentarios del Técnico:** Se registran desde el panel administrativo y son visibles para el usuario en la vista de seguimiento.
+- **Comentarios del Usuario:** Se registran desde la vista pública y son inyectados en el panel administrativo con un prefijo de autor (`[Nombre]:`) para su correcta identificación por el técnico.
+
 ---
 
 ## 5. ✍️ Firma Digital y Documentos Legales

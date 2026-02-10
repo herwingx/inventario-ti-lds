@@ -44,7 +44,9 @@ const createTransporter = () => {
  * URL base del frontend para construir links.
  */
 const getFrontendUrl = () => {
-  return process.env.FRONTEND_URL || 'http://localhost:5173/soporte';
+  // Aseguramos que la URL termine sin slash para concatenar manualmente
+  const url = process.env.FRONTEND_URL || 'http://localhost:5173';
+  return url.replace(/\/$/, '');
 };
 
 /**
@@ -206,7 +208,7 @@ const notifyUserComment = async (ticket, comentario, emailUsuario) => {
 
   try {
     const transporter = createTransporter();
-    const trackingUrl = `${getFrontendUrl()}/q/ticket/${ticket.token_acceso}`;
+    const trackingUrl = `${getFrontendUrl()}/soporte/q/ticket/${ticket.token_acceso}`;
 
     const content = `
       ${emailHeader('Respuesta a tu Ticket', 'El equipo de soporte ha respondido a tu reporte')}
@@ -314,7 +316,7 @@ const notifyTicketCreated = async (ticket, equipo, emailUsuario, nombreUsuario) 
 
   try {
     const transporter = createTransporter();
-    const trackingUrl = `${getFrontendUrl()}/q/ticket/${ticket.token_acceso}`;
+    const trackingUrl = `${getFrontendUrl()}/soporte/q/ticket/${ticket.token_acceso}`;
 
     const content = `
       ${emailHeader('Tu Reporte ha sido Registrado', 'Hemos recibido tu solicitud de soporte técnico')}

@@ -30,7 +30,7 @@ class TicketService {
   }
 
   static async findById(id) {
-    return await prisma.tickets.findUnique({
+    const ticket = await prisma.tickets.findUnique({
       where: { id: parseInt(id) },
       include: {
         equipos: true,
@@ -42,6 +42,31 @@ class TicketService {
         }
       }
     });
+
+    if (!ticket) return null;
+
+    // Procesar comentarios para que el frontend reciba un autor coherente
+    ticket.ticket_comentarios = ticket.ticket_comentarios.map(c => {
+      let autorNombre = c.usuarios_sistema?.username || 'Usuario Externo';
+      let contenidoLimpio = c.contenido;
+
+      // Si es comentario público (id_usuario null), intentar extraer el nombre del prefijo [...]
+      if (!c.id_usuario && c.contenido.startsWith('[')) {
+        const match = c.contenido.match(/^\[(.*?)\]: (.*)/);
+        if (match) {
+          autorNombre = match[1];
+          contenidoLimpio = match[2];
+        }
+      }
+
+      return {
+        ...c,
+        autor_nombre: autorNombre,
+        contenido: contenidoLimpio
+      };
+    });
+
+    return ticket;
   }
 
   static async create(data, userId) {
@@ -87,12 +112,15 @@ class TicketService {
   }
 
   static async getTecnicos() {
-    // Asumiendo que el rol de técnico es aquel que tiene permiso para tickets.
-    // En muchos sistemas es rol_id = 2. Ajustar según convención.
-    return await prisma.usuarios_sistema.findMany({
+    const users = await prisma.usuarios_sistema.findMany({
       where: { id_status: 1 }, // Solo activos
       select: { id: true, username: true, id_rol: true }
     });
+    
+    return users.map(u => ({
+      id: u.id,
+      nombre_usuario: u.username
+    }));
   }
 
   static async getComments(ticketId, includeInternals = false) {

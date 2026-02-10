@@ -59,6 +59,18 @@ class QrPublicService {
     const equipo = await prisma.equipos.findFirst({ where: { qr_token: token } });
     if (!equipo) return null;
 
+    // Mapeo de etiquetas UI a ENUM de Base de Datos
+    const mapeoFalla = {
+      'No tengo Internet': 'RED',
+      'No imprime': 'IMPRESORA',
+      'Está muy lenta': 'SOFTWARE',
+      'No prende': 'HARDWARE',
+      'Programa falla': 'SOFTWARE',
+      'Algo está roto': 'HARDWARE'
+    };
+
+    const fallaEnum = mapeoFalla[tipo_falla] || 'OTRO';
+
     const token_acceso = uuidv4().replace(/-/g, '').substring(0, 16);
 
     let descripcionFinal = descripcion;
@@ -71,7 +83,7 @@ class QrPublicService {
       data: {
         id_equipo: equipo.id,
         token_acceso,
-        tipo_falla: tipo_falla,
+        tipo_falla: fallaEnum,
         descripcion: descripcionFinal,
         prioridad: 'MEDIA',
         estatus: 'ABIERTO',
@@ -114,11 +126,25 @@ class QrPublicService {
         fecha_actualizacion: ticket.fecha_actualizacion,
         fecha_cierre: ticket.fecha_cierre
       },
-      comentarios: ticket.ticket_comentarios.map(c => ({
-        contenido: c.contenido,
-        fecha_creacion: c.fecha_creacion,
-        autor: c.usuarios_sistema?.username || 'Usuario'
-      })),
+      comentarios: ticket.ticket_comentarios.map(c => {
+        let autor = c.usuarios_sistema?.username || 'Usuario';
+        let contenido = c.contenido;
+
+        // Si es comentario público, intentar extraer el nombre del prefijo [Nombre]:
+        if (!c.id_usuario && contenido.startsWith('[')) {
+          const match = contenido.match(/^\[(.*?)\]: (.*)/);
+          if (match) {
+            autor = match[1];
+            contenido = match[2];
+          }
+        }
+
+        return {
+          contenido,
+          fecha_creacion: c.fecha_creacion,
+          autor
+        };
+      }),
       puede_comentar: ticket.estatus !== 'CERRADO'
     };
   }
@@ -129,12 +155,14 @@ class QrPublicService {
 
     if (!ticket || ticket.estatus === 'CERRADO') return null;
 
-    const autor = ticket.nombre_reporta || nombre || 'Usuario';
-    const contenidoFinal = `[${autor}]: ${contenido.trim()}`;
+    // Usamos el nombre del reporte si no viene uno en el comentario
+    const autorNombre = nombre || ticket.nombre_reporta || 'Usuario Externo';
+    const contenidoFinal = `[${autorNombre}]: ${contenido.trim()}`;
 
     return await prisma.ticket_comentarios.create({
       data: {
         id_ticket: ticket.id,
+        id_usuario: null, // Es un comentario público
         contenido: contenidoFinal,
         es_interno: false
       }

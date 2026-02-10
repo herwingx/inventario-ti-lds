@@ -178,23 +178,21 @@ app.get('/db-test', async (req, res) => {
   }
 });
 
-// * Rutas de Autenticación (Públicas - NO protegidas por el middleware `protect`)
-// * El login debe ser accesible sin un token.
+// * Rutas de Autenticación (Públicas)
 app.use('/api/auth', authRoutes);
 
 // * Rate Limiting para rutas públicas QR (Más estricto)
 const publicLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutos
-  max: 50, // Límite de 50 peticiones por IP por cada 5 minutos
+  windowMs: 5 * 60 * 1000,
+  max: 50,
   message: { message: 'Demasiadas peticiones al servicio de soporte QR. Intente más tarde.' }
 });
 
-// * Rutas Públicas QR (Dentro de /api pero antes del middleware protect)
+// * Rutas Públicas QR (Fase 2) - ACCESO LIBRE
 app.use('/api/q', publicLimiter, qrPublicRoutes);
 
 // * Middleware de Protección JWT
-// ! Todas las rutas definidas DESPUÉS de esta línea requerirán un token JWT válido.
-// ! Aplico el middleware a todas las rutas que comiencen con /api.
+// ! A partir de aquí, todo requiere Token
 app.use('/api', protect);
 
 // * Middleware de Auditoría (Fase 2)

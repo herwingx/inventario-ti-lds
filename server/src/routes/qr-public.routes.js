@@ -46,7 +46,7 @@ router.get('/:token', qrController.getEquipoByQrToken);
  *       201:
  *         description: Ticket creado desde flujo público.
  */
-router.post('/:token/report', qrController.createPublicTicket);
+router.post('/:token', qrController.createPublicTicket);
 
 /**
  * @openapi

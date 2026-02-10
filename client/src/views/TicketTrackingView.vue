@@ -28,14 +28,25 @@ onMounted(async () => {
 })
 
 const loadTicket = async () => {
+  if (!ticketToken.value) {
+    error.value = 'Código de seguimiento no proporcionado.'
+    loading.value = false
+    return
+  }
+
   loading.value = true
   error.value = null
   
   try {
     const data = await QrPublicService.getTicketStatus(ticketToken.value)
-    ticket.value = data.ticket
-    comentarios.value = data.comentarios || []
+    if (data && data.ticket) {
+      ticket.value = data.ticket
+      comentarios.value = data.comentarios || []
+    } else {
+      throw new Error('Ticket no encontrado')
+    }
   } catch (err) {
+    console.error('Error cargando seguimiento:', err)
     error.value = 'No se encontró el ticket o el código es inválido.'
   } finally {
     loading.value = false

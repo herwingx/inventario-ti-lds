@@ -25,8 +25,10 @@ const loading = ref(true)
 // Construir la URL pública del equipo para el QR
 const publicUrl = computed(() => {
   if (!equipo.value?.qr_token) return ''
-  // En producción window.location.origin será https://erp.linea-digital.com
-  return `${window.location.origin}/soporte/q/${equipo.value.qr_token}`
+  // Forzamos el uso de la ubicación actual (ya sea IP o Dominio)
+  const currentHost = window.location.host // Esto incluye el puerto (ej: 192.168.0.252:5173)
+  const protocol = window.location.protocol
+  return `${protocol}//${currentHost}/soporte/q/${equipo.value.qr_token}`
 })
 
 // Función para imprimir etiqueta de activo

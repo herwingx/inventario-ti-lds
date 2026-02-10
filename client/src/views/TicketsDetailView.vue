@@ -62,7 +62,8 @@ const loadTicket = async () => {
   try {
     const data = await TicketsService.getById(ticketId.value)
     ticket.value = data
-    comentarios.value = data.comentarios || []
+    // Prisma devuelve ticket_comentarios según el include del backend
+    comentarios.value = data.ticket_comentarios || []
     
     // Inicializar selects con valores actuales
     selectedEstatus.value = data.estatus
@@ -208,8 +209,8 @@ const goBack = () => {
                 <Monitor :size="24" class="text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <div class="font-semibold text-gray-900 dark:text-white">{{ ticket.equipo_marca }} {{ ticket.equipo_modelo }}</div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">S/N: {{ ticket.equipo_serie }}</div>
+                <div class="font-semibold text-gray-900 dark:text-white">{{ ticket.equipos?.marca }} {{ ticket.equipos?.modelo }}</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">S/N: {{ ticket.equipos?.numero_serie }}</div>
               </div>
               <Tag :value="ticket.tipo_falla" severity="info" class="ml-auto !font-bold" />
             </div>
@@ -247,7 +248,7 @@ const goBack = () => {
                     <User :size="16" class="text-primary" />
                   </div>
                   <div class="flex-1">
-                    <span class="font-medium text-gray-900 dark:text-white text-sm">{{ comentario.autor || 'Usuario' }}</span>
+                    <span class="font-medium text-gray-900 dark:text-white text-sm">{{ comentario.autor_nombre || 'Sistema' }}</span>
                     <span v-if="comentario.es_interno" class="ml-2 text-xs text-amber-600 dark:text-amber-400 font-medium">(Nota interna)</span>
                   </div>
                   <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatRelativeTime(comentario.fecha_creacion) }}</span>

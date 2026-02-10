@@ -16,11 +16,16 @@ const createPublicTicket = async (req, res) => {
   const result = await QrPublicService.createPublicTicket(req.params.token, req.body);
   if (!result) return res.status(404).json({ message: 'Equipo no encontrado' });
 
-  // Notificar por email
-  notifyNewTicket(result, result.equipo_info).catch(err => logger.error('[EMAIL] Notificación admin fallida:', err));
-  if (req.body.email_reporta) {
-    notifyTicketCreated(result, result.equipo_info, req.body.email_reporta, req.body.nombre_reporta)
-      .catch(err => logger.error('[EMAIL] Confirmación usuario fallida:', err));
+  // Notificar por email (Se envuelven en try/catch silencioso para no bloquear la respuesta)
+  try {
+    const { notifyNewTicket, notifyTicketCreated } = require('../services/ticketNotification.service');
+    notifyNewTicket(result, result.equipo_info).catch(err => logger.error('[EMAIL] Notificación admin fallida:', err));
+    if (req.body.email_reporta) {
+      notifyTicketCreated(result, result.equipo_info, req.body.email_reporta, req.body.nombre_reporta)
+        .catch(err => logger.error('[EMAIL] Confirmación usuario fallida:', err));
+    }
+  } catch (emailError) {
+    logger.warn('[SOPORTE] Servicio de email no disponible, ticket creado sin notificaciones.');
   }
 
   res.status(201).json({
