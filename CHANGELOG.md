@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.3.1](https://github.com/herwingx/inventario-ti-lds/compare/v2.3.0...v2.3.1) (2026-02-10)
+
+
+### Features
+
+* **ui:** rediseño de interfaz de chat con burbujas dinámicas, DVH y simetría de control ([24a8c40](https://github.com/herwingx/inventario-ti-lds/commit/24a8c40ea16f5d44fafe1e0b299f57a98e7c5677))
+
 ## [2.3.0](https://github.com/herwingx/inventario-ti-lds/compare/v2.2.1...v2.3.0) (2026-02-10)
 
 
