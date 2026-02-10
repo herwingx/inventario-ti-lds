@@ -12,30 +12,142 @@ const router = express.Router();
 // * Importo las funciones controladoras de equipos
 const equiposController = require('../controllers/equipos.controller');
 
-// ===============================================================
-// DEFINICIÓN DE RUTAS
-// Estas rutas se montarán bajo el prefijo /api/equipos en server.js.
-// ===============================================================
+/**
+ * @openapi
+ * tags:
+ *   name: Equipos
+ *   description: Gestión del inventario de hardware y activos tecnológicos
+ */
 
-// * [GET] /api/equipos - Trae todos los equipos
+/**
+ * @openapi
+ * /api/equipos:
+ *   get:
+ *     summary: Listar todos los equipos
+ *     tags: [Equipos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de equipos obtenida exitosamente.
+ *       401:
+ *         description: No autorizado.
+ */
 router.get('/', equiposController.getAllEquipos);
 
-// * [GET] /api/equipos/disponibles-componentes - Trae equipos disponibles para ser componentes
+/**
+ * @openapi
+ * /api/equipos/disponibles-componentes:
+ *   get:
+ *     summary: Listar equipos disponibles para ser usados como componentes
+ *     tags: [Equipos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de componentes disponibles.
+ */
 router.get('/disponibles-componentes', equiposController.getEquiposDisponiblesParaComponentes);
 
-// Las rutas de equipos ahora están limpias y delegadas al controlador.
-
-// * [GET] /api/equipos/:id - Trae un equipo específico por su ID
+/**
+ * @openapi
+ * /api/equipos/{id}:
+ *   get:
+ *     summary: Obtener detalles de un equipo por ID
+ *     tags: [Equipos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Datos del equipo.
+ *       404:
+ *         description: Equipo no encontrado.
+ */
 router.get('/:id', equiposController.getEquipoById);
 
-// * [POST] /api/equipos - Crea un nuevo equipo
+/**
+ * @openapi
+ * /api/equipos:
+ *   post:
+ *     summary: Registrar un nuevo equipo
+ *     tags: [Equipos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - numero_serie
+ *               - id_tipo_equipo
+ *               - id_sucursal_actual
+ *             properties:
+ *               numero_serie:
+ *                 type: string
+ *               nombre_equipo:
+ *                 type: string
+ *               id_tipo_equipo:
+ *                 type: integer
+ *               id_sucursal_actual:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Equipo creado exitosamente.
+ */
 router.post('/', equiposController.createEquipo);
 
-// * [PUT] /api/equipos/:id - Actualiza un equipo por su ID
+/**
+ * @openapi
+ * /api/equipos/{id}:
+ *   put:
+ *     summary: Actualizar datos de un equipo
+ *     tags: [Equipos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Equipo actualizado.
+ */
 router.put('/:id', equiposController.updateEquipo);
 
-// * [DELETE] /api/equipos/:id - Elimina un equipo por su ID
+/**
+ * @openapi
+ * /api/equipos/{id}:
+ *   delete:
+ *     summary: Dar de baja un equipo
+ *     tags: [Equipos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Equipo eliminado (Soft delete).
+ */
 router.delete('/:id', equiposController.deleteEquipo);
 
-// * Exporto el enrutador para usarlo en server.js
 module.exports = router;

@@ -11,25 +11,81 @@ const router = express.Router(); // * Instancia del enrutador de Express
 // * Importo las funciones controladoras de usuarios del sistema
 const usuariosSistemaController = require('../controllers/usuarios_sistema.controller');
 
-// ===============================================================
-// DEFINICIÓN DE RUTAS
-// Montadas bajo /api/usuarios-sistema en server.js.
-// ===============================================================
+/**
+ * @openapi
+ * tags:
+ *   name: Gestión de Usuarios
+ *   description: Administración de cuentas con acceso al panel administrativo
+ */
 
-// * [GET] /api/usuarios-sistema - Trae todos los usuarios del sistema
+/**
+ * @openapi
+ * /api/usuarios-sistema:
+ *   get:
+ *     summary: Listar todos los usuarios del sistema
+ *     tags: [Gestión de Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios.
+ */
 router.get('/', usuariosSistemaController.getAllUsuariosSistema);
 
-// * [GET] /api/usuarios-sistema/:id - Trae un usuario específico por su ID
+/**
+ * @openapi
+ * /api/usuarios-sistema/{id}:
+ *   get:
+ *     summary: Obtener usuario por ID
+ *     tags: [Gestión de Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Datos del usuario.
+ */
 router.get('/:id', usuariosSistemaController.getUsuarioSistemaById);
 
-// * [POST] /api/usuarios-sistema - Crea un nuevo usuario (maneja hash de contraseña)
+/**
+ * @openapi
+ * /api/usuarios-sistema:
+ *   post:
+ *     summary: Crear un nuevo usuario administrativo
+ *     tags: [Gestión de Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Usuario creado.
+ */
 router.post('/', usuariosSistemaController.createUsuarioSistema);
 
-// * [PUT] /api/usuarios-sistema/:id - Actualiza un usuario por su ID (puede actualizar contraseña)
+/**
+ * @openapi
+ * /api/usuarios-sistema/{id}:
+ *   put:
+ *     summary: Actualizar datos de usuario
+ *     tags: [Gestión de Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Usuario actualizado.
+ */
 router.put('/:id', usuariosSistemaController.updateUsuarioSistema);
 
-// * [DELETE] /api/usuarios-sistema/:id - Elimina un usuario por su ID
+/**
+ * @openapi
+ * /api/usuarios-sistema/{id}:
+ *   delete:
+ *     summary: Eliminar un usuario
+ *     tags: [Gestión de Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Usuario eliminado.
+ */
 router.delete('/:id', usuariosSistemaController.deleteUsuarioSistema);
 
-// * Exporto el enrutador para usarlo en server.js
 module.exports = router;

@@ -38,9 +38,48 @@ const qrPublicRoutes = require('./src/routes/qr-public.routes'); // * Rutas púb
 const { protect } = require('./src/middleware/auth.middleware'); // * Middleware de protección JWT
 const { auditMiddleware } = require('./src/middleware/audit.middleware'); // * Middleware de auditoría (Fase 2)
 const { initCronJobs } = require('./src/config/cron.config'); // * Tareas programadas (Fase 2)
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 
 const app = express();
 const port = process.env.PORT || 3000; // * Puerto del servidor (por defecto 3000 si no hay .env)
+
+// * Configuración de Swagger
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'API de Inventario TI & Soporte LDS',
+      version: '1.1.0',
+      description: 'Documentación interactiva de la API para la gestión de activos tecnológicos y tickets de soporte.',
+      contact: {
+        name: 'Soporte TI',
+      },
+    },
+    servers: [
+      {
+        url: `http://localhost:${port}`,
+        description: 'Servidor de Desarrollo',
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [{
+      bearerAuth: [],
+    }],
+  },
+  apis: ['./src/routes/*.js', './server.js'], // Archivos donde buscar anotaciones
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // * Middleware de seguridad Helmet
 app.use(helmet());

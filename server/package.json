@@ -32,6 +32,8 @@
     "mysql2": "^3.14.1",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.12",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0",
     "winston": "^3.19.0",
     "zod": "^4.3.6"

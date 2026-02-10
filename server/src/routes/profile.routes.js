@@ -9,10 +9,39 @@ const router = express.Router();
 
 const profileController = require('../controllers/profile.controller');
 
-// * [GET] /api/profile - Obtener perfil del usuario autenticado
+/**
+ * @openapi
+ * tags:
+ *   name: Usuario
+ *   description: Gestión de perfil y configuración personal
+ */
+
+/**
+ * @openapi
+ * /api/profile:
+ *   get:
+ *     summary: Obtener perfil del usuario autenticado
+ *     tags: [Usuario]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Datos del perfil.
+ */
 router.get('/', profileController.getProfile);
 
-// * [PUT] /api/profile - Actualizar perfil (email, password)
+/**
+ * @openapi
+ * /api/profile:
+ *   put:
+ *     summary: Actualizar datos de perfil (Email/Password)
+ *     tags: [Usuario]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Perfil actualizado.
+ */
 router.put('/', profileController.updateProfile);
 
 module.exports = router;

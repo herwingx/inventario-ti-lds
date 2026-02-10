@@ -12,25 +12,91 @@ const router = express.Router();
 // * Importo las funciones controladoras de cuentas de email
 const cuentasEmailController = require('../controllers/cuentas_email.controller');
 
-// ===============================================================
-// DEFINICIÓN DE RUTAS
-// Montadas bajo /api/cuentas-email en server.js.
-// ===============================================================
+/**
+ * @openapi
+ * tags:
+ *   name: Recursos Digitales
+ *   description: Gestión de correos corporativos y accesos
+ */
 
-// * [GET] /api/cuentas-email - Trae todas las cuentas de email (sin password_data por seguridad)
+/**
+ * @openapi
+ * /api/cuentas-email:
+ *   get:
+ *     summary: Listar cuentas de correo
+ *     tags: [Recursos Digitales]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de cuentas.
+ */
 router.get('/', cuentasEmailController.getAllCuentasEmail);
 
-// * [GET] /api/cuentas-email/:id - Trae una cuenta de email específica por su ID (sin password_data)
+/**
+ * @openapi
+ * /api/cuentas-email/{id}:
+ *   get:
+ *     summary: Obtener cuenta por ID
+ *     tags: [Recursos Digitales]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Datos de la cuenta.
+ */
 router.get('/:id', cuentasEmailController.getCuentaEmailById);
 
-// * [POST] /api/cuentas-email - Crea una nueva cuenta de email (ver notas de seguridad en el controlador)
+/**
+ * @openapi
+ * /api/cuentas-email:
+ *   post:
+ *     summary: Registrar nueva cuenta de correo
+ *     tags: [Recursos Digitales]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, example: "usuario@empresa.com" }
+ *               id_empleado_asignado: { type: integer }
+ *     responses:
+ *       201:
+ *         description: Cuenta creada.
+ */
 router.post('/', cuentasEmailController.createCuentaEmail);
 
-// * [PUT] /api/cuentas-email/:id - Actualiza una cuenta de email por su ID (ver notas de seguridad en el controlador)
+/**
+ * @openapi
+ * /api/cuentas-email/{id}:
+ *   put:
+ *     summary: Actualizar cuenta de correo
+ *     tags: [Recursos Digitales]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cuenta actualizada.
+ */
 router.put('/:id', cuentasEmailController.updateCuentaEmail);
 
-// * [DELETE] /api/cuentas-email/:id - Elimina una cuenta de email por su ID
+/**
+ * @openapi
+ * /api/cuentas-email/{id}:
+ *   delete:
+ *     summary: Eliminar cuenta de correo
+ *     tags: [Recursos Digitales]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cuenta eliminada.
+ */
 router.delete('/:id', cuentasEmailController.deleteCuentaEmail);
 
-// * Exporto el enrutador para usarlo en server.js
 module.exports = router;

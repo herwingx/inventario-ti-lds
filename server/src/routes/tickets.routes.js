@@ -6,60 +6,127 @@ const router = require('express').Router();
 const ticketsController = require('../controllers/tickets.controller');
 
 /**
- * @route GET /api/tickets
- * @description Obtiene todos los tickets con filtros opcionales
- * @query {string} [estatus] - Filtrar por estatus
- * @query {string} [prioridad] - Filtrar por prioridad
- * @query {number} [id_equipo] - Filtrar por equipo
+ * @openapi
+ * tags:
+ *   name: Soporte (Helpdesk)
+ *   description: Gestión de incidentes y tickets de servicio
+ */
+
+/**
+ * @openapi
+ * /api/tickets:
+ *   get:
+ *     summary: Listar todos los tickets
+ *     tags: [Soporte (Helpdesk)]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: estatus
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Lista de tickets.
  */
 router.get('/', ticketsController.getAllTickets);
 
 /**
- * @route GET /api/tickets/tecnicos
- * @description Obtiene técnicos disponibles para asignación
+ * @openapi
+ * /api/tickets/tecnicos:
+ *   get:
+ *     summary: Obtener lista de técnicos
+ *     tags: [Soporte (Helpdesk)]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios con rol soporte/admin.
  */
 router.get('/tecnicos', ticketsController.getTecnicos);
 
 /**
- * @route GET /api/tickets/:id
- * @description Obtiene un ticket por ID con comentarios
+ * @openapi
+ * /api/tickets/{id}:
+ *   get:
+ *     summary: Obtener ticket por ID
+ *     tags: [Soporte (Helpdesk)]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Datos del ticket y comentarios.
  */
 router.get('/:id', ticketsController.getTicketById);
 
 /**
- * @route POST /api/tickets
- * @description Crea un nuevo ticket
- * @body {number} id_equipo - ID del equipo
- * @body {string} tipo_falla - HARDWARE|SOFTWARE|RED|IMPRESORA|OTRO
- * @body {string} descripcion - Descripción del problema
- * @body {string} [prioridad] - BAJA|MEDIA|ALTA|CRITICA
+ * @openapi
+ * /api/tickets:
+ *   post:
+ *     summary: Crear un ticket desde el panel administrativo
+ *     tags: [Soporte (Helpdesk)]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [id_equipo, tipo_falla, descripcion]
+ *             properties:
+ *               id_equipo: { type: integer }
+ *               tipo_falla: { type: string }
+ *               descripcion: { type: string }
+ *     responses:
+ *       201:
+ *         description: Ticket creado.
  */
 router.post('/', ticketsController.createTicket);
 
 /**
- * @route PUT /api/tickets/:id
- * @description Actualiza un ticket (estado, asignación, prioridad)
+ * @openapi
+ * /api/tickets/{id}:
+ *   put:
+ *     summary: Actualizar ticket (Estatus, Prioridad, Asignación)
+ *     tags: [Soporte (Helpdesk)]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Ticket actualizado.
  */
 router.put('/:id', ticketsController.updateTicket);
 
 /**
- * @route DELETE /api/tickets/:id
- * @description Elimina un ticket
- */
-router.delete('/:id', ticketsController.deleteTicket);
-
-/**
- * @route GET /api/tickets/:id/comments
- * @description Obtiene comentarios de un ticket
- * @query {boolean} [incluir_internos] - Incluir notas internas
+ * @openapi
+ * /api/tickets/{id}/comments:
+ *   get:
+ *     summary: Obtener comentarios de un ticket
+ *     tags: [Soporte (Helpdesk)]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Historial de comentarios.
  */
 router.get('/:id/comments', ticketsController.getComments);
 
 /**
- * @route POST /api/tickets/:id/comments
- * @description Agrega un comentario a un ticket
- * @body {string} contenido - Contenido del comentario
- * @body {boolean} [es_interno] - Si es nota interna
+ * @openapi
+ * /api/tickets/{id}/comments:
+ *   post:
+ *     summary: Agregar un comentario o nota interna
+ *     tags: [Soporte (Helpdesk)]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Comentario agregado.
  */
 router.post('/:id/comments', ticketsController.addComment);
 

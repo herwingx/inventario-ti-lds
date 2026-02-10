@@ -8,44 +8,91 @@ const qrController = require('../controllers/qr-public.controller');
 const { uploadTickets, handleMulterError } = require('../config/upload.config');
 
 /**
- * @route GET /q/:token
- * @description Obtiene información del equipo por token QR
- * @public
+ * @openapi
+ * tags:
+ *   name: Público (QR)
+ *   description: Endpoints accesibles sin autenticación para escaneo de equipos y reportes
+ */
+
+/**
+ * @openapi
+ * /q/{token}:
+ *   get:
+ *     summary: Obtener información del equipo por token QR
+ *     tags: [Público (QR)]
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Información limitada del equipo.
  */
 router.get('/:token', qrController.getEquipoByQrToken);
 
 /**
- * @route POST /q/:token/report
- * @description Crea un ticket desde escaneo QR
- * @public
- * @body {string} tipo_falla - HARDWARE|SOFTWARE|RED|IMPRESORA|OTRO
- * @body {string} descripcion - Descripción del problema
- * @body {string} [nombre_reporta] - Nombre de quien reporta
- * @body {string} [email_reporta] - Email de contacto
+ * @openapi
+ * /q/{token}/report:
+ *   post:
+ *     summary: Reportar una falla desde escaneo QR
+ *     tags: [Público (QR)]
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       201:
+ *         description: Ticket creado desde flujo público.
  */
 router.post('/:token/report', qrController.createPublicTicket);
 
 /**
- * @route GET /q/ticket/:ticketToken
- * @description Obtiene el estado de un ticket por token de seguimiento
- * @public
+ * @openapi
+ * /q/ticket/{ticketToken}:
+ *   get:
+ *     summary: Consultar estado de ticket público
+ *     tags: [Público (QR)]
+ *     parameters:
+ *       - in: path
+ *         name: ticketToken
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Estado y comentarios del ticket.
  */
 router.get('/ticket/:ticketToken', qrController.getTicketStatus);
 
 /**
- * @route POST /q/ticket/:ticketToken/comment
- * @description Agrega un comentario público a un ticket
- * @public
- * @body {string} contenido - Contenido del comentario
- * @body {string} [nombre] - Nombre del comentarista
+ * @openapi
+ * /q/ticket/{ticketToken}/comment:
+ *   post:
+ *     summary: Agregar comentario a un ticket público
+ *     tags: [Público (QR)]
+ *     responses:
+ *       201:
+ *         description: Comentario agregado.
  */
 router.post('/ticket/:ticketToken/comment', qrController.addPublicComment);
 
 /**
- * @route POST /q/ticket/:ticketToken/evidence
- * @description Sube evidencia (foto) a un ticket
- * @public
- * @file archivo - Imagen JPG/PNG o PDF (max 5MB)
+ * @openapi
+ * /q/ticket/{ticketToken}/evidence:
+ *   post:
+ *     summary: Subir foto de evidencia a un ticket público
+ *     tags: [Público (QR)]
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               archivo: { type: string, format: binary }
+ *     responses:
+ *       201:
+ *         description: Evidencia subida.
  */
 router.post(
   '/ticket/:ticketToken/evidence',
