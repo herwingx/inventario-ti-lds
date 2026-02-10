@@ -62,7 +62,7 @@ const form = ref({
     fecha_compra: null,
     id_status: null,
     otras_caracteristicas: '',
-    frecuencia_mantenimiento_meses: 6,
+    frecuencia_mantenimiento_meses: null,
     proxima_fecha_mantenimiento: null
 })
 
