@@ -407,6 +407,54 @@ const infoSections = computed(() => {
       </div>
 
     </div>
+
+    <!-- SECCIÓN: BITÁCORA DE SOPORTE (Historial de Tickets) -->
+    <div class="mt-8 animate-fade-in-up" style="animation-delay: 0.2s">
+      <div class="detail-card">
+        <div class="detail-section-header">
+          <div class="detail-section-icon text-red-500 bg-red-500/10">
+            <i class="pi pi-ticket text-lg"></i>
+          </div>
+          <h2 class="detail-section-title">Bitácora de Soporte Técnico</h2>
+        </div>
+
+        <div v-if="equipo?.historial_tickets?.length > 0" class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="text-[10px] font-black uppercase tracking-widest text-light-muted border-b border-light-border dark:border-dark-border">
+                <th class="py-4 px-2">Folio</th>
+                <th class="py-4 px-2">Falla</th>
+                <th class="py-4 px-2">Fecha</th>
+                <th class="py-4 px-2">Técnico</th>
+                <th class="py-4 px-2 text-right">Estatus</th>
+              </tr>
+            </thead>
+            <tbody class="text-sm">
+              <tr 
+                v-for="t in equipo.historial_tickets" :key="t.id"
+                @click="router.push({ name: 'tickets-detalle', params: { id: t.id } })"
+                class="border-b border-light-border/50 dark:border-dark-border/50 hover:bg-slate-50 dark:hover:bg-dark-bg/20 cursor-pointer transition-colors group"
+              >
+                <td class="py-4 px-2 font-mono font-bold text-primary">#{{ t.id }}</td>
+                <td class="py-4 px-2 font-bold group-hover:text-primary transition-colors italic uppercase text-xs">{{ t.tipo_falla }}</td>
+                <td class="py-4 px-2 text-xs opacity-70">{{ new Date(t.fecha).toLocaleDateString() }}</td>
+                <td class="py-4 px-2 text-xs font-medium">{{ t.tecnico }}</td>
+                <td class="py-4 px-2 text-right">
+                  <Tag 
+                    :value="t.estatus" 
+                    :severity="t.estatus === 'RESUELTO' || t.estatus === 'CERRADO' ? 'success' : 'warn'" 
+                    class="!text-[8px] !font-black uppercase !px-2 !py-0.5"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else class="text-center py-10 opacity-50 italic text-sm">
+          No hay reportes de soporte registrados para este equipo.
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

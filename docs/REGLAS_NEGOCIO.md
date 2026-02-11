@@ -49,6 +49,9 @@ El sistema gestiona prioridades basadas en el impacto operativo.
 | **MEDIA** | Trabajo degradado pero funcional. | < 24 Horas |
 | **BAJA** | Consulta o mejora menor. | < 72 Horas |
 
+### Trazabilidad Automática (Chat Audit):
+Cualquier cambio administrativo en un ticket (Estatus, Prioridad o Técnico asignado) genera automáticamente un mensaje de sistema en el hilo de conversación. Esto asegura que el reportante esté informado en tiempo real de los avances sin necesidad de interacción manual del técnico.
+
 ---
 
 ## 4. 🔐 Seguridad y Auditoría

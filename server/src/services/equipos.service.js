@@ -52,17 +52,33 @@ class EquipoService {
       include: {
         tipos_equipo: true,
         sucursales: true,
-        status: true
+        status: true,
+        tickets: {
+          orderBy: { fecha_creacion: 'desc' },
+          include: {
+            usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: {
+              select: { username: true }
+            }
+          }
+        }
       }
     });
 
     if (!e) return null;
 
     return {
-      ...e, // Incluir qr_token y otros campos
+      ...e,
       nombre_tipo_equipo: e.tipos_equipo?.nombre_tipo,
       nombre_sucursal_actual: e.sucursales?.nombre,
-      status_nombre: e.status?.nombre_status
+      status_nombre: e.status?.nombre_status,
+      historial_tickets: e.tickets.map(t => ({
+        id: t.id,
+        tipo_falla: t.tipo_falla,
+        estatus: t.estatus,
+        prioridad: t.prioridad,
+        fecha: t.fecha_creacion,
+        tecnico: t.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema?.username || 'Sin asignar'
+      }))
     };
   }
 

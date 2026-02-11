@@ -21,7 +21,8 @@ export const getStatusSeverity = (status) => {
     s === 'ACTIVA' ||
     s === 'HABILITADO' ||
     s === 'EN LINEA' ||
-    s === 'OPERATIVO'
+    s === 'OPERATIVO' ||
+    s === 'RESUELTO'
   ) {
     return 'success';
   }
@@ -32,7 +33,8 @@ export const getStatusSeverity = (status) => {
     s === 'ASIGNADO' ||
     s === 'OCUPADO' ||
     s === 'EN USO' ||
-    s === 'ASIGNADO A RECEPCION'
+    s === 'ASIGNADO A RECEPCION' ||
+    s === 'EN_PROGRESO'
   ) {
     return 'info';
   }
@@ -60,7 +62,8 @@ export const getStatusSeverity = (status) => {
     s.includes('CANCELADA') ||
     s.includes('ELIMINADO') ||
     s.includes('BLOQUEADO') ||
-    s.includes('PERDIDO')
+    s.includes('PERDIDO') ||
+    s === 'ABIERTO'
   ) {
     return 'danger';
   }

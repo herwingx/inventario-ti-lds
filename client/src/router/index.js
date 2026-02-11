@@ -254,7 +254,13 @@ const routes = [
         path: 'tickets',
         name: 'tickets',
         component: () => import('../views/TicketsView.vue'),
-        meta: { title: 'Tickets de Soporte' }
+        meta: { title: 'Tickets Activos' }
+      },
+      {
+        path: 'tickets/historial',
+        name: 'tickets-historial',
+        component: () => import('../views/TicketsHistoryView.vue'),
+        meta: { title: 'Historial de Soporte' }
       },
       {
         path: 'tickets/:id',

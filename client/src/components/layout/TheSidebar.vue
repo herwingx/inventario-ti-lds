@@ -120,10 +120,13 @@ const menuItems = ref([
     ]
   },
   {
-    id: 'tickets',
-    label: 'Tickets Soporte',
+    id: 'soporte',
+    label: 'Soporte Técnico',
     icon: Ticket,
-    route: '/tickets'
+    children: [
+      { id: 'tickets-activos', label: 'Tickets Activos', route: '/tickets' },
+      { id: 'tickets-historial', label: 'Historial de Soporte', route: '/tickets/historial' }
+    ]
   },
   {
     id: 'notas',

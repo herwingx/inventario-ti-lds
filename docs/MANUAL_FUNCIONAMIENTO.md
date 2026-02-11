@@ -74,11 +74,18 @@ El sistema expone los siguientes puntos de acceso que no requieren autenticació
 | **Seguimiento** | `/q/ticket/:token` | `.../soporte/q/ticket/:token` |
 | **Acceso Admin** | `/login` | `.../soporte/login` |
 
-### 4.3 Comunicación Bidireccional
-El sistema permite un hilo de conversación transparente:
-- **Interfaz de Mensajería:** Implementación de un diseño basado en burbujas de chat (Chat Bubbles) con diferenciación visual de autoría (Soporte vs. Usuario).
-- **UX Adaptativa (Mobile-First):** Uso de unidades **DVH (Dynamic Viewport Height)** para garantizar que el área de escritura siempre sea visible, adaptándose automáticamente a la barra de direcciones y al teclado virtual de los dispositivos móviles.
-- **Gestión de Scroll:** Bloqueo de scroll global para priorizar el desplazamiento interno de la conversación, emulando el comportamiento de una aplicación nativa.
+### 4.3 Comunicación Bidireccional y Auditoría en Vivo
+El sistema permite un hilo de conversación transparente entre el usuario y el equipo de TI:
+- **Interfaz de Mensajería:** Implementación de un diseño basado en burbujas de chat con diferenciación visual de autoría (Soporte vs. Usuario).
+- **UX Adaptativa (Mobile-First):** Uso de unidades **DVH (Dynamic Viewport Height)** para garantizar que el área de escritura siempre sea visible, adaptándose automáticamente al teclado virtual de dispositivos móviles.
+- **Sincronización:** El chat cuenta con un mecanismo de refresco automático (Polling) cada 30 segundos para asegurar que los mensajes lleguen oportunamente.
+- **Mensajes de Sistema:** El sistema inyecta automáticamente notificaciones en el chat cuando un técnico cambia la prioridad, el estatus o el técnico asignado al ticket.
+
+### 4.4 Bitácora Técnica por Activo
+Para mejorar la toma de decisiones, el detalle de cada equipo ahora incluye una **Bitácora de Soporte Técnico**:
+- **Historial Consolidado:** Muestra todos los tickets asociados al equipo a lo largo de su vida útil.
+- **Trazabilidad:** Permite identificar fallas recurrentes en hardware específico para evaluar su reemplazo o mantenimiento mayor.
+- **Acceso Rápido:** Los técnicos pueden saltar directamente al detalle de un ticket histórico desde la vista del equipo.
 
 ---
 

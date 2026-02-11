@@ -45,6 +45,16 @@ class TicketService {
 
     if (!ticket) return null;
 
+    // Obtener otros tickets del mismo equipo (Historial)
+    const historialEquipo = await prisma.tickets.findMany({
+      where: { 
+        id_equipo: ticket.id_equipo,
+        id: { not: ticket.id } // Excluir el ticket actual
+      },
+      orderBy: { fecha_creacion: 'desc' },
+      take: 5
+    });
+
     // Procesar comentarios para que el frontend reciba un autor coherente
     ticket.ticket_comentarios = ticket.ticket_comentarios.map(c => {
       let autorNombre = c.usuarios_sistema?.username || 'Usuario Externo';
@@ -66,7 +76,10 @@ class TicketService {
       };
     });
 
-    return ticket;
+    return {
+      ...ticket,
+      historial_equipo: historialEquipo
+    };
   }
 
   static async create(data, userId) {
@@ -85,15 +98,50 @@ class TicketService {
   }
 
   static async update(id, data) {
+    const ticketId = parseInt(id);
     try {
+      const oldTicket = await prisma.tickets.findUnique({ 
+        where: { id: ticketId },
+        include: { usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: true } 
+      });
+      if (!oldTicket) return null;
+
       let updateData = { ...data };
       if (data.estatus === 'RESUELTO' || data.estatus === 'CERRADO') {
         updateData.fecha_cierre = new Date();
       }
-      return await prisma.tickets.update({
-        where: { id: parseInt(id) },
-        data: updateData
+
+      const updated = await prisma.tickets.update({
+        where: { id: ticketId },
+        data: updateData,
+        include: { usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: true }
       });
+
+      // --- GENERAR MENSAJES DE SISTEMA ---
+      const systemChanges = [];
+      if (data.estatus && data.estatus !== oldTicket.estatus) {
+        systemChanges.push(`estatus a ${data.estatus}`);
+      }
+      if (data.prioridad && data.prioridad !== oldTicket.prioridad) {
+        systemChanges.push(`prioridad a ${data.prioridad}`);
+      }
+      if (data.id_asignado_a !== undefined && data.id_asignado_a !== oldTicket.id_asignado_a) {
+        const tecnicoNombre = updated.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema?.username || 'Sin asignar';
+        systemChanges.push(`técnico asignado a: ${tecnicoNombre}`);
+      }
+
+      if (systemChanges.length > 0) {
+        await prisma.ticket_comentarios.create({
+          data: {
+            id_ticket: ticketId,
+            id_usuario: null, // Sistema
+            contenido: `[SISTEMA]: Cambió ${systemChanges.join(', ')}`,
+            es_interno: false
+          }
+        });
+      }
+
+      return updated;
     } catch (error) {
       if (error.code === 'P2025') return null;
       throw error;
