@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.3.3] (2026-02-11)
+### Added (Añadido)
+- **Tickets (Soporte):** Bloqueo integral del chat (input, adjuntos y respuestas rápidas) para tickets en estado `CERRADO`.
+- **Notificaciones:** Integración del servicio de email (`nodemailer`) para notificar a usuarios finales sobre respuestas de soporte y confirmación de reportes recibidos.
+- **Resiliencia:** Derivación automática de URL de frontend a partir de `API_URL` en el servicio de notificaciones para mayor portabilidad.
+
+### Fixed (Corregido)
+- **Backend:** Candado de seguridad en `TicketService` para impedir la creación de comentarios o adjuntos en tickets finalizados, incluso vía API externa.
+
 ### [2.3.2] (2026-02-11)
 ### Added (Añadido)
 - **Dashboard:** Mejoras en el widget de actividad reciente para distinguir visualmente entre asignaciones activas (Verde) y finalizadas (Gris), mostrando también la fecha de finalización.
