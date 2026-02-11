@@ -69,7 +69,9 @@ class DashboardService {
           nombre_equipo: a.equipos_asignaciones_id_equipoToequipos?.nombre_equipo,
           empleado: a.empleados ? `${a.empleados.nombres} ${a.empleados.apellidos}` :
             a.sucursales ? `Sucursal: ${a.sucursales.nombre}` :
-              a.areas ? `Área: ${a.areas.nombre}` : 'N/A'
+              a.areas ? `Área: ${a.areas.nombre}` : 'N/A',
+          activo: !a.fecha_fin_asignacion,
+          fecha_fin: a.fecha_fin_asignacion
         })),
         recent_maintenances: ultimosMantenimientos.map(m => ({
           fecha: m.fecha_programada,

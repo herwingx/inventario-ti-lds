@@ -113,6 +113,11 @@ class AsignacionesService {
    * @param {Array<number>} componentesIds - Nuevos IDs de los componentes.
    * @returns {Promise<Object>} Resultado de la actualización.
    */
+  async updateComponentes(id, componentesIds) {
+    const response = await api.put(`/asignaciones/${id}/componentes`, { componentes: componentesIds })
+    return response.data
+  }
+
   /**
    * Descarga la Carta Responsiva en formato PDF.
    * 
@@ -123,12 +128,12 @@ class AsignacionesService {
     const response = await api.get(`/asignaciones/${id}/pdf`, {
       responseType: 'blob'
     })
-    
+
     // Crear un link temporal para la descarga
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = url
-    
+
     // Intentar obtener el nombre del archivo desde el header si es posible
     const contentDisposition = response.headers['content-disposition']
     let fileName = `Responsiva_Asignacion_${id}.pdf`
@@ -136,11 +141,11 @@ class AsignacionesService {
       const fileNameMatch = contentDisposition.match(/filename="?(.+)"?/)
       if (fileNameMatch.length === 2) fileName = fileNameMatch[1]
     }
-    
+
     link.setAttribute('download', fileName)
     document.body.appendChild(link)
     link.click()
-    
+
     // Limpieza
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)

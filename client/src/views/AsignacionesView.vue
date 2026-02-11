@@ -20,13 +20,14 @@ import {
   HelpCircle, 
   Eye, 
   CheckSquare,
-  Pencil
+  Pencil,
+  Trash2
 } from 'lucide-vue-next'
 
 import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 
-const { confirmWarning, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
+const { confirmWarning, confirmDelete, success: toastSuccess, error: toastError, info: toastInfo } = useSwal()
 const router = useRouter()
 const route = useRoute()
 
@@ -123,6 +124,25 @@ const finalizarAsignacion = async (data) => {
     }
   } else {
     toastInfo('Operación cancelada')
+  }
+}
+
+const deleteAsignacion = async (data) => {
+  const result = await confirmDelete({
+    title: '¿Eliminar Asignación?',
+    text: `Se eliminará el registro de asignación #${data.id}. El equipo quedará disponible si era la asignación activa.`,
+    confirmButtonText: 'Eliminar definitivamente',
+    cancelButtonText: 'Cancelar'
+  })
+
+  if (result.isConfirmed) {
+    try {
+      await AsignacionesService.delete(data.id)
+      toastSuccess('Asignación eliminada')
+      loadAsignaciones()
+    } catch (error) {
+      toastError('Error al eliminar asignación')
+    }
   }
 }
 
@@ -283,7 +303,7 @@ const clearFilters = () => {
 
         <!-- Actions -->
         <template #actions="{ data }">
-          <div class="flex gap-1 justify-end">
+          <div class="flex gap-1 justify-center">
             <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center transition-all" @click="viewAsignacion(data)" title="Ver Detalle">
               <Eye :size="16" />
             </button>
@@ -292,6 +312,9 @@ const clearFilters = () => {
             </button>
             <button v-if="!data.fecha_fin_asignacion" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 text-orange-500 dark:text-orange-400 flex items-center justify-center transition-all" @click="finalizarAsignacion(data)" title="Finalizar Asignación">
               <CheckSquare :size="16" />
+            </button>
+            <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center transition-all" @click="deleteAsignacion(data)" title="Eliminar asignación">
+              <Trash2 :size="16" />
             </button>
           </div>
         </template>

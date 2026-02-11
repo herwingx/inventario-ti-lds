@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.3.2] (2026-02-11)
+### Added (Añadido)
+- **Dashboard:** Mejoras en el widget de actividad reciente para distinguir visualmente entre asignaciones activas (Verde) y finalizadas (Gris), mostrando también la fecha de finalización.
+- **Asignaciones:** Corrección crítica en el módulo de gestión de componentes adicionales, permitiendo agregar y quitar periféricos correctamente.
+
+### Fixed (Corregido)
+- **UI:** Estandarización de botones de acción en todas las tablas del sistema (centrado `justify-center` para mejor estética).
+- **Asignaciones:** Implementación faltante del método `updateComponentes` en el servicio de frontend.
+
 ### [2.3.1] (2026-02-10)
 ### Added (Añadido)
 - **Chat Premium:** Rediseño visual del chat de soporte con burbujas dinámicas y soporte para Viewport dinámico (DVH).

@@ -136,7 +136,7 @@ const clearFilters = () => {
         </template>
 
         <template #actions="{ data }">
-          <div class="flex gap-1 justify-end">
+          <div class="flex gap-1 justify-center">
             <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all" @click="editEmpresa(data)" title="Editar">
               <Pencil :size="16" />
             </button>
@@ -147,7 +147,7 @@ const clearFilters = () => {
         </template>
 
         <template #skeleton-actions>
-          <div class="flex gap-2 justify-end">
+          <div class="flex gap-2 justify-center">
             <div class="skeleton w-8 h-8 rounded-lg"></div>
             <div class="skeleton w-8 h-8 rounded-lg"></div>
           </div>

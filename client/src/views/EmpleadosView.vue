@@ -246,7 +246,7 @@ const clearFilters = () => {
         </template>
 
         <template #actions="{ data }">
-          <div class="flex gap-1 justify-end">
+          <div class="flex gap-1 justify-center">
             <button class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center transition-all" @click="viewEmpleado(data)" title="Ver detalles">
               <Eye :size="16" />
             </button>
@@ -260,7 +260,7 @@ const clearFilters = () => {
         </template>
 
         <template #skeleton-actions>
-          <div class="flex gap-2 justify-end">
+          <div class="flex gap-2 justify-center">
             <div class="skeleton w-8 h-8 rounded-lg"></div>
             <div class="skeleton w-8 h-8 rounded-lg"></div>
             <div class="skeleton w-8 h-8 rounded-lg"></div>

@@ -256,8 +256,16 @@ onMounted(() => {
               :key="index"
               class="py-4 first:pt-0 last:pb-0 flex items-center gap-4 group"
             >
-              <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0 group-hover:bg-green-200 dark:group-hover:bg-green-800/40 transition-colors">
-                <CheckCircle class="text-green-600 dark:text-green-400" :size="18" />
+              <div 
+                class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors"
+                :class="[
+                  activity.activo 
+                    ? 'bg-green-100 dark:bg-green-900/30 group-hover:bg-green-200 dark:group-hover:bg-green-800/40 text-green-600 dark:text-green-400' 
+                    : 'bg-gray-100 dark:bg-zinc-800 group-hover:bg-gray-200 dark:group-hover:bg-zinc-700 text-gray-400 dark:text-gray-500'
+                ]"
+              >
+                <CheckCircle v-if="activity.activo" :size="18" />
+                <History v-else :size="18" />
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-semibold text-light-text dark:text-dark-text truncate">
@@ -268,8 +276,11 @@ onMounted(() => {
                   <span>{{ activity.empleado }}</span>
                 </div>
               </div>
-              <div class="text-xs text-right text-light-muted dark:text-dark-muted whitespace-nowrap">
-                {{ formatDate(activity.fecha) }}
+              <div class="text-xs text-right text-light-muted dark:text-dark-muted whitespace-nowrap flex flex-col items-end">
+                <span>{{ formatDate(activity.fecha) }}</span>
+                <span v-if="!activity.activo" class="text-[10px] bg-gray-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-gray-500 font-medium mt-0.5">
+                  Fin: {{ formatDate(activity.fecha_fin) }}
+                </span>
               </div>
             </div>
             

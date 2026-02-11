@@ -31,6 +31,12 @@ const signing = ref(false)
 const showSignatureDialog = ref(false)
 const signaturePad = ref(null)
 
+// Variables para gestión de componentes
+const showComponentesDialog = ref(false)
+const availableEquipos = ref([])
+const selectedComponentesIds = ref([])
+const savingComponentes = ref(false)
+
 const loadAsignacion = async () => {
     loading.value = true
     try {

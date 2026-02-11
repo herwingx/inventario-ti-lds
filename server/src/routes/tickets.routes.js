@@ -130,4 +130,25 @@ router.get('/:id/comments', ticketsController.getComments);
  */
 router.post('/:id/comments', ticketsController.addComment);
 
+/**
+ * @openapi
+ * /api/tickets/{id}:
+ *   delete:
+ *     summary: Eliminar un ticket de forma permanente
+ *     tags: [Soporte (Helpdesk)]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Ticket eliminado exitosamente.
+ *       404:
+ *         description: Ticket no encontrado.
+ */
+router.delete('/:id', ticketsController.deleteTicket);
+
 module.exports = router;

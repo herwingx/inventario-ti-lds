@@ -9,7 +9,7 @@ import TicketsService from '../services/TicketsService'
 import { useSwal } from '../composables/useSwal'
 import DataTable from '../components/ui/DataTable.vue'
 import { getStatusSeverity } from '../utils/status'
-import { Search, Eye, History } from 'lucide-vue-next'
+import { Search, Eye, History, Trash2 } from 'lucide-vue-next'
 
 // PrimeVue
 import InputText from 'primevue/inputtext'
@@ -17,7 +17,7 @@ import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
 const router = useRouter()
-const { error: toastError } = useSwal()
+const { error: toastError, success: toastSuccess, confirmDelete } = useSwal()
 
 // Data
 const tickets = ref([])
@@ -78,6 +78,25 @@ const loadHistory = async () => {
 
 const viewDetail = (ticket) => {
   router.push({ name: 'tickets-detalle', params: { id: ticket.id } })
+}
+
+const deleteTicket = async (ticket) => {
+  const result = await confirmDelete({
+    title: '¿Eliminar Ticket Histórico?',
+    text: `Esta acción es irreversible. Se eliminará el folio #${ticket.id} y toda su evidencia.`,
+    confirmButtonText: 'Eliminar definitivamente',
+    cancelButtonText: 'Cancelar'
+  })
+
+  if (result.isConfirmed) {
+    try {
+      await TicketsService.delete(ticket.id)
+      toastSuccess('Ticket eliminado del historial')
+      loadHistory()
+    } catch (e) {
+      toastError('Error al eliminar registro')
+    }
+  }
 }
 
 onMounted(loadHistory)
@@ -143,13 +162,20 @@ const getSeverity = getStatusSeverity
 
         <!-- Acciones -->
         <template #actions="{ data }">
-          <div class="flex gap-1 justify-end">
+          <div class="flex gap-1 justify-center">
             <button 
               class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center transition-all" 
               @click="viewDetail(data)" 
               title="Ver historial completo"
             >
               <Eye :size="16" />
+            </button>
+            <button
+              class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center transition-all"
+              @click="deleteTicket(data)"
+              title="Eliminar historial"
+            >
+              <Trash2 :size="16" />
             </button>
           </div>
         </template>
