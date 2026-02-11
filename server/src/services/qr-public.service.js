@@ -151,7 +151,7 @@ class QrPublicService {
           autor
         };
       }),
-      puede_comentar: ticket.estatus !== 'CERRADO'
+      puede_comentar: !['RESUELTO', 'CERRADO'].includes(ticket.estatus)
     };
 
     logger.debug(`[QrPublicService:getTicketStatus] Datos del ticket con token ${token} devueltos: ${JSON.stringify(result, null, 2)}`);
@@ -179,7 +179,7 @@ class QrPublicService {
     const { contenido, nombre } = data;
     const ticket = await prisma.tickets.findUnique({ where: { token_acceso: token } });
 
-    if (!ticket || ticket.estatus === 'CERRADO') return null;
+    if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) return null;
 
     // Usamos el nombre del reporte si no viene uno en el comentario
     const autorNombre = nombre || ticket.nombre_reporta || 'Usuario Externo';
@@ -197,7 +197,7 @@ class QrPublicService {
 
   static async uploadEvidence(token, url) {
     const ticket = await prisma.tickets.findUnique({ where: { token_acceso: token } });
-    if (!ticket || ticket.estatus === 'CERRADO') return null;
+    if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) return null;
 
     return await prisma.tickets.update({
       where: { id: ticket.id },
@@ -207,7 +207,7 @@ class QrPublicService {
 
   static async addPublicAttachment(token, fileUrl, fileName, nombre = '') {
     const ticket = await prisma.tickets.findUnique({ where: { token_acceso: token } });
-    if (!ticket || ticket.estatus === 'CERRADO') return null;
+    if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) return null;
 
     const isImage = fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
     const tipo = isImage ? 'IMAGEN' : 'ARCHIVO';

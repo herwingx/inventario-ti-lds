@@ -329,7 +329,7 @@ onUnmounted(() => {
       </div>
     </main>
 
-    <div v-if="ticket && ticket.estatus !== 'CERRADO'" class="p-3 sm:p-6 pb-8 sm:pb-8 bg-white dark:bg-dark-card border-t border-light-border dark:border-dark-border shrink-0 z-30 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
+    <div v-if="ticket && !['RESUELTO', 'CERRADO'].includes(ticket.estatus)" class="p-3 sm:p-6 pb-8 sm:pb-8 bg-white dark:bg-dark-card border-t border-light-border dark:border-dark-border shrink-0 z-30 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
       <div class="max-w-4xl mx-auto flex items-center gap-3">
         <div 
           class="flex-1 relative"
@@ -386,9 +386,9 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Banner Cerrado -->
-    <div v-else-if="ticket?.estatus === 'CERRADO'" class="p-5 bg-slate-100 dark:bg-dark-bg text-center text-light-muted font-black uppercase tracking-widest text-[10px] shrink-0 border-t border-light-border dark:border-dark-border pb-8">
-      Reporte finalizado por el equipo de soporte
+    <!-- Banner Cerrado/Resuelto -->
+    <div v-else-if="['RESUELTO', 'CERRADO'].includes(ticket?.estatus)" class="p-5 bg-slate-100 dark:bg-dark-bg text-center text-light-muted font-black uppercase tracking-widest text-[10px] shrink-0 border-t border-light-border dark:border-dark-border pb-8">
+      Reporte finalizado {{ ticket?.estatus === 'RESUELTO' ? ' y resuelto' : '' }} por el equipo de soporte
     </div>
 
     <!-- Visor de PDF Integrado -->

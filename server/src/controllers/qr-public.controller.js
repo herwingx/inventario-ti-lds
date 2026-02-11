@@ -49,7 +49,7 @@ const addPublicComment = async (req, res) => {
   if (!contenido) return res.status(400).json({ message: 'El contenido es requerido' });
 
   const comment = await QrPublicService.addPublicComment(req.params.ticketToken, req.body);
-  if (!comment) return res.status(404).json({ message: 'Ticket no encontrado o cerrado' });
+  if (!comment) return res.status(404).json({ message: 'Ticket no encontrado o ya finalizado' });
 
   // Notificar al admin (opcional pero recomendado en el original)
   // Para simplificar, obtenemos el ticket de nuevo si es necesario
@@ -67,8 +67,8 @@ const uploadTicketEvidence = async (req, res) => { // Asegurado que es async
 
   // Necesitamos el ticket ID para construir la URL correctamente
   const ticket = await QrPublicService.getTicketByTokenAcceso(req.params.ticketToken);
-  if (!ticket || ticket.estatus === 'CERRADO') {
-    return res.status(404).json({ message: 'Ticket no encontrado o cerrado para subir evidencia.' });
+  if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
+    return res.status(404).json({ message: 'Ticket no encontrado o finalizado para subir evidencia.' });
   }
 
   // La URL debe coincidir con la nueva estructura de Multer (si usa ticketId)
@@ -84,8 +84,8 @@ const uploadPublicAttachmentController = [
   async (req, res, next) => {
     // Buscar el ticket para obtener su ID real
     const ticket = await QrPublicService.getTicketByTokenAcceso(req.params.ticketToken);
-    if (!ticket || ticket.estatus === 'CERRADO') {
-      return res.status(404).json({ message: 'Ticket no encontrado o cerrado' });
+    if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
+      return res.status(404).json({ message: 'Ticket no encontrado o ya finalizado' });
     }
     req.ticketId = ticket.id; // Asignar el ID del ticket para Multer
     req.ticketObj = ticket; // También pasamos el objeto ticket completo para notificaciones si es necesario

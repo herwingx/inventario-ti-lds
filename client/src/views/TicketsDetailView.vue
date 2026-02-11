@@ -394,7 +394,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
         </div>
 
         <!-- Barra de Respuesta -->
-        <div v-if="ticket?.estatus !== 'CERRADO'" class="p-3 sm:p-6 pb-8 sm:pb-8 bg-white dark:bg-dark-card border-t border-light-border dark:border-dark-border shrink-0 z-30 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
+        <div v-if="!['RESUELTO', 'CERRADO'].includes(ticket?.estatus)" class="p-3 sm:p-6 pb-8 sm:pb-8 bg-white dark:bg-dark-card border-t border-light-border dark:border-dark-border shrink-0 z-30 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
           <div class="max-w-4xl mx-auto">
             
             <!-- Quick Replies -->

@@ -195,8 +195,8 @@ class TicketService {
 
   static async addComment(ticketId, userId, data) {
     const ticket = await prisma.tickets.findUnique({ where: { id: parseInt(ticketId) } });
-    if (!ticket || ticket.estatus === 'CERRADO') {
-      throw new Error('No se pueden agregar comentarios a un ticket cerrado');
+    if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
+      throw new Error('No se pueden agregar comentarios a un ticket finalizado o cerrado');
     }
 
     return await prisma.ticket_comentarios.create({
@@ -211,8 +211,8 @@ class TicketService {
 
   static async addAttachment(ticketId, userId, fileUrl, fileName) {
     const ticket = await prisma.tickets.findUnique({ where: { id: parseInt(ticketId) } });
-    if (!ticket || ticket.estatus === 'CERRADO') {
-      throw new Error('No se pueden agregar archivos a un ticket cerrado');
+    if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
+      throw new Error('No se pueden agregar archivos a un ticket finalizado o cerrado');
     }
 
     // Detectar tipo de archivo para el mensaje

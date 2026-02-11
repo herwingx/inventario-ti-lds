@@ -64,7 +64,7 @@ const addComment = async (req, res) => {
   // Buscar el ticket para notificaciones y validación extra
   const ticket = await TicketService.findById(id);
   if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
-  if (ticket.estatus === 'CERRADO') return res.status(400).json({ message: 'No se pueden agregar mensajes a un ticket cerrado' });
+  if (['RESUELTO', 'CERRADO'].includes(ticket.estatus)) return res.status(400).json({ message: 'No se pueden agregar mensajes a un ticket finalizado' });
 
   const comment = await TicketService.addComment(id, userId, req.body);
 
@@ -97,8 +97,8 @@ const uploadTicketAttachment = [
 
     // Validación extra: Ticket no cerrado
     const ticket = await TicketService.findById(id);
-    if (!ticket || ticket.estatus === 'CERRADO') {
-      return res.status(400).json({ message: 'No se pueden adjuntar archivos a un ticket cerrado' });
+    if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
+      return res.status(400).json({ message: 'No se pueden adjuntar archivos a un ticket finalizado' });
     }
 
     // La URL relativa debe coincidir con la forma en que Express sirve los archivos estáticos
