@@ -74,7 +74,6 @@ const createEquipo = async (req, res, next) => {
             return res.status(409).json({ message: error.message });
         }
         logger.error(`Error creando equipo: ${error.message}`);
-        console.error(error); // Ver stack trace completo
         next(error);
     }
 };
