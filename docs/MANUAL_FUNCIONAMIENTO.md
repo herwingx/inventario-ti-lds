@@ -80,6 +80,7 @@ El sistema permite un hilo de conversación transparente entre el usuario y el e
 - **UX Adaptativa (Mobile-First):** Uso de unidades **DVH (Dynamic Viewport Height)** para garantizar que el área de escritura siempre sea visible, adaptándose automáticamente al teclado virtual de dispositivos móviles.
 - **Sincronización:** El chat cuenta con un mecanismo de refresco automático (Polling) cada 30 segundos para asegurar que los mensajes lleguen oportunamente.
 - **Mensajes de Sistema:** El sistema inyecta automáticamente notificaciones en el chat cuando un técnico cambia la prioridad, el estatus o el técnico asignado al ticket.
+- **Bloqueo de Seguridad (Finalización):** Una vez que un ticket alcanza los estados `RESUELTO` o `CERRADO`, el sistema inhabilita permanentemente la capacidad de enviar nuevos mensajes o archivos. La interfaz se bloquea automáticamente y el backend rechaza cualquier intento de escritura posterior para preservar la integridad del reporte final.
 
 ### 4.4 Bitácora Técnica por Activo
 Para mejorar la toma de decisiones, el detalle de cada equipo ahora incluye una **Bitácora de Soporte Técnico**:

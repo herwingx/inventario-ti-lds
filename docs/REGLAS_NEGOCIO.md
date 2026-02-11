@@ -52,6 +52,12 @@ El sistema gestiona prioridades basadas en el impacto operativo.
 ### Trazabilidad Automática (Chat Audit):
 Cualquier cambio administrativo en un ticket (Estatus, Prioridad o Técnico asignado) genera automáticamente un mensaje de sistema en el hilo de conversación. Esto asegura que el reportante esté informado en tiempo real de los avances sin necesidad de interacción manual del técnico.
 
+### Política de Cierre de Comunicación:
+Para garantizar que los registros de soporte no se alteren después de haber sido solucionados:
+1. **Bloqueo por Estatus:** Al transicionar a `RESUELTO` o `CERRADO`, el canal de comunicación se cierra de forma bidireccional.
+2. **Inmutabilidad:** No se permite la reapertura del chat por parte del usuario o técnico una vez finalizado; cualquier problema nuevo debe generar un nuevo ticket para mantener métricas de SLA limpias.
+3. **Banner Informativo:** El portal público muestra un aviso explícito de "Reporte Finalizado" al detectar estos estados.
+
 ---
 
 ## 4. 🔐 Seguridad y Auditoría
