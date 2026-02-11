@@ -99,5 +99,19 @@ export default {
    */
   getTecnicos() {
     return api.get('/tickets/tecnicos').then(res => res.data);
+  },
+
+  /**
+   * Sube un archivo adjunto al ticket.
+   * @param {number} id - ID del ticket
+   * @param {File} file - Objeto File a subir
+   * @returns {Promise<Object>}
+   */
+  uploadAttachment(id, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/tickets/${id}/attachments`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(res => res.data);
   }
 };

@@ -484,6 +484,51 @@ const TailwindPreset = {
     text: { class: 'flex-1' },
     closeButton: { class: 'w-6 h-6 rounded flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer ml-auto' },
     closeIcon: { class: '' }
+  },
+
+  // Image
+  image: {
+    root: { class: 'relative inline-block group' },
+    image: { class: 'max-w-full h-auto' },
+    previewMask: {
+      class: [
+        'absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-300',
+        'bg-black/40 backdrop-blur-sm text-white cursor-pointer group-hover:opacity-100'
+      ]
+    },
+    previewIcon: { class: 'text-5xl pi pi-search transform scale-50 group-hover:scale-100 transition-all duration-500 ease-out opacity-80' },
+    previewContainer: { class: 'fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-xl animate-fade-in overflow-hidden' },
+    mask: {
+      class: 'fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-xl cursor-pointer overflow-hidden'
+    },
+    toolbar: {
+      class: [
+        'fixed top-6 left-1/2 -translate-x-1/2 flex items-center justify-center gap-1.5 p-1.5 z-[3010]',
+        'bg-zinc-950/90 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl w-auto'
+      ]
+    },
+    rotateRightButton: {
+      class: 'w-9 h-9 flex items-center justify-center rounded-xl bg-transparent text-white hover:bg-white/10 active:scale-95 transition-all focus:outline-none'
+    },
+    rotateLeftButton: {
+      class: 'w-9 h-9 flex items-center justify-center rounded-xl bg-transparent text-white hover:bg-white/10 active:scale-95 transition-all focus:outline-none'
+    },
+    zoomOutButton: {
+      class: 'w-9 h-9 flex items-center justify-center rounded-xl bg-transparent text-white hover:bg-white/10 active:scale-95 transition-all focus:outline-none'
+    },
+    zoomInButton: {
+      class: 'w-9 h-9 flex items-center justify-center rounded-xl bg-transparent text-white hover:bg-white/10 active:scale-95 transition-all focus:outline-none'
+    },
+    closeButton: {
+      class: 'w-9 h-9 flex items-center justify-center rounded-xl bg-red-600/90 text-white hover:bg-red-600 active:scale-95 transition-all focus:outline-none shadow-lg ml-1'
+    },
+    preview: {
+      class: [
+        'max-w-[95vw] max-h-[85vh] md:max-w-[90vw] md:max-h-[90vh]',
+        'transition-all duration-300 ease-out cursor-grab active:cursor-grabbing',
+        'rounded-lg shadow-2xl border border-white/5'
+      ]
+    }
   }
 }
 

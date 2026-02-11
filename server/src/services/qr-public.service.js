@@ -4,6 +4,7 @@
  */
 const prisma = require('../config/prisma');
 const { v4: uuidv4 } = require('uuid');
+const logger = require('../utils/logger'); // Importar logger
 
 class QrPublicService {
   static async getEquipoByToken(token) {
@@ -111,9 +112,12 @@ class QrPublicService {
       }
     });
 
-    if (!ticket) return null;
+    if (!ticket) {
+      logger.debug(`[QrPublicService:getTicketStatus] Ticket con token ${token} no encontrado.`);
+      return null;
+    }
 
-    return {
+    const result = {
       ticket: {
         id: ticket.id,
         tipo_falla: ticket.tipo_falla,
@@ -122,6 +126,7 @@ class QrPublicService {
         estatus: ticket.estatus,
         tecnico: ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema?.username,
         equipo: `${ticket.equipos?.marca} ${ticket.equipos?.modelo}`,
+        qr_token: ticket.equipos?.qr_token,
         fecha_creacion: ticket.fecha_creacion,
         fecha_actualizacion: ticket.fecha_actualizacion,
         fecha_cierre: ticket.fecha_cierre
@@ -148,6 +153,26 @@ class QrPublicService {
       }),
       puede_comentar: ticket.estatus !== 'CERRADO'
     };
+
+    logger.debug(`[QrPublicService:getTicketStatus] Datos del ticket con token ${token} devueltos: ${JSON.stringify(result, null, 2)}`);
+    return result;
+  }
+
+  static async getTicketByTokenAcceso(token) {
+    return await prisma.tickets.findUnique({
+      where: { token_acceso: token },
+      include: {
+        equipos: true,
+        usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: {
+          select: { username: true }
+        },
+        ticket_comentarios: {
+          where: { es_interno: false },
+          orderBy: { fecha_creacion: 'asc' },
+          include: { usuarios_sistema: { select: { username: true } } }
+        }
+      }
+    });
   }
 
   static async addPublicComment(token, data) {
@@ -177,6 +202,30 @@ class QrPublicService {
     return await prisma.tickets.update({
       where: { id: ticket.id },
       data: { evidencia_url: url }
+    });
+  }
+
+  static async addPublicAttachment(token, fileUrl, fileName, nombre = '') {
+    const ticket = await prisma.tickets.findUnique({ where: { token_acceso: token } });
+    if (!ticket || ticket.estatus === 'CERRADO') return null;
+
+    const isImage = fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+    const tipo = isImage ? 'IMAGEN' : 'ARCHIVO';
+
+    const autorNombre = nombre || ticket.nombre_reporta || 'Usuario Externo';
+    // Mismo formato que admin: [ADJUNTO:...] pero prefijado con el autor para que el parsing público funcione
+    // Sin embargo, el parsing público actualmente busca [Nombre]: Contenido.
+    // Para simplificar, insertamos el adjunto COMO PARTE del contenido.
+    // Formato final en DB: [Nombre]: [ADJUNTO:...]
+    const contenidoFinal = `[${autorNombre}]: [ADJUNTO:${tipo}|${fileName}|${fileUrl}]`;
+
+    return await prisma.ticket_comentarios.create({
+      data: {
+        id_ticket: ticket.id,
+        id_usuario: null,
+        contenido: contenidoFinal,
+        es_interno: false
+      }
     });
   }
 }

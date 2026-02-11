@@ -101,4 +101,26 @@ router.post(
   qrController.uploadTicketEvidence
 );
 
+/**
+ * @openapi
+ * /q/ticket/{ticketToken}/attachment:
+ *   post:
+ *     summary: Subir adjunto a comentario público
+ *     tags: [Público (QR)]
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file: { type: string, format: binary }
+ *     responses:
+ *       201:
+ *         description: Archivo adjunto subido.
+ */
+router.post(
+  '/ticket/:ticketToken/attachment',
+  qrController.uploadPublicAttachment
+);
+
 module.exports = router;

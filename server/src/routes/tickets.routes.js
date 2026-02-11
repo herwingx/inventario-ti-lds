@@ -132,6 +132,29 @@ router.post('/:id/comments', ticketsController.addComment);
 
 /**
  * @openapi
+ * /api/tickets/{id}/attachments:
+ *   post:
+ *     summary: Adjuntar archivo (imagen/pdf) a un ticket
+ *     tags: [Soporte (Helpdesk)]
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Archivo subido.
+ */
+router.post('/:id/attachments', ticketsController.uploadAttachment);
+
+/**
+ * @openapi
  * /api/tickets/{id}:
  *   delete:
  *     summary: Eliminar un ticket de forma permanente

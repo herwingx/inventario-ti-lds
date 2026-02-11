@@ -66,5 +66,16 @@ export default {
         'Content-Type': 'multipart/form-data'
       }
     }).then(res => res.data);
+  },
+
+  /**
+   * Sube un adjunto al chat público.
+   */
+  uploadAttachment(ticketToken, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return publicApi.post(`/ticket/${ticketToken}/attachment`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(res => res.data);
   }
 };

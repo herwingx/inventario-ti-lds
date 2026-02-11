@@ -1,10 +1,7 @@
-/**
- * @module Controllers/Tickets
- * @description Controlador para la gestión de tickets de soporte.
- */
 const TicketService = require('../services/tickets.service');
 const { ticketSchema, updateTicketSchema } = require('../schemas/ticket.schema');
 const logger = require('../utils/logger');
+const { uploadTickets, handleMulterError } = require('../config/upload.config');
 
 const getAllTickets = async (req, res) => {
   const tickets = await TicketService.findAll(req.query);
@@ -67,6 +64,34 @@ const addComment = async (req, res) => {
   res.status(201).json(comment);
 };
 
+// Nuevo controlador para manejar la subida de adjuntos
+const uploadTicketAttachment = [
+  (req, res, next) => {
+    req.ticketId = req.params.id; // Asignar el ID del ticket a req.ticketId para Multer
+    next();
+  },
+  uploadTickets.single('file'), // 'file' es el nombre del campo en el formulario
+  handleMulterError, // Manejador de errores de Multer
+  async (req, res) => {
+    const { id } = req.params;
+    const userId = req.user?.userId;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: 'No se ha subido ningún archivo' });
+    }
+
+    // La URL relativa debe coincidir con la forma en que Express sirve los archivos estáticos
+    // y cómo Multer los guarda.
+    // Multer los guarda en /storage/tickets/ID_TICKET/nombre_generado.ext
+    const fileUrl = `/storage/tickets/${id}/${file.filename}`; // CAMBIO AQUÍ: '/storage' en lugar de '/uploads'
+
+    await TicketService.addAttachment(id, userId, fileUrl, file.originalname);
+
+    res.status(201).json({ message: 'Archivo subido', url: fileUrl });
+  }
+];
+
 module.exports = {
   getAllTickets,
   getTicketById,
@@ -75,5 +100,6 @@ module.exports = {
   deleteTicket,
   getTecnicos,
   getComments,
-  addComment
+  addComment,
+  uploadAttachment: uploadTicketAttachment // Exportar el nuevo controlador
 };

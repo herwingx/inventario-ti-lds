@@ -3,6 +3,7 @@
  * @description Lógica de negocio para Tickets usando Prisma.
  */
 const prisma = require('../config/prisma');
+const logger = require('../utils/logger'); // Importar logger
 
 class TicketService {
   static async findAll(filters) {
@@ -14,7 +15,7 @@ class TicketService {
     if (tecnicoId) where.id_asignado_a = parseInt(tecnicoId);
     if (id_equipo) where.id_equipo = parseInt(id_equipo);
 
-    return await prisma.tickets.findMany({
+    const result = await prisma.tickets.findMany({
       where,
       include: {
         equipos: true,
@@ -27,6 +28,8 @@ class TicketService {
       },
       orderBy: { fecha_creacion: 'desc' }
     });
+    logger.debug(`[TicketService:findAll] Tickets devueltos: ${JSON.stringify(result, null, 2)}`);
+    return result;
   }
 
   static async findById(id) {
@@ -43,11 +46,14 @@ class TicketService {
       }
     });
 
-    if (!ticket) return null;
+    if (!ticket) {
+      logger.debug(`[TicketService:findById] Ticket ID ${id} no encontrado.`);
+      return null;
+    }
 
     // Obtener otros tickets del mismo equipo (Historial)
     const historialEquipo = await prisma.tickets.findMany({
-      where: { 
+      where: {
         id_equipo: ticket.id_equipo,
         id: { not: ticket.id } // Excluir el ticket actual
       },
@@ -76,10 +82,13 @@ class TicketService {
       };
     });
 
-    return {
+    const result = {
       ...ticket,
       historial_equipo: historialEquipo
     };
+
+    logger.debug(`[TicketService:findById] Datos del ticket ${id} devueltos: ${JSON.stringify(result, null, 2)}`);
+    return result;
   }
 
   static async create(data, userId) {
@@ -100,9 +109,9 @@ class TicketService {
   static async update(id, data) {
     const ticketId = parseInt(id);
     try {
-      const oldTicket = await prisma.tickets.findUnique({ 
+      const oldTicket = await prisma.tickets.findUnique({
         where: { id: ticketId },
-        include: { usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: true } 
+        include: { usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: true }
       });
       if (!oldTicket) return null;
 
@@ -164,7 +173,7 @@ class TicketService {
       where: { id_status: 1 }, // Solo activos
       select: { id: true, username: true, id_rol: true }
     });
-    
+
     return users.map(u => ({
       id: u.id,
       nombre_usuario: u.username
@@ -191,6 +200,25 @@ class TicketService {
         id_usuario: userId,
         contenido: data.contenido,
         es_interno: data.es_interno || false
+      }
+    });
+  }
+
+  static async addAttachment(ticketId, userId, fileUrl, fileName) {
+    // Detectar tipo de archivo para el mensaje
+    const isImage = fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+    const tipo = isImage ? 'IMAGEN' : 'ARCHIVO';
+
+    // Guardamos la URL en el contenido con un formato especial Markdown-like
+    // [ADJUNTO: TIPO | NOMBRE | URL]
+    const content = `[ADJUNTO:${tipo}|${fileName}|${fileUrl}]`;
+
+    return await prisma.ticket_comentarios.create({
+      data: {
+        id_ticket: parseInt(ticketId),
+        id_usuario: userId,
+        contenido: content,
+        es_interno: false // Los adjuntos por defecto son visibles, o podríamos parametrizarlo
       }
     });
   }

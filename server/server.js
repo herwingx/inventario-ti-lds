@@ -82,7 +82,9 @@ const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // * Middleware de seguridad Helmet
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // * Middleware de CORS
 app.use(cors({
@@ -154,7 +156,17 @@ app.use(express.static('public', {
 }));
 
 // * Servir archivos subidos (evidencias, tickets) - Fase 2
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Añadir setHeaders a express.static para CORS en archivos subidos
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path, stat) => {
+    res.set('Access-Control-Allow-Origin', '*'); // Permitir acceso desde cualquier origen
+  }
+}));
+app.use('/storage', express.static(path.join(__dirname, 'storage'), {
+  setHeaders: (res, path, stat) => {
+    res.set('Access-Control-Allow-Origin', '*'); // Permitir acceso desde cualquier origen
+  }
+}));
 
 // * Middleware para parsear JSON en las peticiones (body-parser integrado)
 app.use(express.json());
