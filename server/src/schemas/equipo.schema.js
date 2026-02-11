@@ -21,7 +21,9 @@ const createEquipoSchema = z.object({
     sistema_operativo: z.string().optional(),
     mac_address: z.string().trim().optional().nullable().transform(val => val === '' ? null : val), // Permitir string vacío como null
     otras_caracteristicas: z.string().optional(),
-    fecha_compra: z.string().regex(dateRegex, 'La fecha de compra debe tener formato YYYY-MM-DD').optional().nullable(),
+    fecha_compra: z.string().regex(dateRegex, 'La fecha de compra debe tener formato YYYY-MM-DD').optional().nullable().transform(val => val ? new Date(`${val}T00:00:00.000Z`) : val),
+    frecuencia_mantenimiento_meses: z.preprocess((val) => (val === '' || val === '0' || val === 0 ? null : val), z.coerce.number().int().positive().optional().nullable()),
+    proxima_fecha_mantenimiento: z.preprocess((val) => (val === '' ? null : val), z.string().regex(dateRegex, 'La fecha debe tener formato YYYY-MM-DD').optional().nullable().transform(val => val ? new Date(`${val}T00:00:00.000Z`) : val)),
     id_status: z.number().int().positive().optional().default(5) // Default a DISPONIBLE (5)
   })
 });
@@ -45,7 +47,9 @@ const updateEquipoSchema = z.object({
     sistema_operativo: z.string().optional(),
     mac_address: z.string().trim().optional().nullable(),
     otras_caracteristicas: z.string().optional(),
-    fecha_compra: z.string().regex(dateRegex, 'La fecha de compra debe tener formato YYYY-MM-DD').optional().nullable(),
+    fecha_compra: z.preprocess((val) => (val === '' ? null : val), z.string().regex(dateRegex, 'La fecha de compra debe tener formato YYYY-MM-DD').optional().nullable().transform(val => val ? new Date(`${val}T00:00:00.000Z`) : val)),
+    frecuencia_mantenimiento_meses: z.preprocess((val) => (val === '' || val === '0' || val === 0 ? null : val), z.coerce.number().int().positive().optional().nullable()),
+    proxima_fecha_mantenimiento: z.preprocess((val) => (val === '' ? null : val), z.string().regex(dateRegex, 'La fecha debe tener formato YYYY-MM-DD').optional().nullable().transform(val => val ? new Date(`${val}T00:00:00.000Z`) : val)),
     id_status: z.number().int().positive().optional()
   })
 });

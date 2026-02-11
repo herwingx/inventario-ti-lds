@@ -51,8 +51,14 @@ const createEquipo = async (req, res, next) => {
         const validation = createEquipoSchema.safeParse({ body: req.body });
 
         if (!validation.success) {
-            // Formatear errores de Zod para el cliente
-            const errors = validation.error.errors.map(e => e.message);
+            // Formatear errores de Zod para el cliente de forma segura
+            let errors = [];
+            if (validation.error && Array.isArray(validation.error.errors)) {
+                errors = validation.error.errors.map(e => e.message);
+            } else {
+                errors = [validation.error?.message || 'Error de validación desconocido'];
+            }
+
             logger.warn(`Intento de creación de equipo inválido: ${errors.join(', ')}`);
             return res.status(400).json({ message: 'Datos inválidos', errors });
         }
@@ -68,6 +74,7 @@ const createEquipo = async (req, res, next) => {
             return res.status(409).json({ message: error.message });
         }
         logger.error(`Error creando equipo: ${error.message}`);
+        console.error(error); // Ver stack trace completo
         next(error);
     }
 };
