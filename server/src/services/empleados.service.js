@@ -121,14 +121,34 @@ class EmpleadoService {
   }
 
   static async delete(id) {
+    const empleadoId = parseInt(id);
     try {
       return await prisma.empleados.delete({
-        where: { id: parseInt(id) }
+        where: { id: empleadoId }
       });
     } catch (error) {
       if (error.code === 'P2025') return null;
       if (error.code === 'P2003') {
-        throw new Error('REFERENTIAL_INTEGRITY: No se puede eliminar el empleado porque tiene registros asociados.');
+        // Fallback a Soft Delete
+        const statusBaja = await prisma.status.findFirst({
+          where: {
+            nombre_status: { in: ['BAJA', 'ELIMINADO', 'INACTIVO', 'DADO DE BAJA'] }
+          }
+        });
+
+        if (!statusBaja) {
+          throw new Error('REFERENTIAL_INTEGRITY: No se puede eliminar el empleado y no existe estado de BAJA para inhabilitarlo.');
+        }
+
+        const softDelete = await prisma.empleados.update({
+          where: { id: empleadoId },
+          data: {
+            id_status: statusBaja.id,
+            fecha_actualizacion: new Date()
+          }
+        });
+
+        return !!softDelete;
       }
       throw error;
     }

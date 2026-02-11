@@ -71,14 +71,34 @@ class SucursalService {
   }
 
   static async delete(id) {
+    const sucursalId = parseInt(id);
     try {
       return await prisma.sucursales.delete({
-        where: { id: parseInt(id) }
+        where: { id: sucursalId }
       });
     } catch (error) {
       if (error.code === 'P2025') return null;
       if (error.code === 'P2003') {
-        throw new Error('REFERENTIAL_INTEGRITY: No se puede eliminar la sucursal porque tiene áreas o empleados asociados.');
+        // Fallback a Soft Delete
+        const statusBaja = await prisma.status.findFirst({
+          where: {
+            nombre_status: { in: ['BAJA', 'ELIMINADO', 'INACTIVO', 'CERRADA'] }
+          }
+        });
+
+        if (!statusBaja) {
+          throw new Error('REFERENTIAL_INTEGRITY: No se puede eliminar la sucursal y no existe estado de BAJA/CERRADA.');
+        }
+
+        const softDelete = await prisma.sucursales.update({
+          where: { id: sucursalId },
+          data: {
+            id_status: statusBaja.id,
+            fecha_actualizacion: new Date()
+          }
+        });
+
+        return !!softDelete;
       }
       throw error;
     }

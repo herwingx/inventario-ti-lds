@@ -141,14 +141,34 @@ class AreaService {
   }
 
   static async delete(id) {
+    const areaId = parseInt(id);
     try {
       return await prisma.areas.delete({
-        where: { id: parseInt(id) }
+        where: { id: areaId }
       });
     } catch (error) {
       if (error.code === 'P2025') return null;
       if (error.code === 'P2003') {
-        throw new Error('REFERENTIAL_INTEGRITY: No se puede eliminar el área porque tiene empleados o equipos asociados.');
+        // Fallback a Soft Delete
+        const statusBaja = await prisma.status.findFirst({
+          where: {
+            nombre_status: { in: ['BAJA', 'ELIMINADO', 'INACTIVO'] }
+          }
+        });
+
+        if (!statusBaja) {
+          throw new Error('REFERENTIAL_INTEGRITY: No se puede eliminar el área y no existe estado de para inhabilitarla.');
+        }
+
+        const softDelete = await prisma.areas.update({
+          where: { id: areaId },
+          data: {
+            id_status: statusBaja.id,
+            fecha_actualizacion: new Date()
+          }
+        });
+
+        return !!softDelete;
       }
       throw error;
     }

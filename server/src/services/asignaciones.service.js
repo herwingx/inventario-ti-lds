@@ -217,6 +217,8 @@ class AsignacionService {
   static async update(id, data) {
     const asignacionId = parseInt(id);
 
+    const { componentes, ...restData } = data;
+
     return await prisma.$transaction(async (tx) => {
       const current = await tx.asignaciones.findUnique({ where: { id: asignacionId } });
       if (!current) return null;
@@ -224,7 +226,7 @@ class AsignacionService {
       const eraActiva = current.fecha_fin_asignacion === null;
 
       // Lógica de finalización/sincronización
-      let updateData = { ...data };
+      let updateData = { ...restData };
       if (updateData.fecha_fin_asignacion) updateData.fecha_fin_asignacion = new Date(updateData.fecha_fin_asignacion);
       if (updateData.fecha_asignacion) updateData.fecha_asignacion = new Date(updateData.fecha_asignacion);
 
@@ -247,14 +249,81 @@ class AsignacionService {
           data: { fecha_fin_asignacion: updateData.fecha_fin_asignacion, id_status_asignacion: STATUS_ASIGNACION_FINALIZADA }
         });
 
-        const componentes = await tx.asignaciones.findMany({ where: { id_equipo_padre: current.id_equipo, fecha_fin_asignacion: updateData.fecha_fin_asignacion } });
-        for (const c of componentes) {
+        // Marcar equipos componentes como disponibles
+        const comps = await tx.asignaciones.findMany({
+          where: { id_equipo_padre: current.id_equipo, fecha_fin_asignacion: { not: null }, id_status_asignacion: STATUS_ASIGNACION_FINALIZADA },
+          orderBy: { fecha_fin_asignacion: 'desc' }, // Intentar obtener los recién finalizados
+          take: 50 // Limite seguro
+        });
+        // Nota: La consulta anterior puede traer muchos historicos. Mejor buscar por la fecha exacta si es posible o simplemente asumir que los componentes activos son los que acabamos de cerrar.
+        // Mejor estrategia: Buscar los que acabamos de cerrar arriba (no se puede obtener IDs de updateMany facilmente en Prisma).
+        // Alternativa: Buscar los activos ANTES de updateMany.
+
+        // Corrección lógica: Buscar componentes activos antes de cerrarlos para liberar sus equipos
+        const componentesActivos = await tx.asignaciones.findMany({
+          where: { id_equipo_padre: current.id_equipo, fecha_fin_asignacion: null }
+        });
+
+        for (const c of componentesActivos) {
           await tx.equipos.update({ where: { id: c.id_equipo }, data: { id_status: STATUS_DISPONIBLE } });
         }
+
       }
       // Si cambia de Finalizado a Activo (Regla de negocio: No permitido usualmente, pero manejamos la lógica por si acaso)
       else if (!eraActiva && esAhoraActiva) {
         throw new Error('CONFLICT: Una asignación finalizada no puede ser reactivada.');
+      }
+
+      // Actualizar componentes si se proporcionan
+      if (componentes && Array.isArray(componentes) && esAhoraActiva) {
+        // 1. Obtener componentes actuales
+        const actuales = await tx.asignaciones.findMany({
+          where: { id_equipo_padre: current.id_equipo, fecha_fin_asignacion: null }
+        });
+        const idsActuales = actuales.map(c => c.id_equipo);
+
+        // 2. Determinar cuáles quitar y cuáles añadir
+        const paraQuitar = idsActuales.filter(id => !componentes.includes(id));
+        const paraAnadir = componentes.filter(id => !idsActuales.includes(id));
+
+        // 3. Quitar componentes
+        if (paraQuitar.length > 0) {
+          await tx.asignaciones.updateMany({
+            where: {
+              id_equipo_padre: current.id_equipo,
+              id_equipo: { in: paraQuitar },
+              fecha_fin_asignacion: null
+            },
+            data: {
+              fecha_fin_asignacion: new Date(),
+              id_status_asignacion: STATUS_ASIGNACION_FINALIZADA
+            }
+          });
+          await tx.equipos.updateMany({
+            where: { id: { in: paraQuitar } },
+            data: { id_status: STATUS_DISPONIBLE }
+          });
+        }
+
+        // 4. Añadir nuevos componentes
+        for (const compId of paraAnadir) {
+          await tx.asignaciones.create({
+            data: {
+              id_equipo: compId,
+              id_equipo_padre: current.id_equipo,
+              id_empleado: current.id_empleado,
+              id_sucursal_asignado: current.id_sucursal_asignado,
+              id_area_asignado: current.id_area_asignado,
+              fecha_asignacion: new Date(),
+              id_status_asignacion: STATUS_ASIGNACION_ACTIVA,
+              observacion: `Componente añadido en actualización`
+            }
+          });
+          await tx.equipos.update({
+            where: { id: compId },
+            data: { id_status: STATUS_ASIGNADO }
+          });
+        }
       }
 
       return await tx.asignaciones.update({

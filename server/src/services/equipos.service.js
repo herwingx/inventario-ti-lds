@@ -141,15 +141,53 @@ class EquipoService {
    * Elimina un equipo si no tiene referencias.
    * @param {number} id
    */
+  /**
+   * Elimina un equipo. 
+   * Intenta borrado físico, si falla por integridad, realiza Soft Delete.
+   * @param {number} id
+   */
   static async delete(id) {
+    const equipoId = parseInt(id);
+    const STATUS_ASIGNADO = 4;
+    const STATUS_ELIMINADO = 7; // Asumimos 7 si no existe lo buscamos, pero mejor buscamos dinámico o usar config.
+
+    // 1. Verificar estado actual
+    const current = await prisma.equipos.findUnique({ where: { id: equipoId } });
+    if (!current) return false;
+
+    if (current.id_status === STATUS_ASIGNADO) {
+      throw new Error('BUSINESS_RULE: No se puede eliminar un equipo que está actualmente ASIGNADO. Libérelo primero.');
+    }
+
     try {
+      // 2. Intentar Hard Delete
       const result = await prisma.equipos.delete({
-        where: { id: parseInt(id) }
+        where: { id: equipoId }
       });
       return !!result;
     } catch (error) {
       if (error.code === 'P2003') {
-        throw new Error('REFERENTIAL_INTEGRITY: No se puede eliminar el equipo porque tiene asignaciones asociadas.');
+        // 3. Fallback a Soft Delete si hay relaciones históricas (tickets, logs, asignaciones viejas)
+        // Buscar el estado 'BAJA', 'ELIMINADO' o 'INACTIVO'
+        const statusBaja = await prisma.status.findFirst({
+          where: {
+            nombre_status: { in: ['BAJA', 'ELIMINADO', 'INACTIVO', 'DADO DE BAJA'] }
+          }
+        });
+
+        if (!statusBaja) {
+          throw new Error('CONFIG_ERROR: No existe un estado de "BAJA" o "ELIMINADO" en el sistema para realizar soft delete.');
+        }
+
+        const softDelete = await prisma.equipos.update({
+          where: { id: equipoId },
+          data: {
+            id_status: statusBaja.id,
+            fecha_actualizacion: new Date()
+          }
+        });
+
+        return !!softDelete;
       }
       if (error.code === 'P2025') return false; // Not found
       throw error;
