@@ -60,7 +60,21 @@ const getComments = async (req, res) => {
 const addComment = async (req, res) => {
   const { id } = req.params;
   const userId = req.user?.userId;
+
+  // Buscar el ticket para notificaciones y validación extra
+  const ticket = await TicketService.findById(id);
+  if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
+  if (ticket.estatus === 'CERRADO') return res.status(400).json({ message: 'No se pueden agregar mensajes a un ticket cerrado' });
+
   const comment = await TicketService.addComment(id, userId, req.body);
+
+  // Si no es interno, notificar al usuario
+  if (!req.body.es_interno && ticket.email_reporta) {
+    const { notifyUserComment } = require('../services/ticketNotification.service');
+    notifyUserComment(ticket, req.body.contenido, ticket.email_reporta)
+      .catch(err => logger.error('[EMAIL] Notificación a usuario fallida:', err));
+  }
+
   res.status(201).json(comment);
 };
 
@@ -79,6 +93,12 @@ const uploadTicketAttachment = [
 
     if (!file) {
       return res.status(400).json({ message: 'No se ha subido ningún archivo' });
+    }
+
+    // Validación extra: Ticket no cerrado
+    const ticket = await TicketService.findById(id);
+    if (!ticket || ticket.estatus === 'CERRADO') {
+      return res.status(400).json({ message: 'No se pueden adjuntar archivos a un ticket cerrado' });
     }
 
     // La URL relativa debe coincidir con la forma en que Express sirve los archivos estáticos

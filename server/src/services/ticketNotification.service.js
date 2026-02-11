@@ -44,8 +44,10 @@ const createTransporter = () => {
  * URL base del frontend para construir links.
  */
 const getFrontendUrl = () => {
-  // Aseguramos que la URL termine sin slash para concatenar manualmente
-  const url = process.env.FRONTEND_URL || 'http://localhost:5173';
+  // Intentamos obtener la URL del frontend desde la API_URL si no existe FRONTEND_URL
+  // API_URL suele ser http://IP/soporte/api o http://IP/api
+  const apiUrl = process.env.API_URL || 'http://localhost:3000/api';
+  const url = process.env.FRONTEND_URL || apiUrl.replace(/\/api\/?$/, '');
   return url.replace(/\/$/, '');
 };
 

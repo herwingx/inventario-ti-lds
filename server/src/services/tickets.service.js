@@ -194,6 +194,11 @@ class TicketService {
   }
 
   static async addComment(ticketId, userId, data) {
+    const ticket = await prisma.tickets.findUnique({ where: { id: parseInt(ticketId) } });
+    if (!ticket || ticket.estatus === 'CERRADO') {
+      throw new Error('No se pueden agregar comentarios a un ticket cerrado');
+    }
+
     return await prisma.ticket_comentarios.create({
       data: {
         id_ticket: parseInt(ticketId),
@@ -205,6 +210,11 @@ class TicketService {
   }
 
   static async addAttachment(ticketId, userId, fileUrl, fileName) {
+    const ticket = await prisma.tickets.findUnique({ where: { id: parseInt(ticketId) } });
+    if (!ticket || ticket.estatus === 'CERRADO') {
+      throw new Error('No se pueden agregar archivos a un ticket cerrado');
+    }
+
     // Detectar tipo de archivo para el mensaje
     const isImage = fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
     const tipo = isImage ? 'IMAGEN' : 'ARCHIVO';
