@@ -57,11 +57,11 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await AuthService.login({ username, password })
 
-      token.value = response.token
-      user.value = response.user
+      token.value = response.data.token
+      user.value = response.data.user
 
-      localStorage.setItem('token', response.token)
-      localStorage.setItem('userData', JSON.stringify(response.user))
+      localStorage.setItem('token', response.data.token)
+      localStorage.setItem('userData', JSON.stringify(response.data.user))
 
       // Redirigir a la URL intentada o al home
       router.replace(returnUrl.value || '/home')

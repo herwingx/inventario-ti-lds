@@ -15,7 +15,7 @@ export default {
    */
   async getStats() {
     try {
-      const res = await apiClient.get('/dashboard/stats')
+      const res = await apiClient.get('/dashboard')
 
       // Mapeamos la respuesta del backend a la estructura que espera la vista
       // El backend devuelve: { stats: { equipos: { total, ... }, empleados, asignaciones_activas }, activity: { ... } }

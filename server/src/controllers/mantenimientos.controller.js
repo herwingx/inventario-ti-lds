@@ -89,9 +89,9 @@ const updateMantenimiento = asyncHandler(async (req, res) => {
     }
 
     logger.info(`Mantenimiento ID ${id} actualizado.`);
-    res.status(200).json({ 
+    res.status(200).json({
         status: 'success',
-        message: 'Mantenimiento actualizado exitosamente' 
+        message: 'Mantenimiento actualizado exitosamente'
     });
 });
 
@@ -111,16 +111,16 @@ const deleteMantenimiento = asyncHandler(async (req, res) => {
         }
 
         logger.info(`Mantenimiento ID ${id} eliminado.`);
-        res.status(200).json({ 
+        res.status(200).json({
             status: 'success',
-            message: 'Mantenimiento eliminado exitosamente' 
+            message: 'Mantenimiento eliminado exitosamente'
         });
     } catch (error) {
         if (error.code === 'P2003') { // Prisma foreign key constraint code
-             const conflictError = new Error('No se puede eliminar porque tiene registros vinculados (evidencias, auditoría).');
-             conflictError.statusCode = 409;
-             conflictError.isOperational = true;
-             throw conflictError;
+            const conflictError = new Error('No se puede eliminar porque tiene registros vinculados (evidencias, auditoría).');
+            conflictError.statusCode = 409;
+            conflictError.isOperational = true;
+            throw conflictError;
         }
         throw error;
     }
@@ -174,20 +174,20 @@ const addEvidencia = asyncHandler(async (req, res) => {
 
     const maintenance = await prisma.mantenimientos.findUnique({ where: { id: parseInt(id) } });
     if (!maintenance) {
-         const error = new Error(`Mantenimiento con ID ${id} no encontrado.`);
-         error.statusCode = 404;
-         error.isOperational = true;
-         throw error;
+        const error = new Error(`Mantenimiento con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
     }
 
     if (!req.file) {
-         const error = new Error('No se proporcionó ningún archivo.');
-         error.statusCode = 400;
-         error.isOperational = true;
-         throw error;
+        const error = new Error('No se proporcionó ningún archivo.');
+        error.statusCode = 400;
+        error.isOperational = true;
+        throw error;
     }
 
-    const urlArchivo = `/uploads/evidencias/${req.file.filename}`;
+    const urlArchivo = `/storage/evidencias/${req.file.filename}`;
 
     const newEvidencia = await prisma.mantenimiento_evidencias.create({
         data: {
@@ -218,7 +218,7 @@ const deleteEvidencia = asyncHandler(async (req, res) => {
     const fs = require('fs').promises;
 
     const evidencia = await prisma.mantenimiento_evidencias.findFirst({
-        where: { 
+        where: {
             id: parseInt(evidenciaId),
             id_mantenimiento: parseInt(id)
         }
@@ -236,13 +236,13 @@ const deleteEvidencia = asyncHandler(async (req, res) => {
         const filePath = path.join(__dirname, '../../public', evidencia.url_archivo); // Asumiendo que uploads está en public/uploads o mapped
         // Nota: En la configuración de express, uploads está en root/uploads pero servido en /uploads
         // Ajustar path.join(__dirname, '../../uploads', ...) si está fuera de src
-        
+
         // Mejor ajuste según estructura original:
         // server/uploads/evidencias/...
         // url_archivo: /uploads/evidencias/filename
         const relativePath = evidencia.url_archivo.replace(/^\//, ''); // Quitar slash inicial
         const absolutePath = path.join(process.cwd(), relativePath); // Usar CWD (server root)
-        
+
         await fs.unlink(absolutePath);
     } catch (fileError) {
         logger.warn(`[EVIDENCIAS] No se pudo eliminar archivo físico: ${fileError.message}`);
@@ -252,9 +252,9 @@ const deleteEvidencia = asyncHandler(async (req, res) => {
         where: { id: parseInt(evidenciaId) }
     });
 
-    res.json({ 
+    res.json({
         status: 'success',
-        message: 'Evidencia eliminada correctamente' 
+        message: 'Evidencia eliminada correctamente'
     });
 });
 

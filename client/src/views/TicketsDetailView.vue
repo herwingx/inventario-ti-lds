@@ -236,7 +236,7 @@ const getFullUrl = (path) => {
     cleanPath = `/storage${cleanPath}`
   }
   
-  const baseUrl = import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
+  const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')
   return `${baseUrl}${cleanPath}`
 }
 
