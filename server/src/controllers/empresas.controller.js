@@ -1,81 +1,123 @@
 /**
  * @module Controllers/Empresas
  * @description Controlador para la gestión de empresas.
+ * Refactorizado con asyncHandler y validación Zod.
  */
 const EmpresaService = require('../services/empresas.service');
 const { createEmpresaSchema, updateEmpresaSchema } = require('../schemas/empresa.schema');
 const logger = require('../utils/logger');
+const asyncHandler = require('../utils/asyncHandler');
 
-const getAllEmpresas = async (req, res) => {
-  const empresas = await EmpresaService.findAll();
-  res.status(200).json(empresas);
-};
+/**
+ * Obtiene todas las empresas.
+ * @route GET /api/empresas
+ */
+const getAllEmpresas = asyncHandler(async (req, res) => {
+    const empresas = await EmpresaService.findAll();
+    res.status(200).json(empresas);
+});
 
-const getEmpresaById = async (req, res) => {
-  const { id } = req.params;
-  const empresa = await EmpresaService.findById(id);
+/**
+ * Obtiene una empresa por ID.
+ * @route GET /api/empresas/:id
+ */
+const getEmpresaById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const empresa = await EmpresaService.findById(id);
 
-  if (!empresa) {
-    return res.status(404).json({ message: `Empresa con ID ${id} no encontrada.` });
-  }
+    if (!empresa) {
+        const error = new Error(`Empresa con ID ${id} no encontrada.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
 
-  res.status(200).json(empresa);
-};
+    res.status(200).json(empresa);
+});
 
-const createEmpresa = async (req, res) => {
-  const validation = createEmpresaSchema.parse({ body: req.body });
+/**
+ * Crea una nueva empresa.
+ * @route POST /api/empresas
+ */
+const createEmpresa = asyncHandler(async (req, res) => {
+    const validation = createEmpresaSchema.safeParse({ body: req.body });
 
-  try {
-    const newEmpresa = await EmpresaService.create(validation.body);
+    if (!validation.success) {
+        const error = new Error('Datos de empresa inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
+
+    const newEmpresa = await EmpresaService.create(validation.data.body);
     logger.info(`Empresa creada: ${newEmpresa.nombre} (ID: ${newEmpresa.id})`);
-    res.status(201).json(newEmpresa);
-  } catch (error) {
-    if (error.message.includes('DUPLICATE_ENTRY')) {
-      return res.status(409).json({ message: error.message });
+    
+    res.status(201).json({
+        status: 'success',
+        message: 'Empresa creada exitosamente',
+        data: newEmpresa
+    });
+});
+
+/**
+ * Actualiza una empresa existente.
+ * @route PUT /api/empresas/:id
+ */
+const updateEmpresa = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const validation = updateEmpresaSchema.safeParse({ params: { id }, body: req.body });
+
+    if (!validation.success) {
+        const error = new Error('Datos de actualización inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
     }
-    throw error;
-  }
-};
 
-const updateEmpresa = async (req, res) => {
-  const validation = updateEmpresaSchema.parse({ params: req.params, body: req.body });
+    const updated = await EmpresaService.update(id, validation.data.body);
 
-  try {
-    const updated = await EmpresaService.update(validation.params.id, validation.body);
     if (!updated) {
-      return res.status(404).json({ message: `Empresa con ID ${validation.params.id} no encontrada.` });
+        const error = new Error(`Empresa con ID ${id} no encontrada.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
     }
-    logger.info(`Empresa ID ${validation.params.id} actualizada.`);
-    res.status(200).json({ message: 'Empresa actualizada exitosamente' });
-  } catch (error) {
-    if (error.message.includes('DUPLICATE_ENTRY')) {
-      return res.status(409).json({ message: error.message });
-    }
-    throw error;
-  }
-};
 
-const deleteEmpresa = async (req, res) => {
-  const { id } = req.params;
-  try {
+    logger.info(`Empresa ID ${id} actualizada.`);
+    res.status(200).json({ 
+        status: 'success',
+        message: 'Empresa actualizada exitosamente' 
+    });
+});
+
+/**
+ * Elimina una empresa.
+ * @route DELETE /api/empresas/:id
+ */
+const deleteEmpresa = asyncHandler(async (req, res) => {
+    const { id } = req.params;
     const deleted = await EmpresaService.delete(id);
+    
     if (!deleted) {
-      return res.status(404).json({ message: `Empresa con ID ${id} no encontrada.` });
+        const error = new Error(`Empresa con ID ${id} no encontrada.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
     }
+
     logger.info(`Empresa ID ${id} eliminada.`);
-    res.status(200).json({ message: 'Empresa eliminada exitosamente' });
-  } catch (error) {
-    if (error.message.includes('REFERENTIAL_INTEGRITY')) {
-      return res.status(409).json({ message: error.message });
-    }
-    throw error;
-  }
-};
+    res.status(200).json({ 
+        status: 'success',
+        message: 'Empresa eliminada exitosamente' 
+    });
+});
 
 module.exports = {
-  getAllEmpresas,
-  getEmpresaById,
-  createEmpresa,
-  updateEmpresa,
-  deleteEmpresa
+    getAllEmpresas,
+    getEmpresaById,
+    createEmpresa,
+    updateEmpresa,
+    deleteEmpresa
 };

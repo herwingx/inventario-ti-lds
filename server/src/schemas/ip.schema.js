@@ -1,8 +1,12 @@
+/**
+ * @module Schemas/Ip
+ * @description Esquemas de validación Zod para la entidad 'DireccionIp'.
+ */
 const { z } = require('zod');
 
 const ipSchema = z.object({
   body: z.object({
-    direccion_ip: z.string().regex(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/, 'Formato IPv4 inválido'),
+    direccion_ip: z.string({ required_error: 'La dirección IP es obligatoria' }).ip({ version: 'v4', message: 'Formato IPv4 inválido' }),
     id_sucursal: z.number().int().optional().nullable(),
     comentario: z.string().trim().optional().nullable(),
     id_status: z.number().int().optional().default(1)
@@ -11,15 +15,15 @@ const ipSchema = z.object({
 
 const updateIpSchema = z.object({
   params: z.object({
-    id: z.string().regex(/^\d+$/, 'ID debe ser un número').transform(Number)
+    id: z.string().transform((val) => parseInt(val, 10)).refine((val) => !isNaN(val) && val > 0, {
+      message: 'El ID debe ser un número positivo',
+    })
   }),
   body: z.object({
-    direccion_ip: z.string().regex(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/, 'Formato IPv4 inválido').optional(),
+    direccion_ip: z.string().ip({ version: 'v4', message: 'Formato IPv4 inválido' }).optional(),
     id_sucursal: z.number().int().optional().nullable(),
     comentario: z.string().trim().optional().nullable(),
     id_status: z.number().int().optional()
-  }).refine(data => Object.keys(data).length > 0, {
-    message: 'Debe proporcionar al menos un campo para actualizar'
   })
 });
 

@@ -71,13 +71,23 @@ router.get('/:id', empleadosController.getEmpleadoById);
  *             type: object
  *             required: [nombres, apellidos]
  *             properties:
+ *               numero_empleado: { type: string }
  *               nombres: { type: string }
  *               apellidos: { type: string }
- *               email_personal: { type: string }
+ *               email_personal: { type: string, format: email }
+ *               telefono: { type: string }
+ *               puesto: { type: string }
+ *               fecha_nacimiento: { type: string, format: date }
+ *               fecha_ingreso: { type: string, format: date }
  *               id_empresa: { type: integer }
+ *               id_sucursal: { type: integer }
+ *               id_area: { type: integer }
+ *               asignar_id_correo: { type: integer, description: "ID de una cuenta de correo del sistema para asignar" }
  *     responses:
  *       201:
  *         description: Empleado creado.
+ *       409:
+ *         description: Empleado duplicado (email o número).
  */
 router.post('/', empleadosController.createEmpleado);
 
@@ -101,9 +111,25 @@ router.post('/', empleadosController.createEmpleado);
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               numero_empleado: { type: string }
+ *               nombres: { type: string }
+ *               apellidos: { type: string }
+ *               email_personal: { type: string, format: email }
+ *               telefono: { type: string }
+ *               puesto: { type: string }
+ *               fecha_nacimiento: { type: string, format: date }
+ *               fecha_ingreso: { type: string, format: date }
+ *               id_empresa: { type: integer }
+ *               id_sucursal: { type: integer }
+ *               id_area: { type: integer }
+ *               asignar_id_correo: { type: integer }
+ *               id_status: { type: integer }
  *     responses:
  *       200:
  *         description: Empleado actualizado.
+ *       404:
+ *         description: Empleado no encontrado.
  */
 router.put('/:id', empleadosController.updateEmpleado);
 
@@ -124,6 +150,8 @@ router.put('/:id', empleadosController.updateEmpleado);
  *     responses:
  *       200:
  *         description: Empleado dado de baja.
+ *       404:
+ *         description: Empleado no encontrado.
  */
 router.delete('/:id', empleadosController.deleteEmpleado);
 

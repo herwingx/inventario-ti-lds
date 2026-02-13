@@ -1,40 +1,49 @@
+/**
+ * @module Schemas/Asignacion
+ * @description Esquemas de validación Zod para la entidad 'Asignacion'.
+ */
 const { z } = require('zod');
+
+// Regex para validar formato fecha YYYY-MM-DD
+const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+// Regex para fecha con hora opcional
+const dateTimeRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
 
 const createAsignacionSchema = z.object({
   body: z.object({
-    id_equipo: z.number().int(),
-    id_empleado: z.number().int().optional().nullable(),
-    id_sucursal_asignado: z.number().int().optional().nullable(),
-    id_area_asignado: z.number().int().optional().nullable(),
-    id_equipo_padre: z.number().int().optional().nullable(),
-    id_ip: z.number().int().optional().nullable(),
-    fecha_asignacion: z.string().regex(/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/, 'Formato YYYY-MM-DD [HH:MM:SS]'),
+    id_equipo: z.number({ required_error: 'El ID del equipo es obligatorio' }).int().positive(),
+    id_empleado: z.number().int().positive().optional().nullable(),
+    id_sucursal_asignado: z.number().int().positive().optional().nullable(),
+    id_area_asignado: z.number().int().positive().optional().nullable(),
+    id_equipo_padre: z.number().int().positive().optional().nullable(),
+    id_ip: z.number().int().positive().optional().nullable(),
+    fecha_asignacion: z.string().regex(dateTimeRegex, 'Formato inválido. Use YYYY-MM-DD [HH:MM:SS]').optional(),
     observacion: z.string().trim().optional().nullable(),
     id_status_asignacion: z.number().int().optional().default(1),
-    componentes: z.array(z.number().int()).optional() // Para creación con componentes
+    componentes: z.array(z.number().int().positive()).optional()
   }).refine(data => data.id_empleado || data.id_sucursal_asignado || data.id_area_asignado, {
-    message: 'Una asignación activa debe estar vinculada a un empleado, sucursal o área.'
+    message: 'Una asignación debe estar vinculada a un empleado, sucursal o área.'
   })
 });
 
 const updateAsignacionSchema = z.object({
   params: z.object({
-    id: z.string().regex(/^\d+$/, 'ID debe ser un número').transform(Number)
+    id: z.string().transform((val) => parseInt(val, 10)).refine((val) => !isNaN(val) && val > 0, {
+      message: 'El ID debe ser un número positivo',
+    })
   }),
   body: z.object({
-    id_equipo: z.number().int().optional(),
-    id_empleado: z.number().int().optional().nullable(),
-    id_sucursal_asignado: z.number().int().optional().nullable(),
-    id_area_asignado: z.number().int().optional().nullable(),
-    id_equipo_padre: z.number().int().optional().nullable(),
-    id_ip: z.number().int().optional().nullable(),
-    fecha_asignacion: z.string().optional(),
-    fecha_fin_asignacion: z.string().optional().nullable(),
+    id_equipo: z.number().int().positive().optional(),
+    id_empleado: z.number().int().positive().optional().nullable(),
+    id_sucursal_asignado: z.number().int().positive().optional().nullable(),
+    id_area_asignado: z.number().int().positive().optional().nullable(),
+    id_equipo_padre: z.number().int().positive().optional().nullable(),
+    id_ip: z.number().int().positive().optional().nullable(),
+    fecha_asignacion: z.string().regex(dateTimeRegex).optional(),
+    fecha_fin_asignacion: z.string().regex(dateTimeRegex).optional().nullable(),
     observacion: z.string().trim().optional().nullable(),
     id_status_asignacion: z.number().int().optional(),
-    componentes: z.array(z.number().int()).optional() // Para actualización de componentes
-  }).refine(data => Object.keys(data).length > 0, {
-    message: 'Debe proporcionar al menos un campo para actualizar'
+    componentes: z.array(z.number().int().positive()).optional()
   })
 });
 

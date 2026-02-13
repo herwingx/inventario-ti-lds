@@ -1,20 +1,16 @@
 /**
  * @module Routes/Empresas
- * @description Define las rutas para la gestión de las empresas del ecosistema.
+ * @description Define las rutas para la gestión de empresas (Entidades legales).
  */
-// ! Rutas para la entidad Empresas
-
 const express = require('express');
-const router = express.Router(); // * Instancia del enrutador de Express
-
-// * Importo el controlador de empresas
+const router = express.Router();
 const empresasController = require('../controllers/empresas.controller');
 
 /**
  * @openapi
  * tags:
- *   name: Estructura Organizacional
- *   description: Gestión de Empresas, Sucursales y Áreas
+ *   name: Empresas
+ *   description: Catálogo de razones sociales / entidades legales
  */
 
 /**
@@ -22,7 +18,7 @@ const empresasController = require('../controllers/empresas.controller');
  * /api/empresas:
  *   get:
  *     summary: Listar todas las empresas
- *     tags: [Estructura Organizacional]
+ *     tags: [Empresas]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -36,7 +32,7 @@ router.get('/', empresasController.getAllEmpresas);
  * /api/empresas/{id}:
  *   get:
  *     summary: Obtener empresa por ID
- *     tags: [Estructura Organizacional]
+ *     tags: [Empresas]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -47,6 +43,8 @@ router.get('/', empresasController.getAllEmpresas);
  *     responses:
  *       200:
  *         description: Datos de la empresa.
+ *       404:
+ *         description: Empresa no encontrada.
  */
 router.get('/:id', empresasController.getEmpresaById);
 
@@ -54,8 +52,8 @@ router.get('/:id', empresasController.getEmpresaById);
  * @openapi
  * /api/empresas:
  *   post:
- *     summary: Crear una nueva empresa
- *     tags: [Estructura Organizacional]
+ *     summary: Registrar nueva empresa
+ *     tags: [Empresas]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -66,10 +64,12 @@ router.get('/:id', empresasController.getEmpresaById);
  *             type: object
  *             required: [nombre]
  *             properties:
- *               nombre: { type: string, example: "Corporativo LDS" }
+ *               nombre: { type: string }
  *     responses:
  *       201:
- *         description: Empresa creada.
+ *         description: Empresa registrada.
+ *       409:
+ *         description: Nombre de empresa duplicado.
  */
 router.post('/', empresasController.createEmpresa);
 
@@ -77,8 +77,8 @@ router.post('/', empresasController.createEmpresa);
  * @openapi
  * /api/empresas/{id}:
  *   put:
- *     summary: Actualizar una empresa
- *     tags: [Estructura Organizacional]
+ *     summary: Actualizar empresa
+ *     tags: [Empresas]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -87,13 +87,13 @@ router.post('/', empresasController.createEmpresa);
  *         required: true
  *         schema: { type: integer }
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
  *             properties:
  *               nombre: { type: string }
+ *               id_status: { type: integer }
  *     responses:
  *       200:
  *         description: Empresa actualizada.
@@ -104,8 +104,8 @@ router.put('/:id', empresasController.updateEmpresa);
  * @openapi
  * /api/empresas/{id}:
  *   delete:
- *     summary: Eliminar una empresa
- *     tags: [Estructura Organizacional]
+ *     summary: Eliminar empresa
+ *     tags: [Empresas]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -116,6 +116,8 @@ router.put('/:id', empresasController.updateEmpresa);
  *     responses:
  *       200:
  *         description: Empresa eliminada.
+ *       409:
+ *         description: No se puede eliminar (tiene sucursales/empleados).
  */
 router.delete('/:id', empresasController.deleteEmpresa);
 

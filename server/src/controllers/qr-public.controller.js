@@ -1,124 +1,222 @@
 /**
  * @module Controllers/QrPublic
  * @description Controlador para acceso público vía QR.
+ * Refactorizado con asyncHandler y validación Zod.
  */
 const QrPublicService = require('../services/qr-public.service');
-const { notifyNewTicket, notifyTicketCreated, notifyAdminComment } = require('../services/ticketNotification.service');
+// Importar servicios de notificación opcionalmente para no romper si fallan
+let TicketNotificationService;
+try {
+  TicketNotificationService = require('../services/ticketNotification.service');
+} catch (e) {
+  // Fallback si no existe el servicio
+}
+
 const logger = require('../utils/logger');
-const { uploadTickets, handleMulterError } = require('../config/upload.config'); // Importar Multer y su manejador de errores
+const { uploadTickets, handleMulterError } = require('../config/upload.config');
+const asyncHandler = require('../utils/asyncHandler');
+const { publicTicketSchema, publicCommentSchema } = require('../schemas/ticket.schema');
 
-const getEquipoByQrToken = async (req, res) => {
-  const result = await QrPublicService.getEquipoByToken(req.params.token);
-  if (!result) return res.status(404).json({ message: 'Equipo no encontrado' });
-  res.status(200).json(result);
-};
-
-const createPublicTicket = async (req, res) => {
-  const result = await QrPublicService.createPublicTicket(req.params.token, req.body);
-  if (!result) return res.status(404).json({ message: 'Equipo no encontrado' });
-
-  // Notificar por email (Se envuelven en try/catch silencioso para no bloquear la respuesta)
-  try {
-    const { notifyNewTicket, notifyTicketCreated } = require('../services/ticketNotification.service');
-    notifyNewTicket(result, result.equipo_info).catch(err => logger.error('[EMAIL] Notificación admin fallida:', err));
-    if (req.body.email_reporta) {
-      notifyTicketCreated(result, result.equipo_info, req.body.email_reporta, req.body.nombre_reporta)
-        .catch(err => logger.error('[EMAIL] Confirmación usuario fallida:', err));
+/**
+ * Obtiene información básica del equipo por token QR.
+ * @route GET /api/q/equipo/:token
+ */
+const getEquipoByQrToken = asyncHandler(async (req, res) => {
+    const { token } = req.params;
+    const result = await QrPublicService.getEquipoByToken(token);
+    
+    if (!result) {
+        const error = new Error('Equipo no encontrado o token inválido.');
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
     }
-  } catch (emailError) {
-    logger.warn('[SOPORTE] Servicio de email no disponible, ticket creado sin notificaciones.');
-  }
 
-  res.status(201).json({
-    success: true,
-    ticket_id: result.id,
-    token_seguimiento: result.token_acceso,
-    message: 'Tu reporte ha sido registrado exitosamente.',
-    url_seguimiento: `/q/ticket/${result.token_acceso}`
-  });
-};
+    res.status(200).json(result);
+});
 
-const getTicketStatus = async (req, res) => {
-  const status = await QrPublicService.getTicketStatus(req.params.ticketToken);
-  if (!status) return res.status(404).json({ message: 'Ticket no encontrado' });
-  res.status(200).json(status);
-};
+/**
+ * Crea un ticket público desde el escaneo QR.
+ * @route POST /api/q/ticket/:token
+ */
+const createPublicTicket = asyncHandler(async (req, res) => {
+    const { token } = req.params;
+    
+    // Validar input
+    const validation = publicTicketSchema.safeParse({ body: req.body });
+    if (!validation.success) {
+        const error = new Error('Datos del reporte inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
 
-const addPublicComment = async (req, res) => {
-  const { contenido, nombre } = req.body;
-  if (!contenido) return res.status(400).json({ message: 'El contenido es requerido' });
+    const result = await QrPublicService.createPublicTicket(token, validation.data.body);
+    
+    if (!result) {
+        const error = new Error('Equipo no encontrado o token inválido.');
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
 
-  const comment = await QrPublicService.addPublicComment(req.params.ticketToken, req.body);
-  if (!comment) return res.status(404).json({ message: 'Ticket no encontrado o ya finalizado' });
+    // Notificaciones asíncronas (Fire and Forget)
+    if (TicketNotificationService) {
+        Promise.allSettled([
+            TicketNotificationService.notifyNewTicket(result, result.equipo_info),
+            req.body.email_reporta ? TicketNotificationService.notifyTicketCreated(result, result.equipo_info, req.body.email_reporta, req.body.nombre_reporta) : Promise.resolve()
+        ]).catch(err => logger.warn(`[EMAIL] Error en notificaciones: ${err}`));
+    }
 
-  // Notificar al admin (opcional pero recomendado en el original)
-  // Para simplificar, obtenemos el ticket de nuevo si es necesario
-  const status = await QrPublicService.getTicketStatus(req.params.ticketToken);
-  if (status) {
-    notifyAdminComment(status.ticket, contenido, nombre || 'Usuario')
-      .catch(err => logger.error('[EMAIL] Notificación comentario fallida:', err));
-  }
+    res.status(201).json({
+        success: true,
+        ticket_id: result.id,
+        token_seguimiento: result.token_acceso,
+        message: 'Tu reporte ha sido registrado exitosamente.',
+        url_seguimiento: `/q/ticket/${result.token_acceso}`
+    });
+});
 
-  res.status(201).json({ success: true, message: 'Comentario agregado exitosamente' });
-};
+/**
+ * Obtiene el estado de un ticket público.
+ * @route GET /api/q/status/:ticketToken
+ */
+const getTicketStatus = asyncHandler(async (req, res) => {
+    const { ticketToken } = req.params;
+    const status = await QrPublicService.getTicketStatus(ticketToken);
+    
+    if (!status) {
+        const error = new Error('Ticket no encontrado.');
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
 
-const uploadTicketEvidence = async (req, res) => { // Asegurado que es async
-  if (!req.file) return res.status(400).json({ message: 'No se recibió archivo' });
+    res.status(200).json(status);
+});
 
-  // Necesitamos el ticket ID para construir la URL correctamente
-  const ticket = await QrPublicService.getTicketByTokenAcceso(req.params.ticketToken);
-  if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
-    return res.status(404).json({ message: 'Ticket no encontrado o finalizado para subir evidencia.' });
-  }
+/**
+ * Agrega un comentario público a un ticket.
+ * @route POST /api/q/comment/:ticketToken
+ */
+const addPublicComment = asyncHandler(async (req, res) => {
+    const { ticketToken } = req.params;
+    
+    const validation = publicCommentSchema.safeParse({ body: req.body });
+    if (!validation.success) {
+        const error = new Error('Comentario inválido');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
 
-  // La URL debe coincidir con la nueva estructura de Multer (si usa ticketId)
-  const url = `/storage/tickets/${ticket.id}/${req.file.filename}`; // CAMBIO AQUÍ: '/storage' en lugar de '/uploads'
-  const updated = await QrPublicService.uploadEvidence(req.params.ticketToken, url);
-  if (!updated) return res.status(404).json({ message: 'Ticket no encontrado o cerrado' });
+    const comment = await QrPublicService.addPublicComment(ticketToken, validation.data.body);
+    
+    if (!comment) {
+        const error = new Error('Ticket no encontrado o ya finalizado.');
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
 
-  res.status(200).json({ success: true, url, message: 'Evidencia subida' });
-};
+    // Notificar admin
+    if (TicketNotificationService) {
+        // Recuperar info del ticket para notificación
+        QrPublicService.getTicketStatus(ticketToken).then(status => {
+            if (status) {
+                TicketNotificationService.notifyAdminComment(status.ticket, validation.data.body.contenido, validation.data.body.nombre)
+                    .catch(err => logger.warn(`[EMAIL] Error notif comentario: ${err}`));
+            }
+        });
+    }
 
-// Nuevo controlador para manejar la subida de adjuntos públicos
-const uploadPublicAttachmentController = [
-  async (req, res, next) => {
-    // Buscar el ticket para obtener su ID real
+    res.status(201).json({ 
+        success: true, 
+        message: 'Comentario agregado exitosamente' 
+    });
+});
+
+/**
+ * Sube una evidencia a un ticket público (Legacy endpoint).
+ * @deprecated Use uploadPublicAttachment instead
+ */
+const uploadTicketEvidence = asyncHandler(async (req, res) => {
+    if (!req.file) {
+        const error = new Error('No se recibió archivo.');
+        error.statusCode = 400;
+        error.isOperational = true;
+        throw error;
+    }
+
     const ticket = await QrPublicService.getTicketByTokenAcceso(req.params.ticketToken);
     if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
-      return res.status(404).json({ message: 'Ticket no encontrado o ya finalizado' });
-    }
-    req.ticketId = ticket.id; // Asignar el ID del ticket para Multer
-    req.ticketObj = ticket; // También pasamos el objeto ticket completo para notificaciones si es necesario
-    next();
-  },
-  uploadTickets.single('file'), // 'file' es el nombre del campo en el formulario
-  handleMulterError, // Manejador de errores de Multer
-  async (req, res) => {
-    const { ticketToken } = req.params;
-    const { nombre } = req.body;
-    const file = req.file;
-
-    if (!file) {
-      return res.status(400).json({ message: 'No se ha subido ningún archivo' });
+        const error = new Error('Ticket no encontrado o finalizado.');
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
     }
 
-    // La URL relativa debe coincidir con la forma en que Express sirve los archivos estáticos
-    // y cómo Multer los guarda.
-    // Multer los guarda en /storage/tickets/ID_TICKET/nombre_generado.ext
-    const fileUrl = `/storage/tickets/${req.ticketId}/${file.filename}`; // CAMBIO AQUÍ: '/storage' en lugar de '/uploads'
+    const url = `/storage/tickets/${ticket.id}/${req.file.filename}`;
+    const updated = await QrPublicService.uploadEvidence(req.params.ticketToken, url);
+    
+    if (!updated) {
+         const error = new Error('No se pudo actualizar el ticket con la evidencia.');
+         error.statusCode = 500;
+         error.isOperational = true;
+         throw error;
+    }
 
-    await QrPublicService.addPublicAttachment(ticketToken, fileUrl, file.originalname, nombre);
+    res.status(200).json({ success: true, url, message: 'Evidencia subida' });
+});
 
-    res.status(201).json({ success: true, url: fileUrl, message: 'Archivo subido' });
-  }
+/**
+ * Controlador Multi-step para subida de adjuntos públicos.
+ * No usa asyncHandler directamente porque Multer es un middleware intermedio.
+ */
+const uploadPublicAttachment = [
+    asyncHandler(async (req, res, next) => {
+        const ticket = await QrPublicService.getTicketByTokenAcceso(req.params.ticketToken);
+        if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
+            const error = new Error('Ticket no encontrado o ya finalizado');
+            error.statusCode = 404;
+            error.isOperational = true;
+            throw error;
+        }
+        req.ticketId = ticket.id;
+        next();
+    }),
+    uploadTickets.single('file'),
+    handleMulterError,
+    asyncHandler(async (req, res) => {
+        const { ticketToken } = req.params;
+        const { nombre } = req.body;
+        const file = req.file;
+
+        if (!file) {
+            const error = new Error('No se ha subido ningún archivo');
+            error.statusCode = 400;
+            error.isOperational = true;
+            throw error;
+        }
+
+        const fileUrl = `/storage/tickets/${req.ticketId}/${file.filename}`;
+        await QrPublicService.addPublicAttachment(ticketToken, fileUrl, file.originalname, nombre);
+
+        res.status(201).json({ 
+            success: true, 
+            url: fileUrl, 
+            message: 'Archivo subido' 
+        });
+    })
 ];
 
-
 module.exports = {
-  getEquipoByQrToken,
-  createPublicTicket,
-  getTicketStatus,
-  addPublicComment,
-  uploadTicketEvidence,
-  uploadPublicAttachment: uploadPublicAttachmentController // Exportar el nuevo controlador
+    getEquipoByQrToken,
+    createPublicTicket,
+    getTicketStatus,
+    addPublicComment,
+    uploadTicketEvidence,
+    uploadPublicAttachment
 };

@@ -1,85 +1,133 @@
 /**
  * @module Controllers/UsuariosSistema
  * @description Controlador para la gestión de usuarios del sistema.
+ * Implementa seguridad reforzada y manejo de errores centralizado.
  */
 const UsuarioService = require('../services/usuarios.service');
 const { createUsuarioSchema, updateUsuarioSchema } = require('../schemas/usuario.schema');
 const logger = require('../utils/logger');
+const asyncHandler = require('../utils/asyncHandler');
 
-const getAllUsuariosSistema = async (req, res) => {
-  const usuarios = await UsuarioService.findAll();
-  res.status(200).json(usuarios);
-};
+/**
+ * Obtiene la lista de todos los usuarios del sistema.
+ * @route GET /api/usuarios-sistema
+ */
+const getAllUsuariosSistema = asyncHandler(async (req, res) => {
+    const usuarios = await UsuarioService.findAll();
+    // Sanitizar respuesta: no enviar passwords ni hashes por defecto
+    const sanitizedUsuarios = usuarios.map(u => {
+        const { password_hash, ...userWithoutPass } = u;
+        return userWithoutPass;
+    });
+    res.status(200).json(sanitizedUsuarios);
+});
 
-const getUsuarioSistemaById = async (req, res) => {
-  const { id } = req.params;
-  const usuario = await UsuarioService.findById(id);
+/**
+ * Obtiene un usuario por ID.
+ * @route GET /api/usuarios-sistema/:id
+ */
+const getUsuarioSistemaById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const usuario = await UsuarioService.findById(id);
 
-  if (!usuario) {
-    return res.status(404).json({ message: `Usuario con ID ${id} no encontrado.` });
-  }
+    if (!usuario) {
+        const error = new Error(`Usuario con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
 
-  res.status(200).json(usuario);
-};
+    // Sanitizar
+    const { password_hash, ...userWithoutPass } = usuario;
+    res.status(200).json(userWithoutPass);
+});
 
-const createUsuarioSistema = async (req, res) => {
-  const validation = createUsuarioSchema.parse({ body: req.body });
+/**
+ * Crea un nuevo usuario de sistema.
+ * @route POST /api/usuarios-sistema
+ */
+const createUsuarioSistema = asyncHandler(async (req, res) => {
+    const validation = createUsuarioSchema.safeParse({ body: req.body });
 
-  try {
-    const newUser = await UsuarioService.create(validation.body);
+    if (!validation.success) {
+        const error = new Error('Datos de usuario inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
+
+    const newUser = await UsuarioService.create(validation.data.body);
+    
     logger.info(`Usuario creado: ${newUser.username} (ID: ${newUser.id})`);
     res.status(201).json({
-      message: 'Usuario creado exitosamente',
-      id: newUser.id,
-      username: newUser.username
+        status: 'success',
+        message: 'Usuario creado exitosamente',
+        data: { 
+            id: newUser.id,
+            username: newUser.username 
+        }
     });
-  } catch (error) {
-    if (error.message.includes('DUPLICATE_ENTRY')) {
-      return res.status(409).json({ message: error.message });
+});
+
+/**
+ * Actualiza un usuario existente.
+ * @route PUT /api/usuarios-sistema/:id
+ */
+const updateUsuarioSistema = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const validation = updateUsuarioSchema.safeParse({ params: { id }, body: req.body });
+
+    if (!validation.success) {
+        const error = new Error('Datos de actualización inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
     }
-    throw error;
-  }
-};
 
-const updateUsuarioSistema = async (req, res) => {
-  const validation = updateUsuarioSchema.parse({ params: req.params, body: req.body });
-
-  try {
-    const updated = await UsuarioService.update(validation.params.id, validation.body);
+    const updated = await UsuarioService.update(id, validation.data.body);
+    
     if (!updated) {
-      return res.status(404).json({ message: `Usuario con ID ${validation.params.id} no encontrado.` });
+        const error = new Error(`Usuario con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
     }
-    logger.info(`Usuario ID ${validation.params.id} actualizado.`);
-    res.status(200).json({ message: 'Usuario actualizado exitosamente' });
-  } catch (error) {
-    if (error.message.includes('DUPLICATE_ENTRY')) {
-      return res.status(409).json({ message: error.message });
-    }
-    throw error;
-  }
-};
 
-const deleteUsuarioSistema = async (req, res) => {
-  const { id } = req.params;
-  try {
+    logger.info(`Usuario ID ${id} actualizado.`);
+    res.status(200).json({ 
+        status: 'success',
+        message: 'Usuario actualizado exitosamente' 
+    });
+});
+
+/**
+ * Elimina (borrado lógico) un usuario.
+ * @route DELETE /api/usuarios-sistema/:id
+ */
+const deleteUsuarioSistema = asyncHandler(async (req, res) => {
+    const { id } = req.params;
     const deleted = await UsuarioService.delete(id);
+    
     if (!deleted) {
-      return res.status(404).json({ message: `Usuario con ID ${id} no encontrado.` });
+        const error = new Error(`Usuario con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
     }
+
     logger.info(`Usuario ID ${id} eliminado.`);
-    res.status(200).json({ message: 'Usuario eliminado exitosamente' });
-  } catch (error) {
-    if (error.message.includes('REFERENTIAL_INTEGRITY')) {
-      return res.status(409).json({ message: error.message });
-    }
-    throw error;
-  }
-};
+    res.status(200).json({ 
+        status: 'success',
+        message: 'Usuario eliminado exitosamente' 
+    });
+});
 
 module.exports = {
-  getAllUsuariosSistema,
-  getUsuarioSistemaById,
-  createUsuarioSistema,
-  updateUsuarioSistema,
-  deleteUsuarioSistema
+    getAllUsuariosSistema,
+    getUsuarioSistemaById,
+    createUsuarioSistema,
+    updateUsuarioSistema,
+    deleteUsuarioSistema
 };

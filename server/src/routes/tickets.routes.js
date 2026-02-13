@@ -23,7 +23,13 @@ const ticketsController = require('../controllers/tickets.controller');
  *     parameters:
  *       - in: query
  *         name: estatus
+ *         schema: { type: string, enum: [ABIERTO, EN_PROGRESO, PENDIENTE, RESUELTO, CERRADO] }
+ *       - in: query
+ *         name: prioridad
  *         schema: { type: string }
+ *       - in: query
+ *         name: asignado_a
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Lista de tickets.
@@ -60,6 +66,8 @@ router.get('/tecnicos', ticketsController.getTecnicos);
  *     responses:
  *       200:
  *         description: Datos del ticket y comentarios.
+ *       404:
+ *         description: Ticket no encontrado.
  */
 router.get('/:id', ticketsController.getTicketById);
 
@@ -77,14 +85,18 @@ router.get('/:id', ticketsController.getTicketById);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [id_equipo, tipo_falla, descripcion]
+ *             required: [titulo, descripcion]
  *             properties:
- *               id_equipo: { type: integer }
- *               tipo_falla: { type: string }
+ *               titulo: { type: string }
  *               descripcion: { type: string }
+ *               prioridad: { type: string, enum: [BAJA, MEDIA, ALTA, URGENTE, CRITICA], default: MEDIA }
+ *               id_equipo_relacionado: { type: integer }
+ *               id_sucursal: { type: integer }
  *     responses:
  *       201:
  *         description: Ticket creado.
+ *       400:
+ *         description: Datos inválidos.
  */
 router.post('/', ticketsController.createTicket);
 
@@ -96,9 +108,27 @@ router.post('/', ticketsController.createTicket);
  *     tags: [Soporte (Helpdesk)]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               estatus: { type: string, enum: [ABIERTO, EN_PROGRESO, PENDIENTE, RESUELTO, CERRADO, CANCELADO] }
+ *               prioridad: { type: string, enum: [BAJA, MEDIA, ALTA, URGENTE, CRITICA] }
+ *               id_asignado_a: { type: integer }
+ *               comentarios_tecnicos: { type: string }
  *     responses:
  *       200:
  *         description: Ticket actualizado.
+ *       404:
+ *         description: Ticket no encontrado.
  */
 router.put('/:id', ticketsController.updateTicket);
 
@@ -110,6 +140,14 @@ router.put('/:id', ticketsController.updateTicket);
  *     tags: [Soporte (Helpdesk)]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: incluir_internos
+ *         schema: { type: boolean }
  *     responses:
  *       200:
  *         description: Historial de comentarios.
@@ -124,6 +162,21 @@ router.get('/:id/comments', ticketsController.getComments);
  *     tags: [Soporte (Helpdesk)]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [contenido]
+ *             properties:
+ *               contenido: { type: string }
+ *               es_interno: { type: boolean, default: false }
  *     responses:
  *       201:
  *         description: Comentario agregado.
@@ -138,6 +191,11 @@ router.post('/:id/comments', ticketsController.addComment);
  *     tags: [Soporte (Helpdesk)]
  *     consumes:
  *       - multipart/form-data
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
  *     requestBody:
  *       content:
  *         multipart/form-data:
@@ -150,6 +208,8 @@ router.post('/:id/comments', ticketsController.addComment);
  *     responses:
  *       201:
  *         description: Archivo subido.
+ *       400:
+ *         description: Ticket cerrado o archivo inválido.
  */
 router.post('/:id/attachments', ticketsController.uploadAttachment);
 

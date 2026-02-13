@@ -1,21 +1,16 @@
 /**
- * @module Routes/DireccionesIP
- * @description Define las rutas para la gestión del inventario de direcciones IP.
+ * @module Routes/DireccionesIp
+ * @description Rutas para la gestión de direcciones IP.
  */
-// src/routes/direccionesIp.routes.js
-// Define las rutas HTTP para la entidad 'direcciones_ip'.
-
 const express = require('express');
-const router = express.Router(); // * Instancia del enrutador de Express
-
-// * Importo las funciones controladoras de direcciones IP
+const router = express.Router();
 const direccionesIpController = require('../controllers/direcciones_ip.controller');
 
 /**
  * @openapi
  * tags:
- *   name: Infraestructura
- *   description: Gestión de red, IPs y recursos tecnológicos
+ *   name: Direcciones IP
+ *   description: Gestión de inventario de red (IPv4)
  */
 
 /**
@@ -23,14 +18,17 @@ const direccionesIpController = require('../controllers/direcciones_ip.controlle
  * /api/direcciones-ip:
  *   get:
  *     summary: Listar direcciones IP
- *     tags: [Infraestructura]
+ *     tags: [Direcciones IP]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: segmento
+ *         name: id_sucursal
  *         schema: { type: integer }
- *         description: Filtrar por segmento (0-15)
+ *       - in: query
+ *         name: estado
+ *         description: Filtrar por estado (LIBRE, ASIGNADA)
+ *         schema: { type: string }
  *     responses:
  *       200:
  *         description: Lista de IPs.
@@ -39,24 +37,24 @@ router.get('/', direccionesIpController.getAllDireccionesIp);
 
 /**
  * @openapi
- * /api/direcciones-ip/segmentos:
+ * /api/direcciones-ip/resumen:
  *   get:
- *     summary: Resumen de IPs por segmento
- *     tags: [Infraestructura]
+ *     summary: Resumen de uso por segmento
+ *     tags: [Direcciones IP]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Resumen estadístico de segmentos.
+ *         description: Estadísticas de uso de red.
  */
-router.get('/segmentos', direccionesIpController.getSegmentosResumen);
+router.get('/resumen', direccionesIpController.getSegmentosResumen);
 
 /**
  * @openapi
  * /api/direcciones-ip/{id}:
  *   get:
  *     summary: Obtener IP por ID
- *     tags: [Infraestructura]
+ *     tags: [Direcciones IP]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -66,7 +64,7 @@ router.get('/segmentos', direccionesIpController.getSegmentosResumen);
  *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Datos de la IP.
+ *         description: Detalle de la IP.
  */
 router.get('/:id', direccionesIpController.getDireccionIpById);
 
@@ -74,8 +72,8 @@ router.get('/:id', direccionesIpController.getDireccionIpById);
  * @openapi
  * /api/direcciones-ip:
  *   post:
- *     summary: Registrar una nueva IP
- *     tags: [Infraestructura]
+ *     summary: Registrar nueva IP
+ *     tags: [Direcciones IP]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -86,11 +84,14 @@ router.get('/:id', direccionesIpController.getDireccionIpById);
  *             type: object
  *             required: [direccion_ip]
  *             properties:
- *               direccion_ip: { type: string, example: "10.10.1.50" }
+ *               direccion_ip: { type: string, example: "192.168.1.10" }
  *               id_sucursal: { type: integer }
+ *               comentario: { type: string }
  *     responses:
  *       201:
- *         description: IP creada.
+ *         description: IP registrada.
+ *       409:
+ *         description: IP duplicada.
  */
 router.post('/', direccionesIpController.createDireccionIp);
 
@@ -98,10 +99,25 @@ router.post('/', direccionesIpController.createDireccionIp);
  * @openapi
  * /api/direcciones-ip/{id}:
  *   put:
- *     summary: Actualizar una IP
- *     tags: [Infraestructura]
+ *     summary: Actualizar IP
+ *     tags: [Direcciones IP]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               direccion_ip: { type: string }
+ *               id_sucursal: { type: integer }
+ *               comentario: { type: string }
+ *               id_status: { type: integer }
  *     responses:
  *       200:
  *         description: IP actualizada.
@@ -112,10 +128,15 @@ router.put('/:id', direccionesIpController.updateDireccionIp);
  * @openapi
  * /api/direcciones-ip/{id}:
  *   delete:
- *     summary: Eliminar una IP
- *     tags: [Infraestructura]
+ *     summary: Eliminar IP
+ *     tags: [Direcciones IP]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: IP eliminada.

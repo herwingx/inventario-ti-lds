@@ -1,61 +1,123 @@
 /**
  * @module Controllers/TiposEquipo
  * @description Controlador para la gestión de tipos de equipo.
+ * Refactorizado con asyncHandler y validación Zod.
  */
 const TipoEquipoService = require('../services/tipos_equipo.service');
 const { tipoEquipoSchema, updateTipoEquipoSchema } = require('../schemas/tipo_equipo.schema');
+const logger = require('../utils/logger');
+const asyncHandler = require('../utils/asyncHandler');
 
-const getAllTiposEquipo = async (req, res) => {
-  const tipos = await TipoEquipoService.findAll();
-  res.status(200).json(tipos);
-};
+/**
+ * Obtiene todos los tipos de equipo.
+ * @route GET /api/tipos-equipo
+ */
+const getAllTiposEquipo = asyncHandler(async (req, res) => {
+    const tipos = await TipoEquipoService.findAll();
+    res.status(200).json(tipos);
+});
 
-const getTipoEquipoById = async (req, res) => {
-  const { id } = req.params;
-  const t = await TipoEquipoService.findById(id);
-  if (!t) return res.status(404).json({ message: 'Tipo de equipo no encontrado' });
-  res.status(200).json(t);
-};
+/**
+ * Obtiene un tipo de equipo por ID.
+ * @route GET /api/tipos-equipo/:id
+ */
+const getTipoEquipoById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const tipo = await TipoEquipoService.findById(id);
 
-const createTipoEquipo = async (req, res) => {
-  const validation = tipoEquipoSchema.parse({ body: req.body });
-  try {
-    const newTipo = await TipoEquipoService.create(validation.body);
-    res.status(201).json(newTipo);
-  } catch (error) {
-    if (error.message.includes('DUPLICATE_ENTRY')) return res.status(409).json({ message: error.message });
-    throw error;
-  }
-};
+    if (!tipo) {
+        const error = new Error(`Tipo de equipo con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
 
-const updateTipoEquipo = async (req, res) => {
-  const validation = updateTipoEquipoSchema.parse({ params: req.params, body: req.body });
-  try {
-    const updated = await TipoEquipoService.update(validation.params.id, validation.body);
-    if (!updated) return res.status(404).json({ message: 'Tipo de equipo no encontrado' });
-    res.status(200).json({ message: 'Tipo de equipo actualizado exitosamente' });
-  } catch (error) {
-    if (error.message.includes('DUPLICATE_ENTRY')) return res.status(409).json({ message: error.message });
-    throw error;
-  }
-};
+    res.status(200).json(tipo);
+});
 
-const deleteTipoEquipo = async (req, res) => {
-  const { id } = req.params;
-  try {
+/**
+ * Crea un nuevo tipo de equipo.
+ * @route POST /api/tipos-equipo
+ */
+const createTipoEquipo = asyncHandler(async (req, res) => {
+    const validation = tipoEquipoSchema.safeParse({ body: req.body });
+
+    if (!validation.success) {
+        const error = new Error('Datos de tipo de equipo inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
+
+    const newTipo = await TipoEquipoService.create(validation.data.body);
+    logger.info(`Tipo de equipo creado: ID ${newTipo.id}`);
+    
+    res.status(201).json({
+        status: 'success',
+        message: 'Tipo de equipo creado exitosamente',
+        data: newTipo
+    });
+});
+
+/**
+ * Actualiza un tipo de equipo.
+ * @route PUT /api/tipos-equipo/:id
+ */
+const updateTipoEquipo = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const validation = updateTipoEquipoSchema.safeParse({ params: { id }, body: req.body });
+
+    if (!validation.success) {
+        const error = new Error('Datos de actualización inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
+
+    const updated = await TipoEquipoService.update(id, validation.data.body);
+
+    if (!updated) {
+        const error = new Error(`Tipo de equipo con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
+
+    logger.info(`Tipo de equipo ID ${id} actualizado.`);
+    res.status(200).json({ 
+        status: 'success',
+        message: 'Tipo de equipo actualizado exitosamente' 
+    });
+});
+
+/**
+ * Elimina un tipo de equipo.
+ * @route DELETE /api/tipos-equipo/:id
+ */
+const deleteTipoEquipo = asyncHandler(async (req, res) => {
+    const { id } = req.params;
     const deleted = await TipoEquipoService.delete(id);
-    if (!deleted) return res.status(404).json({ message: 'Tipo de equipo no encontrado' });
-    res.status(200).json({ message: 'Tipo de equipo eliminado exitosamente' });
-  } catch (error) {
-    if (error.message.includes('REFERENTIAL_INTEGRITY')) return res.status(409).json({ message: error.message });
-    throw error;
-  }
-};
+    
+    if (!deleted) {
+        const error = new Error(`Tipo de equipo con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
+
+    logger.info(`Tipo de equipo ID ${id} eliminado.`);
+    res.status(200).json({ 
+        status: 'success',
+        message: 'Tipo de equipo eliminado exitosamente' 
+    });
+});
 
 module.exports = {
-  getAllTiposEquipo,
-  getTipoEquipoById,
-  createTipoEquipo,
-  updateTipoEquipo,
-  deleteTipoEquipo
+    getAllTiposEquipo,
+    getTipoEquipoById,
+    createTipoEquipo,
+    updateTipoEquipo,
+    deleteTipoEquipo
 };

@@ -1,60 +1,123 @@
 /**
  * @module Controllers/Roles
  * @description Controlador para la gestión de roles de usuario.
+ * Refactorizado con asyncHandler y validación Zod.
  */
 const RolService = require('../services/roles.service');
 const { rolesSchema, updateRolesSchema } = require('../schemas/rol.schema');
+const logger = require('../utils/logger');
+const asyncHandler = require('../utils/asyncHandler');
 
-const getAllRoles = async (req, res) => {
-  const roles = await RolService.findAll();
-  res.status(200).json(roles);
-};
+/**
+ * Obtiene todos los roles.
+ * @route GET /api/roles
+ */
+const getAllRoles = asyncHandler(async (req, res) => {
+    const roles = await RolService.findAll();
+    res.status(200).json(roles);
+});
 
-const getRoleById = async (req, res) => {
-  const { id } = req.params;
-  const rol = await RolService.findById(id);
-  if (!rol) return res.status(404).json({ message: 'Rol no encontrado' });
-  res.status(200).json(rol);
-};
+/**
+ * Obtiene un rol por ID.
+ * @route GET /api/roles/:id
+ */
+const getRoleById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const rol = await RolService.findById(id);
 
-const createRole = async (req, res) => {
-  const validation = rolesSchema.parse({ body: req.body });
-  try {
-    const newRol = await RolService.create(validation.body);
-    res.status(201).json(newRol);
-  } catch (error) {
-    if (error.message.includes('DUPLICATE_ENTRY')) return res.status(409).json({ message: error.message });
-    throw error;
-  }
-};
+    if (!rol) {
+        const error = new Error(`Rol con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
 
-const updateRole = async (req, res) => {
-  const validation = updateRolesSchema.parse({ params: req.params, body: req.body });
-  try {
-    const updated = await RolService.update(validation.params.id, validation.body);
-    if (!updated) return res.status(404).json({ message: 'Rol no encontrado' });
-    res.status(200).json({ message: 'Rol actualizado exitosamente' });
-  } catch (error) {
-    if (error.message.includes('DUPLICATE_ENTRY')) return res.status(409).json({ message: error.message });
-    throw error;
-  }
-};
+    res.status(200).json(rol);
+});
 
-const deleteRole = async (req, res) => {
-  try {
-    const deleted = await RolService.delete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Rol no encontrado' });
-    res.status(200).json({ message: 'Rol eliminado exitosamente' });
-  } catch (error) {
-    if (error.message.includes('REFERENTIAL_INTEGRITY')) return res.status(409).json({ message: error.message });
-    throw error;
-  }
-};
+/**
+ * Crea un nuevo rol.
+ * @route POST /api/roles
+ */
+const createRole = asyncHandler(async (req, res) => {
+    const validation = rolesSchema.safeParse({ body: req.body });
+
+    if (!validation.success) {
+        const error = new Error('Datos de rol inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
+
+    const newRol = await RolService.create(validation.data.body);
+    logger.info(`Rol creado: ${newRol.nombre_rol} (ID: ${newRol.id})`);
+    
+    res.status(201).json({
+        status: 'success',
+        message: 'Rol creado exitosamente',
+        data: newRol
+    });
+});
+
+/**
+ * Actualiza un rol existente.
+ * @route PUT /api/roles/:id
+ */
+const updateRole = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const validation = updateRolesSchema.safeParse({ params: { id }, body: req.body });
+
+    if (!validation.success) {
+        const error = new Error('Datos de actualización inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
+
+    const updated = await RolService.update(id, validation.data.body);
+
+    if (!updated) {
+        const error = new Error(`Rol con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
+
+    logger.info(`Rol ID ${id} actualizado.`);
+    res.status(200).json({ 
+        status: 'success',
+        message: 'Rol actualizado exitosamente' 
+    });
+});
+
+/**
+ * Elimina un rol.
+ * @route DELETE /api/roles/:id
+ */
+const deleteRole = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const deleted = await RolService.delete(id);
+    
+    if (!deleted) {
+        const error = new Error(`Rol con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
+
+    logger.info(`Rol ID ${id} eliminado.`);
+    res.status(200).json({ 
+        status: 'success',
+        message: 'Rol eliminado exitosamente' 
+    });
+});
 
 module.exports = {
-  getAllRoles,
-  getRoleById,
-  createRole,
-  updateRole,
-  deleteRole
+    getAllRoles,
+    getRoleById,
+    createRole,
+    updateRole,
+    deleteRole
 };

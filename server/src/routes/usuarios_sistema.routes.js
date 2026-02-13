@@ -1,34 +1,29 @@
 /**
  * @module Routes/UsuariosSistema
- * @description Define las rutas para la gestión de usuarios del sistema.
+ * @description Rutas para gestión de usuarios administradores/técnicos.
  */
-// src/routes/usuariosSistema.routes.js
-// Define las rutas HTTP para la entidad 'usuarios_sistema'.
-
 const express = require('express');
-const router = express.Router(); // * Instancia del enrutador de Express
-
-// * Importo las funciones controladoras de usuarios del sistema
+const router = express.Router();
 const usuariosSistemaController = require('../controllers/usuarios_sistema.controller');
 
 /**
  * @openapi
  * tags:
- *   name: Gestión de Usuarios
- *   description: Administración de cuentas con acceso al panel administrativo
+ *   name: Usuarios Sistema
+ *   description: Gestión de accesos al panel administrativo
  */
 
 /**
  * @openapi
  * /api/usuarios-sistema:
  *   get:
- *     summary: Listar todos los usuarios del sistema
- *     tags: [Gestión de Usuarios]
+ *     summary: Listar usuarios del sistema
+ *     tags: [Usuarios Sistema]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Lista de usuarios.
+ *         description: Lista de usuarios (sin passwords).
  */
 router.get('/', usuariosSistemaController.getAllUsuariosSistema);
 
@@ -37,9 +32,14 @@ router.get('/', usuariosSistemaController.getAllUsuariosSistema);
  * /api/usuarios-sistema/{id}:
  *   get:
  *     summary: Obtener usuario por ID
- *     tags: [Gestión de Usuarios]
+ *     tags: [Usuarios Sistema]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Datos del usuario.
@@ -50,10 +50,23 @@ router.get('/:id', usuariosSistemaController.getUsuarioSistemaById);
  * @openapi
  * /api/usuarios-sistema:
  *   post:
- *     summary: Crear un nuevo usuario administrativo
- *     tags: [Gestión de Usuarios]
+ *     summary: Registrar nuevo usuario
+ *     tags: [Usuarios Sistema]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password, id_rol]
+ *             properties:
+ *               username: { type: string }
+ *               password: { type: string, minLength: 6 }
+ *               email: { type: string, format: email }
+ *               id_rol: { type: integer }
+ *               id_empleado: { type: integer }
  *     responses:
  *       201:
  *         description: Usuario creado.
@@ -64,10 +77,26 @@ router.post('/', usuariosSistemaController.createUsuarioSistema);
  * @openapi
  * /api/usuarios-sistema/{id}:
  *   put:
- *     summary: Actualizar datos de usuario
- *     tags: [Gestión de Usuarios]
+ *     summary: Actualizar usuario
+ *     tags: [Usuarios Sistema]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username: { type: string }
+ *               email: { type: string }
+ *               id_rol: { type: integer }
+ *               id_status: { type: integer }
+ *               password: { type: string, description: "Opcional: Solo si se desea cambiar" }
  *     responses:
  *       200:
  *         description: Usuario actualizado.
@@ -78,10 +107,15 @@ router.put('/:id', usuariosSistemaController.updateUsuarioSistema);
  * @openapi
  * /api/usuarios-sistema/{id}:
  *   delete:
- *     summary: Eliminar un usuario
- *     tags: [Gestión de Usuarios]
+ *     summary: Eliminar usuario
+ *     tags: [Usuarios Sistema]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Usuario eliminado.

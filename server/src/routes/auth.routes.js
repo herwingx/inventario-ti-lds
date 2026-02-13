@@ -3,7 +3,6 @@
  * @description Define las rutas para la autenticación de usuarios en la plataforma.
  */
 // src/routes/auth.routes.js
-// * Este archivo define las rutas para la autenticación, como el login.
 
 const express = require('express');
 const router = express.Router();
@@ -29,17 +28,17 @@ const authController = require('../controllers/auth.controller');
  *           schema:
  *             type: object
  *             required:
- *               - email
+ *               - username
  *               - password
  *             properties:
- *               email:
+ *               username:
  *                 type: string
- *                 example: admin@lds.com
- *                 description: Correo electrónico corporativo
+ *                 example: admin
+ *                 description: Nombre de usuario del sistema
  *               password:
  *                 type: string
  *                 format: password
- *                 example: password123
+ *                 example: Secret.123
  *     responses:
  *       200:
  *         description: Login exitoso. Retorna el token JWT y datos del usuario.
@@ -48,20 +47,29 @@ const authController = require('../controllers/auth.controller');
  *             schema:
  *               type: object
  *               properties:
- *                 token:
+ *                 status:
  *                   type: string
- *                   description: JWT Bearer Token
- *                 user:
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                 data:
  *                   type: object
  *                   properties:
- *                     id: 
- *                       type: integer
- *                     username:
+ *                     token:
  *                       type: string
- *                     role:
- *                       type: string
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id: 
+ *                           type: integer
+ *                         username:
+ *                           type: string
+ *                         roleName:
+ *                           type: string
  *       401:
- *         description: Credenciales inválidas.
+ *         description: Credenciales inválidas o cuenta inactiva.
+ *       429:
+ *         description: Demasiados intentos fallidos.
  */
 router.post('/login', authController.login);
 
@@ -120,7 +128,7 @@ router.post('/forgot-password', authController.forgotPassword);
  *       200:
  *         description: Contraseña actualizada correctamente.
  *       400:
- *         description: Token inválido o expirado.
+ *         description: Token inválido, expirado o contraseña débil.
  */
 router.post('/reset-password', authController.resetPassword);
 

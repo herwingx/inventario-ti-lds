@@ -1,9 +1,13 @@
+/**
+ * @module Schemas/Email
+ * @description Esquemas de validación Zod para la entidad 'CuentaEmail'.
+ */
 const { z } = require('zod');
 
 const emailSchema = z.object({
   body: z.object({
-    email: z.string().email(),
-    password_clear: z.string().trim().optional().nullable(), // Se almacena sin hash para propósitos administrativos (uso TI)
+    email: z.string({ required_error: 'El email es obligatorio' }).email('Formato de email inválido'),
+    password_clear: z.string().trim().optional().nullable(),
     id_sucursal: z.number().int().optional().nullable(),
     id_empleado_asignado: z.number().int().optional().nullable(),
     uso_descripcion: z.string().trim().optional().nullable(),
@@ -13,17 +17,17 @@ const emailSchema = z.object({
 
 const updateEmailSchema = z.object({
   params: z.object({
-    id: z.string().regex(/^\d+$/, 'ID debe ser un número').transform(Number)
+    id: z.string().transform((val) => parseInt(val, 10)).refine((val) => !isNaN(val) && val > 0, {
+      message: 'El ID debe ser un número positivo',
+    })
   }),
   body: z.object({
-    email: z.string().email().optional(),
+    email: z.string().email('Formato de email inválido').optional(),
     password_clear: z.string().trim().optional().nullable(),
     id_sucursal: z.number().int().optional().nullable(),
     id_empleado_asignado: z.number().int().optional().nullable(),
     uso_descripcion: z.string().trim().optional().nullable(),
     id_status: z.number().int().optional()
-  }).refine(data => Object.keys(data).length > 0, {
-    message: 'Debe proporcionar al menos un campo para actualizar'
   })
 });
 

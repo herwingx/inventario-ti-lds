@@ -6,36 +6,45 @@
 
 ## 1. 🏗️ Crear un Nuevo Módulo (Backend)
 
-Sigue el patrón de diseño establecido:
+Sigue el patrón de diseño **Controller-Service-Repository** establecido:
 
 1.  **Definir Modelo:** Actualiza `server/prisma/schema.prisma` y ejecuta `npx prisma migrate dev`.
-2.  **Validación (Zod):** Crea un archivo en `src/schemas/` para validar el `body` de las peticiones.
-3.  **Servicio:** Implementa la lógica en `src/services/` usando el cliente de Prisma.
-4.  **Controlador:** Crea el controlador en `src/controllers/` para orquestar la petición.
-5.  **Rutas:** Registra el endpoint en `src/routes/` y móntalo en `server.js`.
+2.  **Validación (Zod):** Crea un archivo en `src/schemas/` para validar estrictamente el `body` de las peticiones.
+    *   *Regla:* Valida tipos primitivos, formatos (email/fecha) y campos obligatorios.
+3.  **Servicio:** Implementa la lógica de negocio pura en `src/services/` usando Prisma Client.
+4.  **Controlador:** Crea el controlador en `src/controllers/` usando el wrapper `asyncHandler`.
+    *   *Nota:* No uses `try-catch` para errores 500 estándar, el wrapper lo maneja.
+    *   *Nota:* Usa `logger.info()` para acciones exitosas de escritura.
+5.  **Rutas:** Registra el endpoint en `src/routes/` y añade documentación **Swagger/OpenAPI** encima de cada ruta.
 
 ---
 
 ## 2. 🎨 Crear una Nueva Vista (Frontend)
 
-1.  **Servicio API:** Agrega el nuevo endpoint en `src/services/NombreService.js`.
-2.  **Vista:** Crea el componente `.vue` en `src/views/`. Utiliza los componentes de **PrimeVue** para consistencia.
-3.  **Rutas:** Registra la vista en `src/router/index.js`. Protege la ruta con `requiresAuth: true` si es necesario.
+1.  **Servicio API:** Agrega el nuevo endpoint en `client/src/services/NombreService.js`.
+2.  **Vista:** Crea el componente `.vue` en `client/src/views/`. Utiliza los componentes de **PrimeVue** para consistencia.
+3.  **Rutas:** Registra la vista en `client/src/router/index.js`. Protege la ruta con `meta: { requiresAuth: true }`.
 
 ---
 
 ## 📝 Convenciones de Código
 
 *   **Variables:** `camelCase` (ej. `usuarioId`).
-*   **Archivos:** `kebab-case` (ej. `auth-controller.js`).
-*   **Commits:** `tipo(alcance): descripción` (ej. `feat(auth): login`).
-*   **Documentación:** Usa JSDoc para funciones complejas.
+*   **Archivos:** `kebab-case` o `camelCase` consistente (ej. `auth.controller.js`).
+*   **Commits:** `tipo(alcance): descripción` (ej. `feat(auth): login endpoint`).
+*   **Logging:** Usar `logger` de `src/utils/logger.js` en lugar de `console.log`.
 
 ```javascript
 /**
- * Calcula la fecha del próximo mantenimiento.
- * @param {Date} ultimaFecha - Fecha del último mantenimiento.
- * @param {number} meses - Frecuencia en meses.
- * @returns {Date}
+ * Ejemplo de Controlador Moderno
  */
+const createItem = asyncHandler(async (req, res) => {
+  const validation = createItemSchema.safeParse({ body: req.body });
+  if (!validation.success) throw new Error('Validation Failed');
+  
+  const item = await Service.create(validation.data.body);
+  logger.info(`Item created: ${item.id}`);
+  
+  res.status(201).json(item);
+});
 ```

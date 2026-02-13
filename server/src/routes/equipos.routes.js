@@ -94,13 +94,44 @@ router.get('/:id', equiposController.getEquipoById);
  *                 type: string
  *               nombre_equipo:
  *                 type: string
+ *               marca:
+ *                 type: string
+ *               modelo:
+ *                 type: string
  *               id_tipo_equipo:
  *                 type: integer
  *               id_sucursal_actual:
  *                 type: integer
+ *               procesador:
+ *                 type: string
+ *               ram:
+ *                 type: string
+ *               disco_duro:
+ *                 type: string
+ *               sistema_operativo:
+ *                 type: string
+ *               mac_address:
+ *                 type: string
+ *               otras_caracteristicas:
+ *                 type: string
+ *               fecha_compra:
+ *                 type: string
+ *                 format: date
+ *               frecuencia_mantenimiento_meses:
+ *                 type: integer
+ *               proxima_fecha_mantenimiento:
+ *                 type: string
+ *                 format: date
+ *               id_status:
+ *                 type: integer
+ *                 default: 5
  *     responses:
  *       201:
  *         description: Equipo creado exitosamente.
+ *       400:
+ *         description: Error de validación.
+ *       409:
+ *         description: Número de serie duplicado.
  */
 router.post('/', equiposController.createEquipo);
 
@@ -124,9 +155,46 @@ router.post('/', equiposController.createEquipo);
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               numero_serie:
+ *                 type: string
+ *               nombre_equipo:
+ *                 type: string
+ *               marca:
+ *                 type: string
+ *               modelo:
+ *                 type: string
+ *               id_tipo_equipo:
+ *                 type: integer
+ *               id_sucursal_actual:
+ *                 type: integer
+ *               procesador:
+ *                 type: string
+ *               ram:
+ *                 type: string
+ *               disco_duro:
+ *                 type: string
+ *               sistema_operativo:
+ *                 type: string
+ *               mac_address:
+ *                 type: string
+ *               otras_caracteristicas:
+ *                 type: string
+ *               fecha_compra:
+ *                 type: string
+ *                 format: date
+ *               frecuencia_mantenimiento_meses:
+ *                 type: integer
+ *               proxima_fecha_mantenimiento:
+ *                 type: string
+ *                 format: date
+ *               id_status:
+ *                 type: integer
  *     responses:
  *       200:
  *         description: Equipo actualizado.
+ *       404:
+ *         description: Equipo no encontrado.
  */
 router.put('/:id', equiposController.updateEquipo);
 
@@ -147,6 +215,8 @@ router.put('/:id', equiposController.updateEquipo);
  *     responses:
  *       200:
  *         description: Equipo eliminado (Soft delete).
+ *       404:
+ *         description: Equipo no encontrado.
  */
 router.delete('/:id', equiposController.deleteEquipo);
 

@@ -1,25 +1,26 @@
 /**
  * @module Routes/QrPublic
- * @description Rutas públicas para flujo QR (sin autenticación JWT).
- * Permite a usuarios externos reportar fallas y dar seguimiento a tickets.
+ * @description Rutas públicas para acceso rápido vía QR.
  */
-const router = require('express').Router();
-const qrController = require('../controllers/qr-public.controller');
+const express = require('express');
+const router = express.Router();
+const qrPublicController = require('../controllers/qr-public.controller');
+// Multer middleware
 const { uploadTickets, handleMulterError } = require('../config/upload.config');
 
 /**
  * @openapi
  * tags:
- *   name: Público (QR)
- *   description: Endpoints accesibles sin autenticación para escaneo de equipos y reportes
+ *   name: QR Publico
+ *   description: Acceso rápido para reporte de incidentes (Sin login)
  */
 
 /**
  * @openapi
- * /q/{token}:
+ * /api/q/equipo/{token}:
  *   get:
- *     summary: Obtener información del equipo por token QR
- *     tags: [Público (QR)]
+ *     summary: Obtener info básica de equipo por QR
+ *     tags: [QR Publico]
  *     parameters:
  *       - in: path
  *         name: token
@@ -27,33 +28,47 @@ const { uploadTickets, handleMulterError } = require('../config/upload.config');
  *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Información limitada del equipo.
+ *         description: Info del equipo (Serie, Nombre, Ubicación).
+ *       404:
+ *         description: Token inválido.
  */
-router.get('/:token', qrController.getEquipoByQrToken);
+router.get('/equipo/:token', qrPublicController.getEquipoByQrToken);
 
 /**
  * @openapi
- * /q/{token}/report:
+ * /api/q/ticket/{token}:
  *   post:
- *     summary: Reportar una falla desde escaneo QR
- *     tags: [Público (QR)]
+ *     summary: Crear reporte de incidente
+ *     tags: [QR Publico]
  *     parameters:
  *       - in: path
  *         name: token
  *         required: true
  *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [descripcion]
+ *             properties:
+ *               descripcion: { type: string }
+ *               email_reporta: { type: string, format: email }
+ *               nombre_reporta: { type: string }
+ *               prioridad: { type: string, enum: [BAJA, MEDIA, ALTA, URGENTE], default: MEDIA }
  *     responses:
  *       201:
- *         description: Ticket creado desde flujo público.
+ *         description: Ticket creado. Retorna token de seguimiento.
  */
-router.post('/:token', qrController.createPublicTicket);
+router.post('/ticket/:token', qrPublicController.createPublicTicket);
 
 /**
  * @openapi
- * /q/ticket/{ticketToken}:
+ * /api/q/status/{ticketToken}:
  *   get:
  *     summary: Consultar estado de ticket público
- *     tags: [Público (QR)]
+ *     tags: [QR Publico]
  *     parameters:
  *       - in: path
  *         name: ticketToken
@@ -61,66 +76,68 @@ router.post('/:token', qrController.createPublicTicket);
  *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Estado y comentarios del ticket.
+ *         description: Estado del ticket y comentarios públicos.
  */
-router.get('/ticket/:ticketToken', qrController.getTicketStatus);
+router.get('/status/:ticketToken', qrPublicController.getTicketStatus);
 
 /**
  * @openapi
- * /q/ticket/{ticketToken}/comment:
+ * /api/q/comment/{ticketToken}:
  *   post:
- *     summary: Agregar comentario a un ticket público
- *     tags: [Público (QR)]
+ *     summary: Agregar comentario a ticket público
+ *     tags: [QR Publico]
+ *     parameters:
+ *       - in: path
+ *         name: ticketToken
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [contenido]
+ *             properties:
+ *               contenido: { type: string }
+ *               nombre: { type: string }
  *     responses:
  *       201:
  *         description: Comentario agregado.
  */
-router.post('/ticket/:ticketToken/comment', qrController.addPublicComment);
+router.post('/comment/:ticketToken', qrPublicController.addPublicComment);
 
 /**
  * @openapi
- * /q/ticket/{ticketToken}/evidence:
+ * /api/q/attachment/{ticketToken}:
  *   post:
- *     summary: Subir foto de evidencia a un ticket público
- *     tags: [Público (QR)]
+ *     summary: Subir adjunto a ticket público
+ *     tags: [QR Publico]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: path
+ *         name: ticketToken
+ *         required: true
+ *         schema: { type: string }
  *     requestBody:
  *       content:
  *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
- *               archivo: { type: string, format: binary }
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               nombre:
+ *                 type: string
  *     responses:
  *       201:
- *         description: Evidencia subida.
+ *         description: Archivo subido.
  */
-router.post(
-  '/ticket/:ticketToken/evidence',
-  uploadTickets.single('archivo'),
-  handleMulterError,
-  qrController.uploadTicketEvidence
-);
+router.post('/attachment/:ticketToken', qrPublicController.uploadPublicAttachment);
 
-/**
- * @openapi
- * /q/ticket/{ticketToken}/attachment:
- *   post:
- *     summary: Subir adjunto a comentario público
- *     tags: [Público (QR)]
- *     requestBody:
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               file: { type: string, format: binary }
- *     responses:
- *       201:
- *         description: Archivo adjunto subido.
- */
-router.post(
-  '/ticket/:ticketToken/attachment',
-  qrController.uploadPublicAttachment
-);
+// Legacy endpoint support
+router.post('/ticket/:ticketToken/evidence', qrPublicController.uploadTicketEvidence);
 
 module.exports = router;

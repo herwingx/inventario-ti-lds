@@ -17,6 +17,8 @@ graph LR
     subgraph "Servidor de Aplicaciones"
         API[Backend API<br/>Node.js + Express]
         Auth[Auth Middleware<br/>JWT Service]
+        Valid[Validation Layer<br/>Zod Schemas]
+        Err[Error Handler<br/>Centralized Middleware]
         ORM[Data Access Layer<br/>Prisma ORM]
     end
 
@@ -26,16 +28,18 @@ graph LR
     end
 
     SPA -- "HTTPS / JSON (REST)" --> API
-    API -- "Valida Token" --> Auth
-    API -- "Query / Transacción" --> ORM
+    API -- "Valida Input" --> Valid
+    Valid -- "Valida Token" --> Auth
+    Auth -- "Query / Transacción" --> ORM
     ORM -- "TCP / 3306" --> DB
+    API -- "Manejo Errores" --> Err
     API -- "Read/Write Blob" --> FS
     API -- "PDF Engine" --> pdfmake[pdfmake]
     
     style SPA fill:#42b883,stroke:#35495e,color:#fff
     style API fill:#68a063,stroke:#35495e,color:#fff
     style DB fill:#00758f,stroke:#005467,color:#fff
-    style pdfmake fill:#f38633,stroke:#333,color:#fff
+    style Valid fill:#e84c50,stroke:#333,color:#fff
 ```
 
 ---
@@ -47,10 +51,12 @@ graph LR
 *   **UI Framework:** PrimeVue (Tema Aura). Provee componentes empresariales robustos (DataTables, DatePickers) reduciendo el tiempo de desarrollo UI en un 60%.
 *   **State Management:** Pinia. Gestiona el estado de sesión (Usuario, Permisos) y caché de catálogos.
 
-### 2. Backend: Node.js + Express
-*   **Modelo de Concurrencia:** Non-blocking I/O. Ideal para una aplicación intensiva en I/O (lectura de inventario, reportes) más que en CPU.
-*   **Routing Inteligente:** Implementación de un **Middleware de Prefijos** que permite al servidor ser "Sub-directory Aware", traduciendo peticiones externas (vía Proxy) a ruteo interno limpio.
-*   **Seguridad:** Implementación de **Helmet** para cabeceras HTTP seguras, **Rate Limiting** para mitigar DDoS y **CORS** estricto.
+### 2. Backend: Node.js + Express (Hardened)
+*   **Modelo de Concurrencia:** Non-blocking I/O. Ideal para una aplicación intensiva en I/O.
+*   **Validación Estricta:** Implementación de **Zod** en todos los controladores para garantizar la integridad de los datos antes de que lleguen a la capa de servicio.
+*   **Manejo de Errores:** Middleware centralizado (`error.middleware.js`) que captura excepciones asíncronas, oculta stack traces en producción y estandariza las respuestas JSON.
+*   **Logging Profesional:** Sistema de logs rotativos con **Winston** (Info, Warn, Error) para auditoría y depuración sin saturar la consola.
+*   **Seguridad:** Implementación de **Helmet** para cabeceras HTTP seguras, **Rate Limiting** global para mitigar DDoS y **CORS** estricto basado en variables de entorno.
 
 ### 3. Capa de Datos: MySQL + Prisma ORM
 *   **Motor:** MySQL 8.0 (ACID Compliant). Crítico para asegurar que una asignación de equipo no quede en estado inconsistente.
@@ -72,14 +78,15 @@ graph LR
 
 El sistema implementa una **Arquitectura de Capas (Layered Architecture)**, lo que permite un desacoplamiento total entre la interfaz de usuario, la lógica de negocio y la persistencia de datos.
 
-### ⚙️ Backend: Patrón Controller-Service-Repository
+### ⚙️ Backend: Patrón Controller-Service-Repository + Async Handler
 
 A diferencia de un MVC tradicional, se ha optado por un enfoque orientado a servicios para garantizar la escalabilidad:
 
 1.  **Capa de Rutas (`routes/`):** Define los contratos de la API (Endpoints) y delega la ejecución a los controladores.
-2.  **Capa de Controladores (`controllers/`):** Actúa como orquestador de la petición HTTP. Valida la estructura de los datos (vía **Zod**) y maneja las respuestas (`200 OK`, `404 Not Found`, etc.).
-3.  **Capa de Servicios (`services/`):** Contiene la **Lógica de Negocio Pura**. Es independiente de la web; maneja transacciones, cálculos técnicos y reglas de integridad.
-4.  **Capa de Acceso a Datos (Prisma):** Funciona como el repositorio que interactúa con MySQL mediante consultas seguras y tipadas.
+2.  **Capa de Validación (`schemas/`):** Define esquemas **Zod** estrictos para cada entidad.
+3.  **Capa de Controladores (`controllers/`):** Actúa como orquestador. Usa un wrapper `asyncHandler` para eliminar el boilerplate `try-catch` y delegar errores al middleware global.
+4.  **Capa de Servicios (`services/`):** Contiene la **Lógica de Negocio Pura**. Es independiente de la web; maneja transacciones, cálculos técnicos y reglas de integridad.
+5.  **Capa de Acceso a Datos (Prisma):** Funciona como el repositorio que interactúa con MySQL mediante consultas seguras y tipadas.
 
 ### 🎨 Frontend: Arquitectura Basada en Componentes y Componibilidad
 
@@ -104,6 +111,8 @@ sequenceDiagram
     U->>C: Ingresa Credenciales
     C->>A: POST /api/auth/login {user, pass}
     activate A
+    A->>A: Rate Limit Check
+    A->>A: Zod Validation
     A->>D: SELECT * FROM usuarios WHERE email = ?
     activate D
     D-->>A: Retorna Hash Password
@@ -112,9 +121,11 @@ sequenceDiagram
     alt Credenciales Inválidas
         A-->>C: 401 Unauthorized
         C-->>U: Muestra "Error de credenciales"
+        A->>Log: Warn: Failed login attempt
     else Credenciales Válidas
         A->>A: jwt.sign(payload, secret)
         A-->>C: 200 OK { token, userProfile }
+        A->>Log: Info: User logged in
     end
     deactivate A
     C->>C: Pinia Store: setAuth(user, token)

@@ -1,28 +1,29 @@
 /**
  * @module Routes/TiposSucursal
- * @description Define las rutas para la gestión de categorías de sucursales.
+ * @description Rutas para catálogo de tipos de sucursal.
  */
-// src/routes/tiposSucursal.routes.js
-// Define las rutas HTTP para la entidad 'tipos_sucursal'.
-
 const express = require('express');
-// * Instancia del enrutador de Express
 const router = express.Router();
-
-// * Importo las funciones controladoras de tipos de sucursal
 const tiposSucursalController = require('../controllers/tipos_sucursal.controller');
+
+/**
+ * @openapi
+ * tags:
+ *   name: Catalogos
+ *   description: Catálogos del sistema (Tipos, Roles, Status)
+ */
 
 /**
  * @openapi
  * /api/tipos-sucursal:
  *   get:
- *     summary: Listar categorías de sucursales
- *     tags: [Catálogos]
+ *     summary: Listar tipos de sucursal
+ *     tags: [Catalogos]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Lista de tipos de sucursal.
+ *         description: Lista de tipos.
  */
 router.get('/', tiposSucursalController.getAllTiposSucursal);
 
@@ -31,13 +32,86 @@ router.get('/', tiposSucursalController.getAllTiposSucursal);
  * /api/tipos-sucursal/{id}:
  *   get:
  *     summary: Obtener tipo de sucursal por ID
- *     tags: [Catálogos]
+ *     tags: [Catalogos]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Datos de la categoría.
+ *         description: Detalle del tipo.
  */
 router.get('/:id', tiposSucursalController.getTipoSucursalById);
+
+/**
+ * @openapi
+ * /api/tipos-sucursal:
+ *   post:
+ *     summary: Crear tipo de sucursal
+ *     tags: [Catalogos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [nombre_tipo]
+ *             properties:
+ *               nombre_tipo: { type: string }
+ *     responses:
+ *       201:
+ *         description: Tipo creado.
+ */
+router.post('/', tiposSucursalController.createTipoSucursal);
+
+/**
+ * @openapi
+ * /api/tipos-sucursal/{id}:
+ *   put:
+ *     summary: Actualizar tipo de sucursal
+ *     tags: [Catalogos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nombre_tipo: { type: string }
+ *     responses:
+ *       200:
+ *         description: Tipo actualizado.
+ */
+router.put('/:id', tiposSucursalController.updateTipoSucursal);
+
+/**
+ * @openapi
+ * /api/tipos-sucursal/{id}:
+ *   delete:
+ *     summary: Eliminar tipo de sucursal
+ *     tags: [Catalogos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Tipo eliminado.
+ */
+router.delete('/:id', tiposSucursalController.deleteTipoSucursal);
 
 module.exports = router;

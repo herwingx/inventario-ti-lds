@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const mantenimientosController = require('../controllers/mantenimientos.controller');
-const { protect, isSupportOrAdmin } = require('../middleware/auth.middleware');
+const { protect } = require('../middleware/auth.middleware');
 const { uploadEvidencias, handleMulterError } = require('../config/upload.config');
 
 /**
@@ -27,6 +27,13 @@ router.use(protect);
  *     tags: [Mantenimientos]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id_equipo
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: estatus
+ *         schema: { type: string, enum: [PENDIENTE, EN_PROGRESO, COMPLETADO, CANCELADO, VENCIDO] }
  *     responses:
  *       200:
  *         description: Lista de mantenimientos.
@@ -49,6 +56,8 @@ router.get('/', mantenimientosController.getAllMantenimientos);
  *     responses:
  *       200:
  *         description: Datos del mantenimiento.
+ *       404:
+ *         description: Mantenimiento no encontrado.
  */
 router.get('/:id', mantenimientosController.getMantenimientoById);
 
@@ -66,14 +75,19 @@ router.get('/:id', mantenimientosController.getMantenimientoById);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [id_equipo, fecha_inicio, titulo]
+ *             required: [id_equipo, titulo, fecha_programada]
  *             properties:
  *               id_equipo: { type: integer }
+ *               tipo: { type: string, enum: [PREVENTIVO, CORRECTIVO, ACTUALIZACION], default: PREVENTIVO }
  *               titulo: { type: string }
- *               diagnostico: { type: string }
+ *               descripcion: { type: string }
+ *               fecha_programada: { type: string, format: date }
+ *               id_tecnico_asignado: { type: integer, nullable: true }
  *     responses:
  *       201:
  *         description: Mantenimiento registrado.
+ *       400:
+ *         description: Datos inválidos.
  */
 router.post('/', mantenimientosController.createMantenimiento);
 
@@ -85,9 +99,30 @@ router.post('/', mantenimientosController.createMantenimiento);
  *     tags: [Mantenimientos]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               estatus: { type: string, enum: [PENDIENTE, EN_PROGRESO, COMPLETADO, CANCELADO, VENCIDO] }
+ *               notas_cierre: { type: string }
+ *               costo: { type: number }
+ *               fecha_realizada: { type: string, format: date }
+ *               titulo: { type: string }
+ *               descripcion: { type: string }
+ *               fecha_programada: { type: string, format: date }
+ *               id_tecnico_asignado: { type: integer }
  *     responses:
  *       200:
  *         description: Mantenimiento actualizado.
+ *       404:
+ *         description: Mantenimiento no encontrado.
  */
 router.put('/:id', mantenimientosController.updateMantenimiento);
 
@@ -99,9 +134,16 @@ router.put('/:id', mantenimientosController.updateMantenimiento);
  *     tags: [Mantenimientos]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Mantenimiento eliminado.
+ *       409:
+ *         description: No se puede eliminar por dependencias (evidencias).
  */
 router.delete('/:id', mantenimientosController.deleteMantenimiento);
 
@@ -113,9 +155,16 @@ router.delete('/:id', mantenimientosController.deleteMantenimiento);
  *     tags: [Mantenimientos]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Lista de evidencias (URLs).
+ *       404:
+ *         description: Mantenimiento no encontrado.
  */
 router.get('/:id/evidencias', mantenimientosController.getEvidencias);
 
@@ -127,6 +176,8 @@ router.get('/:id/evidencias', mantenimientosController.getEvidencias);
  *     tags: [Mantenimientos]
  *     security:
  *       - bearerAuth: []
+ *     consumes:
+ *       - multipart/form-data
  *     parameters:
  *       - in: path
  *         name: id
@@ -141,9 +192,16 @@ router.get('/:id/evidencias', mantenimientosController.getEvidencias);
  *               archivo:
  *                 type: string
  *                 format: binary
+ *               tipo:
+ *                 type: string
+ *                 default: DIAGNOSTICO
+ *               descripcion:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Evidencia subida con éxito.
+ *       400:
+ *         description: Archivo no válido o mantenimiento no encontrado.
  */
 router.post(
   '/:id/evidencias',
@@ -160,9 +218,20 @@ router.post(
  *     tags: [Mantenimientos]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: evidenciaId
+ *         required: true
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Evidencia eliminada.
+ *       404:
+ *         description: Evidencia no encontrada.
  */
 router.delete('/:id/evidencias/:evidenciaId', mantenimientosController.deleteEvidencia);
 

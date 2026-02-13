@@ -1,125 +1,234 @@
+/**
+ * @module Controllers/Tickets
+ * @description Controlador para la gestión de tickets de soporte (Admin/Técnico).
+ * Refactorizado con asyncHandler y validación Zod.
+ */
 const TicketService = require('../services/tickets.service');
 const { ticketSchema, updateTicketSchema } = require('../schemas/ticket.schema');
 const logger = require('../utils/logger');
 const { uploadTickets, handleMulterError } = require('../config/upload.config');
+const asyncHandler = require('../utils/asyncHandler');
+// Importación opcional de notificaciones
+let TicketNotificationService;
+try {
+  TicketNotificationService = require('../services/ticketNotification.service');
+} catch (e) {}
 
-const getAllTickets = async (req, res) => {
-  const tickets = await TicketService.findAll(req.query);
-  res.status(200).json(tickets);
-};
 
-const getTicketById = async (req, res) => {
-  const ticket = await TicketService.findById(req.params.id);
-  if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
-  res.status(200).json(ticket);
-};
+/**
+ * Obtiene todos los tickets con filtros.
+ * @route GET /api/tickets
+ */
+const getAllTickets = asyncHandler(async (req, res) => {
+    const tickets = await TicketService.findAll(req.query);
+    res.status(200).json(tickets);
+});
 
-const createTicket = async (req, res) => {
-  const validation = ticketSchema.parse({ body: req.body });
-  const userId = req.user?.userId;
+/**
+ * Obtiene un ticket por ID.
+ * @route GET /api/tickets/:id
+ */
+const getTicketById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const ticket = await TicketService.findById(id);
 
-  const newTicket = await TicketService.create(validation.body, userId);
-  logger.info(`Ticket creado: ID ${newTicket.id} por usuario ID ${userId}`);
+    if (!ticket) {
+        const error = new Error(`Ticket con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
 
-  res.status(201).json({
-    message: 'Ticket creado exitosamente',
-    id: newTicket.id
-  });
-};
+    res.status(200).json(ticket);
+});
 
-const updateTicket = async (req, res) => {
-  const validation = updateTicketSchema.parse({ params: req.params, body: req.body });
+/**
+ * Crea un nuevo ticket interno.
+ * @route POST /api/tickets
+ */
+const createTicket = asyncHandler(async (req, res) => {
+    const validation = ticketSchema.safeParse({ body: req.body });
 
-  const updated = await TicketService.update(validation.params.id, validation.body);
-  if (!updated) return res.status(404).json({ message: 'Ticket no encontrado' });
+    if (!validation.success) {
+        const error = new Error('Datos de ticket inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
 
-  logger.info(`Ticket ID ${validation.params.id} actualizado.`);
-  res.status(200).json({ message: 'Ticket actualizado exitosamente' });
-};
+    const userId = req.user?.userId;
+    const newTicket = await TicketService.create(validation.data.body, userId);
+    
+    logger.info(`Ticket creado: ID ${newTicket.id} por usuario ID ${userId}`);
 
-const deleteTicket = async (req, res) => {
-  const deleted = await TicketService.delete(req.params.id);
-  if (!deleted) return res.status(404).json({ message: 'Ticket no encontrado' });
+    res.status(201).json({
+        status: 'success',
+        message: 'Ticket creado exitosamente',
+        data: { id: newTicket.id }
+    });
+});
 
-  logger.info(`Ticket ID ${req.params.id} eliminado.`);
-  res.status(200).json({ message: 'Ticket eliminado exitosamente' });
-};
+/**
+ * Actualiza un ticket.
+ * @route PUT /api/tickets/:id
+ */
+const updateTicket = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const validation = updateTicketSchema.safeParse({ params: { id }, body: req.body });
 
-const getTecnicos = async (req, res) => {
-  const tecnicos = await TicketService.getTecnicos();
-  res.status(200).json(tecnicos);
-};
+    if (!validation.success) {
+        const error = new Error('Datos de actualización inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
 
-const getComments = async (req, res) => {
-  const { id } = req.params;
-  const { incluir_internos } = req.query;
-  const comments = await TicketService.getComments(id, incluir_internos === 'true');
-  res.status(200).json(comments);
-};
+    const updated = await TicketService.update(id, validation.data.body);
 
-const addComment = async (req, res) => {
-  const { id } = req.params;
-  const userId = req.user?.userId;
+    if (!updated) {
+        const error = new Error(`Ticket con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
 
-  // Buscar el ticket para notificaciones y validación extra
-  const ticket = await TicketService.findById(id);
-  if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
-  if (['RESUELTO', 'CERRADO'].includes(ticket.estatus)) return res.status(400).json({ message: 'No se pueden agregar mensajes a un ticket finalizado' });
+    logger.info(`Ticket ID ${id} actualizado.`);
+    res.status(200).json({ 
+        status: 'success',
+        message: 'Ticket actualizado exitosamente' 
+    });
+});
 
-  const comment = await TicketService.addComment(id, userId, req.body);
+/**
+ * Elimina un ticket.
+ * @route DELETE /api/tickets/:id
+ */
+const deleteTicket = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const deleted = await TicketService.delete(id);
+    
+    if (!deleted) {
+        const error = new Error(`Ticket con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
 
-  // Si no es interno, notificar al usuario
-  if (!req.body.es_interno && ticket.email_reporta) {
-    const { notifyUserComment } = require('../services/ticketNotification.service');
-    notifyUserComment(ticket, req.body.contenido, ticket.email_reporta)
-      .catch(err => logger.error('[EMAIL] Notificación a usuario fallida:', err));
-  }
+    logger.info(`Ticket ID ${id} eliminado.`);
+    res.status(200).json({ 
+        status: 'success',
+        message: 'Ticket eliminado exitosamente' 
+    });
+});
 
-  res.status(201).json(comment);
-};
+/**
+ * Obtiene lista de técnicos disponibles.
+ * @route GET /api/tickets/tecnicos/list
+ */
+const getTecnicos = asyncHandler(async (req, res) => {
+    const tecnicos = await TicketService.getTecnicos();
+    res.status(200).json(tecnicos);
+});
 
-// Nuevo controlador para manejar la subida de adjuntos
-const uploadTicketAttachment = [
-  (req, res, next) => {
-    req.ticketId = req.params.id; // Asignar el ID del ticket a req.ticketId para Multer
-    next();
-  },
-  uploadTickets.single('file'), // 'file' es el nombre del campo en el formulario
-  handleMulterError, // Manejador de errores de Multer
-  async (req, res) => {
+/**
+ * Obtiene comentarios de un ticket.
+ * @route GET /api/tickets/:id/comments
+ */
+const getComments = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { incluir_internos } = req.query;
+    const comments = await TicketService.getComments(id, incluir_internos === 'true');
+    res.status(200).json(comments);
+});
+
+/**
+ * Agrega un comentario a un ticket.
+ * @route POST /api/tickets/:id/comments
+ */
+const addComment = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const userId = req.user?.userId;
-    const file = req.file;
 
-    if (!file) {
-      return res.status(400).json({ message: 'No se ha subido ningún archivo' });
-    }
-
-    // Validación extra: Ticket no cerrado
     const ticket = await TicketService.findById(id);
-    if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
-      return res.status(400).json({ message: 'No se pueden adjuntar archivos a un ticket finalizado' });
+    if (!ticket) {
+        const error = new Error('Ticket no encontrado.');
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
+    
+    if (['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
+         const error = new Error('No se pueden agregar mensajes a un ticket finalizado.');
+         error.statusCode = 400;
+         error.isOperational = true;
+         throw error;
     }
 
-    // La URL relativa debe coincidir con la forma en que Express sirve los archivos estáticos
-    // y cómo Multer los guarda.
-    // Multer los guarda en /storage/tickets/ID_TICKET/nombre_generado.ext
-    const fileUrl = `/storage/tickets/${id}/${file.filename}`; // CAMBIO AQUÍ: '/storage' en lugar de '/uploads'
+    const comment = await TicketService.addComment(id, userId, req.body);
 
-    await TicketService.addAttachment(id, userId, fileUrl, file.originalname);
+    // Notificaciones
+    if (!req.body.es_interno && ticket.email_reporta && TicketNotificationService) {
+        TicketNotificationService.notifyUserComment(ticket, req.body.contenido, ticket.email_reporta)
+            .catch(err => logger.warn(`[EMAIL] Fallo notif usuario: ${err}`));
+    }
 
-    res.status(201).json({ message: 'Archivo subido', url: fileUrl });
-  }
+    res.status(201).json(comment);
+});
+
+/**
+ * Sube un archivo adjunto a un ticket.
+ * Pipeline: [CheckID] -> [Multer] -> [UpdateDB]
+ */
+const uploadTicketAttachment = [
+    (req, res, next) => {
+        req.ticketId = req.params.id;
+        next();
+    },
+    uploadTickets.single('file'),
+    handleMulterError,
+    asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const userId = req.user?.userId;
+        const file = req.file;
+
+        if (!file) {
+            const error = new Error('No se ha subido ningún archivo.');
+            error.statusCode = 400;
+            error.isOperational = true;
+            throw error;
+        }
+
+        const ticket = await TicketService.findById(id);
+        if (!ticket || ['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
+            // Limpiar archivo subido si falla validación lógica
+            // fs.unlink(file.path)... (pendiente implementación cleanup)
+            const error = new Error('No se pueden adjuntar archivos a un ticket finalizado.');
+            error.statusCode = 400;
+            error.isOperational = true;
+            throw error;
+        }
+
+        const fileUrl = `/storage/tickets/${id}/${file.filename}`;
+        await TicketService.addAttachment(id, userId, fileUrl, file.originalname);
+
+        res.status(201).json({ 
+            status: 'success',
+            message: 'Archivo subido', 
+            data: { url: fileUrl } 
+        });
+    })
 ];
 
 module.exports = {
-  getAllTickets,
-  getTicketById,
-  createTicket,
-  updateTicket,
-  deleteTicket,
-  getTecnicos,
-  getComments,
-  addComment,
-  uploadAttachment: uploadTicketAttachment // Exportar el nuevo controlador
+    getAllTickets,
+    getTicketById,
+    createTicket,
+    updateTicket,
+    deleteTicket,
+    getTecnicos,
+    getComments,
+    addComment,
+    uploadAttachment: uploadTicketAttachment
 };

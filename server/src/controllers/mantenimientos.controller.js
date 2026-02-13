@@ -1,86 +1,130 @@
 /**
  * @module Controllers/Mantenimientos
  * @description Controlador para la gestión de mantenimientos.
+ * Refactorizado con asyncHandler y validación Zod.
  */
 const MantenimientoService = require('../services/mantenimientos.service');
 const { createMantenimientoSchema, updateMantenimientoSchema } = require('../schemas/mantenimiento.schema');
 const logger = require('../utils/logger');
+const asyncHandler = require('../utils/asyncHandler');
+const prisma = require('../config/prisma'); // Usado para consultas directas de evidencia si es necesario, o mover a servicio
 
-const getAllMantenimientos = async (req, res, next) => {
-  try {
+/**
+ * Obtiene todos los mantenimientos.
+ * @route GET /api/mantenimientos
+ */
+const getAllMantenimientos = asyncHandler(async (req, res) => {
     const mantenimientos = await MantenimientoService.findAll(req.query);
     res.status(200).json(mantenimientos);
-  } catch (error) {
-    next(error);
-  }
-};
+});
 
-const getMantenimientoById = async (req, res, next) => {
-  try {
+/**
+ * Obtiene un mantenimiento por ID.
+ * @route GET /api/mantenimientos/:id
+ */
+const getMantenimientoById = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const mantenimiento = await MantenimientoService.findById(id);
 
     if (!mantenimiento) {
-      return res.status(404).json({ message: 'Mantenimiento no encontrado' });
+        const error = new Error(`Mantenimiento con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
     }
 
     res.status(200).json(mantenimiento);
-  } catch (error) {
-    next(error);
-  }
-};
+});
 
-const createMantenimiento = async (req, res, next) => {
-  try {
-    const validation = createMantenimientoSchema.parse({ body: req.body });
+/**
+ * Crea un nuevo mantenimiento.
+ * @route POST /api/mantenimientos
+ */
+const createMantenimiento = asyncHandler(async (req, res) => {
+    const validation = createMantenimientoSchema.safeParse({ body: req.body });
+
+    if (!validation.success) {
+        const error = new Error('Datos de mantenimiento inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
+
     const userId = req.user ? req.user.userId : null;
-
-    const newManto = await MantenimientoService.create(validation.body, userId);
+    const newManto = await MantenimientoService.create(validation.data.body, userId);
 
     logger.info(`Mantenimiento programado: ${newManto.titulo} (ID: ${newManto.id})`);
 
     res.status(201).json({
-      id: newManto.id,
-      message: 'Mantenimiento programado exitosamente'
+        status: 'success',
+        message: 'Mantenimiento programado exitosamente',
+        data: { id: newManto.id }
     });
-  } catch (error) {
-    next(error);
-  }
-};
+});
 
-const updateMantenimiento = async (req, res, next) => {
-  try {
-    const validation = updateMantenimientoSchema.parse({ params: req.params, body: req.body });
-
-    const updated = await MantenimientoService.update(validation.params.id, validation.body);
-    if (!updated) {
-      return res.status(404).json({ message: 'Mantenimiento no encontrado' });
-    }
-
-    logger.info(`Mantenimiento ID ${validation.params.id} actualizado.`);
-    res.status(200).json({ message: 'Mantenimiento actualizado exitosamente' });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const deleteMantenimiento = async (req, res, next) => {
-  try {
+/**
+ * Actualiza un mantenimiento existente.
+ * @route PUT /api/mantenimientos/:id
+ */
+const updateMantenimiento = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const deleted = await MantenimientoService.delete(id);
-    if (!deleted) {
-      return res.status(404).json({ message: 'Mantenimiento no encontrado' });
+    const validation = updateMantenimientoSchema.safeParse({ params: { id }, body: req.body });
+
+    if (!validation.success) {
+        const error = new Error('Datos de actualización inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
     }
 
-    logger.info(`Mantenimiento ID ${id} eliminado.`);
-    res.status(200).json({ message: 'Mantenimiento eliminado exitosamente' });
-  } catch (error) {
-    if (error.code === 'P2003') {
-      return res.status(409).json({ message: 'No se puede eliminar el mantenimiento porque tiene registros vinculados (auditorías, archivos, etc.)' });
+    const updated = await MantenimientoService.update(id, validation.data.body);
+
+    if (!updated) {
+        const error = new Error(`Mantenimiento con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
     }
-    next(error);
-  }
-};
+
+    logger.info(`Mantenimiento ID ${id} actualizado.`);
+    res.status(200).json({ 
+        status: 'success',
+        message: 'Mantenimiento actualizado exitosamente' 
+    });
+});
+
+/**
+ * Elimina un mantenimiento.
+ * @route DELETE /api/mantenimientos/:id
+ */
+const deleteMantenimiento = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    try {
+        const deleted = await MantenimientoService.delete(id);
+        if (!deleted) {
+            const error = new Error(`Mantenimiento con ID ${id} no encontrado.`);
+            error.statusCode = 404;
+            error.isOperational = true;
+            throw error;
+        }
+
+        logger.info(`Mantenimiento ID ${id} eliminado.`);
+        res.status(200).json({ 
+            status: 'success',
+            message: 'Mantenimiento eliminado exitosamente' 
+        });
+    } catch (error) {
+        if (error.code === 'P2003') { // Prisma foreign key constraint code
+             const conflictError = new Error('No se puede eliminar porque tiene registros vinculados (evidencias, auditoría).');
+             conflictError.statusCode = 409;
+             conflictError.isOperational = true;
+             throw conflictError;
+        }
+        throw error;
+    }
+});
 
 // =============================================
 // FASE 2B: GESTIÓN DE EVIDENCIAS
@@ -90,128 +134,137 @@ const deleteMantenimiento = async (req, res, next) => {
  * Obtiene todas las evidencias de un mantenimiento.
  * @route GET /api/mantenimientos/:id/evidencias
  */
-const getEvidencias = async (req, res, next) => {
-  try {
+const getEvidencias = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    // Verificar que el mantenimiento existe
-    const [maintenance] = await query('SELECT id FROM mantenimientos WHERE id = ?', [id]);
+    // Verificar que el mantenimiento existe (Idealmente mover a servicio)
+    const maintenance = await prisma.mantenimientos.findUnique({ where: { id: parseInt(id) } });
     if (!maintenance) {
-      return res.status(404).json({ message: 'Mantenimiento no encontrado' });
+        const error = new Error(`Mantenimiento con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
     }
 
-    const evidencias = await query(`
-      SELECT id, tipo, url_archivo, descripcion, nombre_original, mime_type, tamano_bytes, fecha_subida
-      FROM mantenimiento_evidencias
-      WHERE id_mantenimiento = ?
-      ORDER BY fecha_subida DESC
-    `, [id]);
+    const evidencias = await prisma.mantenimiento_evidencias.findMany({
+        where: { id_mantenimiento: parseInt(id) },
+        orderBy: { fecha_subida: 'desc' },
+        select: {
+            id: true,
+            tipo: true,
+            url_archivo: true,
+            descripcion: true,
+            nombre_original: true,
+            mime_type: true,
+            tamano_bytes: true,
+            fecha_subida: true
+        }
+    });
 
     res.json(evidencias);
-  } catch (error) {
-    next(error);
-  }
-};
+});
 
 /**
  * Agrega una evidencia a un mantenimiento.
- * Requiere multer middleware para procesar el archivo.
  * @route POST /api/mantenimientos/:id/evidencias
  */
-const addEvidencia = async (req, res, next) => {
-  try {
+const addEvidencia = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { tipo, descripcion } = req.body;
 
-    // Verificar que el mantenimiento existe
-    const [maintenance] = await query('SELECT id, estatus FROM mantenimientos WHERE id = ?', [id]);
+    const maintenance = await prisma.mantenimientos.findUnique({ where: { id: parseInt(id) } });
     if (!maintenance) {
-      return res.status(404).json({ message: 'Mantenimiento no encontrado' });
+         const error = new Error(`Mantenimiento con ID ${id} no encontrado.`);
+         error.statusCode = 404;
+         error.isOperational = true;
+         throw error;
     }
 
-    // Verificar que se subió un archivo
     if (!req.file) {
-      return res.status(400).json({ message: 'No se proporcionó ningún archivo' });
+         const error = new Error('No se proporcionó ningún archivo.');
+         error.statusCode = 400;
+         error.isOperational = true;
+         throw error;
     }
 
-    // Construir URL relativa del archivo
     const urlArchivo = `/uploads/evidencias/${req.file.filename}`;
 
-    const sql = `
-      INSERT INTO mantenimiento_evidencias 
-      (id_mantenimiento, url_archivo, tipo, descripcion, nombre_original, mime_type, tamano_bytes)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    const result = await query(sql, [
-      id,
-      urlArchivo,
-      tipo || 'DIAGNOSTICO',
-      descripcion || null,
-      req.file.originalname,
-      req.file.mimetype,
-      req.file.size
-    ]);
+    const newEvidencia = await prisma.mantenimiento_evidencias.create({
+        data: {
+            id_mantenimiento: parseInt(id),
+            url_archivo: urlArchivo,
+            tipo: tipo || 'DIAGNOSTICO',
+            descripcion: descripcion || null,
+            nombre_original: req.file.originalname,
+            mime_type: req.file.mimetype,
+            tamano_bytes: req.file.size
+        }
+    });
 
     res.status(201).json({
-      id: result.insertId,
-      url_archivo: urlArchivo,
-      tipo: tipo || 'DIAGNOSTICO',
-      message: 'Evidencia subida exitosamente'
+        status: 'success',
+        message: 'Evidencia subida exitosamente',
+        data: newEvidencia
     });
-  } catch (error) {
-    next(error);
-  }
-};
+});
 
 /**
- * Elimina una evidencia específica.
- * También elimina el archivo físico del servidor.
+ * Elimina una evidencia.
  * @route DELETE /api/mantenimientos/:id/evidencias/:evidenciaId
  */
-const deleteEvidencia = async (req, res, next) => {
-  try {
+const deleteEvidencia = asyncHandler(async (req, res) => {
     const { id, evidenciaId } = req.params;
     const path = require('path');
     const fs = require('fs').promises;
 
-    // Obtener la evidencia para conocer la ruta del archivo
-    const [evidencia] = await query(`
-      SELECT id, url_archivo 
-      FROM mantenimiento_evidencias 
-      WHERE id = ? AND id_mantenimiento = ?
-    `, [evidenciaId, id]);
+    const evidencia = await prisma.mantenimiento_evidencias.findFirst({
+        where: { 
+            id: parseInt(evidenciaId),
+            id_mantenimiento: parseInt(id)
+        }
+    });
 
     if (!evidencia) {
-      return res.status(404).json({ message: 'Evidencia no encontrada' });
+        const error = new Error('Evidencia no encontrada.');
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
     }
 
-    // Eliminar archivo físico
+    // Eliminar archivo físico (Soft fail)
     try {
-      const filePath = path.join(__dirname, '../..', evidencia.url_archivo);
-      await fs.unlink(filePath);
+        const filePath = path.join(__dirname, '../../public', evidencia.url_archivo); // Asumiendo que uploads está en public/uploads o mapped
+        // Nota: En la configuración de express, uploads está en root/uploads pero servido en /uploads
+        // Ajustar path.join(__dirname, '../../uploads', ...) si está fuera de src
+        
+        // Mejor ajuste según estructura original:
+        // server/uploads/evidencias/...
+        // url_archivo: /uploads/evidencias/filename
+        const relativePath = evidencia.url_archivo.replace(/^\//, ''); // Quitar slash inicial
+        const absolutePath = path.join(process.cwd(), relativePath); // Usar CWD (server root)
+        
+        await fs.unlink(absolutePath);
     } catch (fileError) {
-      console.warn('[EVIDENCIAS] No se pudo eliminar archivo físico:', fileError.message);
-      // Continuar aunque falle la eliminación del archivo
+        logger.warn(`[EVIDENCIAS] No se pudo eliminar archivo físico: ${fileError.message}`);
     }
 
-    // Eliminar registro de BD
-    await query('DELETE FROM mantenimiento_evidencias WHERE id = ?', [evidenciaId]);
+    await prisma.mantenimiento_evidencias.delete({
+        where: { id: parseInt(evidenciaId) }
+    });
 
-    res.json({ message: 'Evidencia eliminada correctamente' });
-  } catch (error) {
-    next(error);
-  }
-};
+    res.json({ 
+        status: 'success',
+        message: 'Evidencia eliminada correctamente' 
+    });
+});
 
 module.exports = {
-  getAllMantenimientos,
-  getMantenimientoById,
-  createMantenimiento,
-  updateMantenimiento,
-  deleteMantenimiento,
-  // Evidencias
-  getEvidencias,
-  addEvidencia,
-  deleteEvidencia
+    getAllMantenimientos,
+    getMantenimientoById,
+    createMantenimiento,
+    updateMantenimiento,
+    deleteMantenimiento,
+    getEvidencias,
+    addEvidencia,
+    deleteEvidencia
 };

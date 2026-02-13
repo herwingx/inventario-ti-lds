@@ -47,6 +47,9 @@ OPTIMIZE TABLE equipos, asignaciones, tickets, logs_sistema;
 *   **Error:** `PrismaClientKnownRequestError`
     *   **Causa:** Inconsistencia entre el código y la base de datos (migraciones pendientes).
     *   **Acción:** Ejecutar `npx prisma migrate deploy` para aplicar cambios pendientes en producción.
+*   **Error:** `MulterError: File too large`
+    *   **Causa:** Intento de subida de archivo mayor a 5MB.
+    *   **Acción:** El cliente debe comprimir el archivo. No se recomienda aumentar el límite por seguridad.
 
 ---
 
@@ -58,7 +61,7 @@ El sistema depende estrictamente de las variables de entorno.
 | :--- | :--- | :--- |
 | `DATABASE_URL` | Pérdida total de servicio. | Restaurar conexión string a MySQL. |
 | `JWT_SECRET` | Invalida todas las sesiones activas. | Generar uno nuevo; los usuarios deberán re-loguearse. |
-| `VITE_API_URL` | El frontend no encuentra la API. | Re-compilar frontend con `npm run build`. |
+| `FRONTEND_URL` | Problemas de CORS. | Actualizar dominio en `.env`. |
 
 ---
 
@@ -66,7 +69,7 @@ El sistema depende estrictamente de las variables de entorno.
 
 | Tarea | Frecuencia | Responsable |
 | :--- | :--- | :--- |
-| Revisión de `logs_sistema` (Auditoría Forense) | Semanal | Administrador TI |
+| Revisión de logs en `server/logs/` | Semanal | Administrador TI |
 | Rotación de logs de servidor (`pm2 flush`) | Mensual | DevOps/Soporte |
 | Prueba de restauración de Backup (Sandbox) | Trimestral | DevOps |
 | Actualización de dependencias (`npm audit`) | Trimestral | Desarrollador |

@@ -1,22 +1,16 @@
 /**
  * @module Routes/CuentasEmail
- * @description Define las rutas para la gestión de cuentas de correo corporativo.
+ * @description Rutas para gestión de cuentas de correo corporativo.
  */
-// src/routes/cuentasEmail.routes.js
-// Define las rutas HTTP para la entidad 'cuentas_email_corporativo'.
-
 const express = require('express');
-// * Instancia del enrutador de Express
 const router = express.Router();
-
-// * Importo las funciones controladoras de cuentas de email
 const cuentasEmailController = require('../controllers/cuentas_email.controller');
 
 /**
  * @openapi
  * tags:
- *   name: Recursos Digitales
- *   description: Gestión de correos corporativos y accesos
+ *   name: Correos
+ *   description: Gestión de cuentas de email corporativo
  */
 
 /**
@@ -24,7 +18,7 @@ const cuentasEmailController = require('../controllers/cuentas_email.controller'
  * /api/cuentas-email:
  *   get:
  *     summary: Listar cuentas de correo
- *     tags: [Recursos Digitales]
+ *     tags: [Correos]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -38,12 +32,17 @@ router.get('/', cuentasEmailController.getAllCuentasEmail);
  * /api/cuentas-email/{id}:
  *   get:
  *     summary: Obtener cuenta por ID
- *     tags: [Recursos Digitales]
+ *     tags: [Correos]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Datos de la cuenta.
+ *         description: Detalle de la cuenta.
  */
 router.get('/:id', cuentasEmailController.getCuentaEmailById);
 
@@ -51,8 +50,8 @@ router.get('/:id', cuentasEmailController.getCuentaEmailById);
  * @openapi
  * /api/cuentas-email:
  *   post:
- *     summary: Registrar nueva cuenta de correo
- *     tags: [Recursos Digitales]
+ *     summary: Registrar cuenta de correo
+ *     tags: [Correos]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -63,11 +62,16 @@ router.get('/:id', cuentasEmailController.getCuentaEmailById);
  *             type: object
  *             required: [email]
  *             properties:
- *               email: { type: string, example: "usuario@empresa.com" }
+ *               email: { type: string, format: email }
+ *               password_clear: { type: string }
+ *               id_sucursal: { type: integer }
  *               id_empleado_asignado: { type: integer }
+ *               uso_descripcion: { type: string }
  *     responses:
  *       201:
  *         description: Cuenta creada.
+ *       409:
+ *         description: Email duplicado.
  */
 router.post('/', cuentasEmailController.createCuentaEmail);
 
@@ -76,9 +80,26 @@ router.post('/', cuentasEmailController.createCuentaEmail);
  * /api/cuentas-email/{id}:
  *   put:
  *     summary: Actualizar cuenta de correo
- *     tags: [Recursos Digitales]
+ *     tags: [Correos]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email: { type: string }
+ *               password_clear: { type: string }
+ *               id_sucursal: { type: integer }
+ *               id_empleado_asignado: { type: integer }
+ *               uso_descripcion: { type: string }
+ *               id_status: { type: integer }
  *     responses:
  *       200:
  *         description: Cuenta actualizada.
@@ -90,9 +111,14 @@ router.put('/:id', cuentasEmailController.updateCuentaEmail);
  * /api/cuentas-email/{id}:
  *   delete:
  *     summary: Eliminar cuenta de correo
- *     tags: [Recursos Digitales]
+ *     tags: [Correos]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Cuenta eliminada.
