@@ -41,44 +41,54 @@ graph TD
 
 ---
 
-## ⚡ Quick Start (Onboarding)
+## 🚀 Quick Start (Enterprise Onboarding)
 
-Diseñado para iniciar el entorno de desarrollo en menos de 5 minutos.
+Sigue estos pasos para levantar el entorno de desarrollo local (Localhost) en menos de 5 minutos.
 
-### Prerrequisitos
-*   **Node.js** v18+ (LTS)
-*   **MySQL** 8.0+
-*   **Git**
+### 0. Prerrequisitos
+* **Node.js**: `v18.x` o superior (`node -v`)
+* **MySQL**: `v8.0` corriendo en puerto `3306`.
+* **Git Bash** (Windows) o Terminal (Linux/Mac).
 
-### Instalación Automática
-Hemos creado un script de orquestación en la raíz del proyecto:
+### 1. Configuración del Entorno (Bootstrap)
+Ejecuta los siguientes comandos para instalar dependencias y configurar variables de entorno:
 
 ```bash
 # 1. Clonar repositorio
 git clone https://github.com/herwingx/inventario-ti-lds.git
 cd inventario-ti-lds
 
-# 2. Configuración de Variables de Entorno
-cp server/.env.example server/.env
-# IMPORTANTE: Edita server/.env con tus credenciales de MySQL (DB_USER, DB_PASSWORD)
+# 2. Configuración Backend
+cd server
+npm install
+cp .env.example .env
+# ⚠️ ADVERTENCIA: Edita server/.env y configura tu DB_PASSWORD y JWT_SECRET antes de continuar.
 
-# 3. Instalación de Dependencias y Generación de Clientes (Backend & Frontend)
-npm run setup
+# 3. Base de Datos (Migraciones y Seeds)
+npx prisma migrate dev --name init
+npm run seed # Carga usuario admin por defecto (admin / 123456)
+
+# 4. Configuración Frontend
+cd ../client
+npm install
 ```
 
-### Ejecución
-Para desarrollo, recomendamos abrir dos terminales:
+### 2. Ejecución (Developer Mode)
+Recomendamos usar dos terminales separadas para ver los logs en tiempo real:
 
-**Terminal 1 (Backend API):**
+**Terminal A (API Server):**
 ```bash
-npm run dev:server
-# API disponible en http://localhost:3000
+cd server
+npm run dev
+# 🟢 API Check: http://localhost:3000/api/status
+# 📄 Docs: http://localhost:3000/api-docs
 ```
 
-**Terminal 2 (Frontend SPA):**
+**Terminal B (Frontend):**
 ```bash
-npm run dev:client
-# UI disponible en http://localhost:5173
+cd client
+npm run dev
+# 🖥️ UI: http://localhost:5173
 ```
 
 ---
@@ -87,7 +97,7 @@ npm run dev:client
 
 | Módulo | Descripción Técnica |
 | :--- | :--- |
-| **📦 Inventario Core** | CRUD transaccional de hardware (`Equipos`, `Periféricos`) con validación de unicidad (Serie, MAC). |
+| **📦 Inventario Core** | CRUD transaccional de hardware (`Equipos`) con validación de unicidad (Serie, MAC). |
 | **🔗 Asignaciones** | Lógica de negocio para préstamos con trazabilidad histórica (Quién tuvo qué y cuándo). |
 | **🌐 Control IP** | Gestión de direcciones IP (`Redes`) para evitar conflictos en la LAN corporativa. |
 | **🎫 Helpdesk QR** | Sistema público/privado para reporte de incidentes mediante escaneo de tokens QR únicos. |
@@ -101,7 +111,7 @@ npm run dev:client
 Para una comprensión profunda de las decisiones técnicas:
 
 *   [🏛️ Arquitectura & Stack](docs/ARQUITECTURA_TECNOLOGIA.md) - Diagramas C4 Container y justificación tecnológica.
-*   [⚖️ ADRs (Decision Records)](docs/ADR/) - Registro de decisiones arquitectónicas clave (ej. Prisma vs Raw SQL).
+*   [⚖️ ADRs (Decision Records)](docs/ADR/) - Registro de decisiones arquitectónicas clave (ej. Soft Delete).
 *   [📘 Manual Técnico](docs/MANUAL_TECNICO.md) - Guías de despliegue, backups y troubleshooting.
 *   [🗂️ Diccionario de Datos](docs/DICCIONARIO_DATOS.md) - Esquema de base de datos y enumeraciones.
 *   [📘 Manual de Funcionamiento](docs/MANUAL_FUNCIONAMIENTO.md) - Lógica interna y flujos de datos detallados.

@@ -3,12 +3,14 @@
 > **Capa de Persistencia:** MySQL 8.0 + Prisma ORM
 >
 > Referencia técnica de la estructura de datos, tipos de campo, enumeraciones y relaciones del sistema.
+> Actualizado a: 2026-02-13
 
 ---
 
 ## 📊 Catálogos Estándar
 
 ### Estados del Sistema (`status`)
+Tabla: `status`
 | ID | Nombre | Descripción |
 |:---|:---|:---|
 | 1 | `Activo` | Registro operativo y habilitado. |
@@ -18,6 +20,7 @@
 | 5 | `Disponible` | Libre en inventario para nueva asignación. |
 
 ### Roles de Usuario (`roles`)
+Tabla: `roles`
 | ID | Rol | Alcance |
 |:---|:---|:---|
 | 1 | `Administrador` | Control total del sistema y gestión de usuarios. |
@@ -29,37 +32,41 @@
 ## 💻 Entidades Principales
 
 ### Equipos (`equipos`)
+Almacena el inventario de hardware.
 | Campo | Tipo | Restricción | Descripción |
 |:---|:---|:---|:---|
 | `id` | `Int` | PK, AI | Identificador interno. |
-| `numero_serie` | `String` | UNIQUE | Identificador físico del fabricante. |
-| `id_tipo_equipo` | `Int` | FK | Relación con `tipos_equipo`. |
-| `id_sucursal_actual`| `Int` | FK | Ubicación física actual. |
-| `qr_token` | `String` | UNIQUE | Token de 64 caracteres para acceso público. |
-| `id_status` | `Int` | FK | Estado actual del hardware. |
+| `numero_serie` | `String(100)` | UNIQUE | Serial del fabricante. |
+| `qr_token` | `String(64)` | UNIQUE | Token para acceso público QR. |
+| `id_status` | `Int` | FK | Estado actual (FK: status). |
+| `id_sucursal_actual` | `Int` | FK | Ubicación física actual. |
+| `mac_address` | `String(20)` | UNIQUE | Dirección MAC para control de red. |
+| `proxima_fecha_mantenimiento` | `Date` | NULL | Calculado según frecuencia. |
 
 ### Asignaciones (`asignaciones`)
+Histórico de préstamos de equipos.
 | Campo | Tipo | Restricción | Descripción |
 |:---|:---|:---|:---|
 | `id` | `Int` | PK, AI | Identificador de transacción. |
-| `id_equipo` | `Int` | FK | Activo vinculado. |
-| `id_empleado` | `Int` | FK (Opt) | Responsable del activo. |
-| `id_ip` | `Int` | FK (Opt) | Dirección IP asignada al activo. |
-| `fecha_asignacion` | `DateTime` | NOT NULL | Inicio de la custodia. |
-| `firma_receptor` | `LongText` | NULL | Nombre del archivo de imagen de la firma (.png). |
-| `url_responsiva_pdf` | `String` | NULL | Nombre del archivo PDF firmado almacenado. |
+| `id_equipo` | `Int` | FK | Equipo prestado. |
+| `id_empleado` | `Int` | FK | Empleado responsable. |
+| `fecha_asignacion` | `DateTime` | NOT NULL | Fecha de inicio de custodia. |
+| `fecha_fin_asignacion` | `DateTime` | NULL | Fecha de devolución (NULL = Activa). |
+| `id_status_asignacion` | `Int` | FK | Estado de la asignación (1: Activa, 2: Finalizada). |
 
 ---
 
-## 🎫 Módulo de Soporte (Fase 2)
+## 🎫 Módulo de Soporte
 
 ### Tickets (`tickets`)
+Sistema de gestión de incidentes.
 | Campo | Tipo | Descripción |
 |:---|:---|:---|
-| `token_acceso` | `String` | Token único para seguimiento externo (sin login). |
+| `token_acceso` | `String(64)` | Token único para seguimiento externo (uuid). |
 | `tipo_falla` | `ENUM` | `HARDWARE`, `SOFTWARE`, `RED`, `IMPRESORA`, `OTRO`. |
 | `prioridad` | `ENUM` | `BAJA`, `MEDIA`, `ALTA`, `CRITICA`. |
 | `estatus` | `ENUM` | `ABIERTO`, `EN_PROGRESO`, `PENDIENTE`, `RESUELTO`, `CERRADO`. |
+| `evidencia_url` | `String` | URL relativa a archivo adjunto. |
 
 ---
 
@@ -68,12 +75,13 @@
 |:---|:---|:---|
 | `id_usuario` | `Int` | Ejecutor de la acción. |
 | `accion` | `ENUM` | `CREATE`, `UPDATE`, `DELETE`. |
-| `valores_anteriores`| `JSON` | Snapshot previo al cambio. |
-| `valores_nuevos` | `JSON` | Snapshot posterior al cambio. |
-| `ip_origen` | `String` | Dirección IPv4/IPv6 del cliente. |
+| `tabla_afectada` | `String` | Nombre de la entidad modificada. |
+| `valores_anteriores`| `LongText` | JSON Snapshot previo al cambio. |
+| `valores_nuevos` | `LongText` | JSON Snapshot posterior al cambio. |
 
 ---
 
 ## 📝 Notas de Implementación
-*   **Soft Delete:** No se ejecutan comandos `DELETE` físicos en tablas maestras; se actualiza `id_status = 2`.
-*   **Formato de Fechas:** Todas las marcas de tiempo se almacenan en UTC.
+*   **Soft Delete:** Se aplica filtro global `where: { id_status: 1 }` para lecturas estándar.
+*   **Fechas:** Todas las marcas de tiempo se almacenan en UTC.
+*   **Uploads:** Las evidencias de tickets se guardan en el sistema de archivos, la BD solo guarda la ruta relativa.

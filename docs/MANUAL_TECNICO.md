@@ -20,10 +20,10 @@ mysqldump -u [usuario] -p --single-transaction --quick --lock-tables=false inven
 **Restauración Crítica:**
 1. Crear base de datos vacía: `CREATE DATABASE inventario_soporte;`
 2. Importar dump: `mysql -u [usuario] -p inventario_soporte < backup_archivo.sql`
-3. Sincronizar Prisma: `npx prisma generate`
+3. Sincronizar Prisma (regenerar cliente): `npx prisma generate`
 
 ### 2. Mantenimiento Preventivo (DB)
-Ejecutar mensualmente para optimizar índices:
+Ejecutar mensualmente para optimizar índices y reclamar espacio:
 ```sql
 OPTIMIZE TABLE equipos, asignaciones, tickets, logs_sistema;
 ```
@@ -34,10 +34,10 @@ OPTIMIZE TABLE equipos, asignaciones, tickets, logs_sistema;
 
 ### Nivel 1: Conectividad
 *   **Error:** `Network Error` / `ECONNREFUSED`
-    *   **Causa:** Backend caído o puerto 3000 bloqueado.
-    *   **Acción:** Ejecutar `pm2 list`. Si el proceso está en `errored`, revisar logs con `pm2 logs`.
+    *   **Causa:** Backend caído o puerto 3000 bloqueado por firewall.
+    *   **Acción:** Ejecutar `pm2 list` (prod) o verificar consola (dev). Si el proceso está en `errored`, revisar logs con `pm2 logs`.
 *   **Error:** `403 Forbidden` (CORS)
-    *   **Causa:** Petición desde un dominio no autorizado.
+    *   **Causa:** Petición desde un dominio no autorizado (ej. IP diferente a `localhost` o dominio producción).
     *   **Acción:** Verificar la variable `CORS_ORIGIN` en el `.env` del servidor.
 
 ### Nivel 2: Aplicación
@@ -45,8 +45,8 @@ OPTIMIZE TABLE equipos, asignaciones, tickets, logs_sistema;
     *   **Causa:** El JWT ha expirado o el `JWT_SECRET` fue modificado.
     *   **Acción:** El sistema forzará logout. Si el problema persiste para todos, verificar sincronización de hora del servidor (`ntp`).
 *   **Error:** `PrismaClientKnownRequestError`
-    *   **Causa:** Inconsistencia entre el código y la base de datos.
-    *   **Acción:** Ejecutar `npx prisma db pull` para verificar discrepancias.
+    *   **Causa:** Inconsistencia entre el código y la base de datos (migraciones pendientes).
+    *   **Acción:** Ejecutar `npx prisma migrate deploy` para aplicar cambios pendientes en producción.
 
 ---
 
@@ -56,8 +56,8 @@ El sistema depende estrictamente de las variables de entorno.
 
 | Variable | Impacto si se pierde | Acción de Recuperación |
 | :--- | :--- | :--- |
-| `DATABASE_URL` | Pérdida total de servicio. | Restaurar conexión a MySQL. |
-| `JWT_SECRET` | Cierre de todas las sesiones. | Generar uno nuevo; los usuarios deberán re-loguearse. |
+| `DATABASE_URL` | Pérdida total de servicio. | Restaurar conexión string a MySQL. |
+| `JWT_SECRET` | Invalida todas las sesiones activas. | Generar uno nuevo; los usuarios deberán re-loguearse. |
 | `VITE_API_URL` | El frontend no encuentra la API. | Re-compilar frontend con `npm run build`. |
 
 ---
@@ -66,12 +66,24 @@ El sistema depende estrictamente de las variables de entorno.
 
 | Tarea | Frecuencia | Responsable |
 | :--- | :--- | :--- |
-| Revisión de `logs_sistema` (Auditoría) | Semanal | Administrador TI |
-| Rotación de `logs/error.log` | Mensual | DevOps/Soporte |
-| Prueba de restauración de Backup | Trimestral | DevOps |
+| Revisión de `logs_sistema` (Auditoría Forense) | Semanal | Administrador TI |
+| Rotación de logs de servidor (`pm2 flush`) | Mensual | DevOps/Soporte |
+| Prueba de restauración de Backup (Sandbox) | Trimestral | DevOps |
 | Actualización de dependencias (`npm audit`) | Trimestral | Desarrollador |
 
 ---
 
-## 🚨 Contacto de Emergencia
-En caso de fallo crítico no documentado, consulte la [Guía de Desarrollo](GUIA_DESARROLLO.md) para entender la traza de errores o contacte al Arquitecto del Sistema.
+## 🚨 Flujo de Respuesta a Incidentes (Mermaid)
+
+```mermaid
+graph TD
+    A[Alerta de Incidente] --> B{¿Sistema Caído?}
+    B -- Sí --> C[Revisar PM2/Docker]
+    C --> D{¿Logs de Error?}
+    D -- Sí --> E[Corregir Código/Config]
+    D -- No --> F[Revisar DB/Red]
+    B -- No --> G{¿Bug Funcional?}
+    G -- Sí --> H[Crear Issue en GitHub]
+    H --> I[Desarrollar Hotfix]
+    I --> J[Deploy a Prod]
+```

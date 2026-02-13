@@ -90,18 +90,33 @@ A diferencia de un MVC tradicional, se ha optado por un enfoque orientado a serv
 
 ---
 
-## 🔒 Estrategia de Seguridad
+## 🔒 Estrategia de Seguridad (Auth Flow)
 
-1.  **Autenticación Stateless:** Tokens JWT firmados (HS256) con expiración. No se almacena estado de sesión en el servidor.
-2.  **Hardening de Rutas Públicas (QR/Ayuda):**
-    *   **Rate Limiting Estricto:** Implementación de `express-rate-limit` específico para endpoints públicos, mitigando ataques de denegación de servicio (DoS) y fuerza bruta.
-    *   **Entropía de Tokens:** Uso de identificadores hexadecimales de 16 caracteres para activos, haciendo matemáticamente imposible la adivinación de recursos (Insecure Direct Object Reference - IDOR).
-    *   **Data Masking (Privacidad):** Los servicios públicos aplican un filtro de "Menor Privilegio", ocultando IDs de base de datos, números de serie y direcciones IP reales.
-3.  **Principio de Menor Privilegio:** La conexión a la BD usa un usuario específico, no `root`.
-4.  **Sanitización:** Validación estricta de entradas vía **Zod** para evitar XSS y SQL Injection.
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as Usuario (Browser)
+    participant C as Cliente (Vue.js)
+    participant A as API (Express)
+    participant D as DB (MySQL)
 
----
-
-## 🌐 Plan de Red y Despliegue
-
-Consulte [PLAN_SEGMENTACION_RED.md](PLAN_SEGMENTACION_RED.md) y [GUIA_DESPLIEGUE.md](GUIA_DESPLIEGUE.md) para detalles de infraestructura.
+    Note over U, D: Flujo de Inicio de Sesión Seguro
+    U->>C: Ingresa Credenciales
+    C->>A: POST /api/auth/login {user, pass}
+    activate A
+    A->>D: SELECT * FROM usuarios WHERE email = ?
+    activate D
+    D-->>A: Retorna Hash Password
+    deactivate D
+    A->>A: bcrypt.compare(pass, hash)
+    alt Credenciales Inválidas
+        A-->>C: 401 Unauthorized
+        C-->>U: Muestra "Error de credenciales"
+    else Credenciales Válidas
+        A->>A: jwt.sign(payload, secret)
+        A-->>C: 200 OK { token, userProfile }
+    end
+    deactivate A
+    C->>C: Pinia Store: setAuth(user, token)
+    C-->>U: Redirecciona a Dashboard
+```

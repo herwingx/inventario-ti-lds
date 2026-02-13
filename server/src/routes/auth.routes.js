@@ -29,20 +29,39 @@ const authController = require('../controllers/auth.controller');
  *           schema:
  *             type: object
  *             required:
- *               - username
+ *               - email
  *               - password
  *             properties:
- *               username:
+ *               email:
  *                 type: string
- *                 example: admin
+ *                 example: admin@lds.com
+ *                 description: Correo electrónico corporativo
  *               password:
  *                 type: string
+ *                 format: password
  *                 example: password123
  *     responses:
  *       200:
  *         description: Login exitoso. Retorna el token JWT y datos del usuario.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: JWT Bearer Token
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id: 
+ *                       type: integer
+ *                     username:
+ *                       type: string
+ *                     role:
+ *                       type: string
  *       401:
- *         description: Usuario o contraseña incorrectos.
+ *         description: Credenciales inválidas.
  */
 router.post('/login', authController.login);
 
@@ -63,10 +82,13 @@ router.post('/login', authController.login);
  *             properties:
  *               email:
  *                 type: string
- *                 example: admin@empresa.com
+ *                 format: email
+ *                 example: admin@lds.com
  *     responses:
  *       200:
- *         description: Correo de recuperación enviado.
+ *         description: Correo de recuperación enviado (si el email existe).
+ *       400:
+ *         description: Email no válido o faltante.
  */
 router.post('/forgot-password', authController.forgotPassword);
 
@@ -75,6 +97,7 @@ router.post('/forgot-password', authController.forgotPassword);
  * /api/auth/reset-password:
  *   post:
  *     summary: Restablecer contraseña con token
+ *     description: Finaliza el proceso de recuperación usando el token enviado por email.
  *     tags: [Autenticación]
  *     requestBody:
  *       required: true
@@ -88,12 +111,17 @@ router.post('/forgot-password', authController.forgotPassword);
  *             properties:
  *               token:
  *                 type: string
+ *                 description: Token recibido por correo
  *               newPassword:
  *                 type: string
+ *                 format: password
+ *                 minLength: 6
  *     responses:
  *       200:
  *         description: Contraseña actualizada correctamente.
+ *       400:
+ *         description: Token inválido o expirado.
  */
 router.post('/reset-password', authController.resetPassword);
 
-module.exports = router; 
+module.exports = router;

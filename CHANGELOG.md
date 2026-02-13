@@ -1,163 +1,29 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+Todos los cambios notables en este proyecto serán documentados en este archivo.
+El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
+y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### [2.3.3] (2026-02-11)
-### Added (Añadido)
-- **Tickets (Soporte):** Bloqueo integral del chat (input, adjuntos y respuestas rápidas) para tickets en estado `RESUELTO` y `CERRADO`.
-- **Notificaciones:** Integración del servicio de email (`nodemailer`) para notificar a usuarios finales sobre respuestas de soporte y confirmación de reportes recibidos.
-- **Resiliencia:** Derivación automática de URL de frontend a partir de `API_URL` en el servicio de notificaciones para mayor portabilidad.
-
-### Fixed (Corregido)
-- **Backend:** Candado de seguridad en `TicketService` para impedir la creación de comentarios o adjuntos en tickets finalizados (`RESUELTO`/`CERRADO`), incluso vía API externa.
-
-### [2.3.2] (2026-02-11)
-### Added (Añadido)
-- **Dashboard:** Mejoras en el widget de actividad reciente para distinguir visualmente entre asignaciones activas (Verde) y finalizadas (Gris), mostrando también la fecha de finalización.
-- **Asignaciones:** Corrección crítica en el módulo de gestión de componentes adicionales, permitiendo agregar y quitar periféricos correctamente.
-
-### Fixed (Corregido)
-- **UI:** Estandarización de botones de acción en todas las tablas del sistema (centrado `justify-center` para mejor estética).
-- **Asignaciones:** Implementación faltante del método `updateComponentes` en el servicio de frontend.
-
-### [2.3.1] (2026-02-10)
-### Added (Añadido)
-- **Chat Premium:** Rediseño visual del chat de soporte con burbujas dinámicas y soporte para Viewport dinámico (DVH).
-- **Auto-Refresh:** Implementación de polling automático (30s) para mantener la conversación sincronizada sin recargar.
-- **Auditoría en Chat:** Mensajes automáticos del sistema cuando se cambia el estatus o técnico asignado.
-
-### [2.3.0] (2026-02-10)
-### Added (Añadido)
-- **Comunicación Bidireccional:** Habilitación de chat en tiempo real entre el usuario (vía QR) y el panel de administración.
-- **Bitácora de Soporte:** Nueva sección en el detalle de equipos que muestra el historial completo de tickets asociados.
-- **Categorización Inteligente:** Mejoras en el mapeo de fallas reportadas por usuarios finales.
-
-### [2.2.1] (2026-02-10)
-
-
-### Features
-
-* **infra:** sincronización de rutas para sub-directorio /soporte y hardening de seguridad ([cbdd919](https://github.com/herwingx/inventario-ti-lds/commit/cbdd91987cef9868f2c53f70cb8738470b5e7d7a))
-
-## [2.2.0](https://github.com/herwingx/inventario-ti-lds/compare/v2.1.1...v2.2.0) (2026-02-10)
-
-
-### Features
-
-* **support:** implementar ecosistema QR inclusivo con asistente wizard y portal de ayuda manual ([c2a152b](https://github.com/herwingx/inventario-ti-lds/commit/c2a152b97283b836c690c8856e0a43b394bea2ee))
-
-### [2.1.1](https://github.com/herwingx/inventario-ti-lds/compare/v2.1.0...v2.1.1) (2026-02-10)
-
-## [2.1.0](https://github.com/herwingx/inventario-ti-lds/compare/v2.0.0...v2.1.0) (2026-02-10)
-
-
-### ⚠ BREAKING CHANGES
-
-* **mantenimiento:** implementacion completa modulo auditoria y refactor UX formularios
-
-### Features
-
-* **assignments:** implementar firma digital autógrafa y generación de hoja de resguardo institucional ([a944dac](https://github.com/herwingx/inventario-ti-lds/commit/a944dac0f9155c7d2c8a9c8e34ad649b215e300d))
-* **DataTable:** implementar selector de filas por página con opción 'Todos' y actualizar la lógica de paginación. ([6002493](https://github.com/herwingx/inventario-ti-lds/commit/6002493cf26e574b33648e64fd945de714174c3a))
-* **equipos:** añadir información de mantenimiento en la vista de detalle y refinar formulario ([c1c0c82](https://github.com/herwingx/inventario-ti-lds/commit/c1c0c82450a02d84fdff1fb5722bafb3589fd9fc))
-* **fase2:** gestión de evidencias, roles y auditoría ([9d7a666](https://github.com/herwingx/inventario-ti-lds/commit/9d7a6665ace65219a0ca9a1e30199641f7a6c4cf))
-* **helpdesk:** implementar sistema de tickets qr publicos con validacion y flujo completo ([f3034f9](https://github.com/herwingx/inventario-ti-lds/commit/f3034f9a47840ee24cb94c65c3d84b904de2f6b1))
-* **layout:** hacer clicable el logo de la barra lateral para navegar a inicio ([0bc9a38](https://github.com/herwingx/inventario-ti-lds/commit/0bc9a3895310470bf4b69d69d5072163ff5211a6))
-* **mantenimiento:** automatización de alertas y programación de mantenimientos preventivos ([dca5120](https://github.com/herwingx/inventario-ti-lds/commit/dca5120f29bacb6bf9a2905751b3624d1e45c28a))
-* **mantenimiento:** implementacion completa modulo auditoria y refactor UX formularios ([8a3466a](https://github.com/herwingx/inventario-ti-lds/commit/8a3466a9300df2eb387d7d63a25547b5745bbc62))
-* **ui:** implementar scroll behavior en el router y resetear menús expandidos del sidebar al sincronizar el elemento activo. ([df55359](https://github.com/herwingx/inventario-ti-lds/commit/df5535944725f36becdca3042bfefd221064466a))
-
-
-### Bug Fixes
-
-* **asignaciones:** corregir gestión de componentes adicionales y mejorar visualización de tipos ([7002e30](https://github.com/herwingx/inventario-ti-lds/commit/7002e3094dc1d82ee18ea68b6c6f466788affe8b))
-* **ui:** sincronizar la prop `rows` en el componente `DataTable` y ajustar el número de filas a 10 en `DireccionesIpView`. ([6f308a2](https://github.com/herwingx/inventario-ti-lds/commit/6f308a2b697eb3b95e35234c10c04049ca2e8662))
-
-## [1.1.0](https://github.com/herwingx/inventario-ti-lds/compare/v2.0.0...v1.1.0) (2026-02-10)
-
-
-### ⚠ BREAKING CHANGES
-
-* **mantenimiento:** implementacion completa modulo auditoria y refactor UX formularios
-
-### Features
-
-* **assignments:** implementar firma digital autógrafa y generación de hoja de resguardo institucional ([a944dac](https://github.com/herwingx/inventario-ti-lds/commit/a944dac0f9155c7d2c8a9c8e34ad649b215e300d))
-* **DataTable:** implementar selector de filas por página con opción 'Todos' y actualizar la lógica de paginación. ([6002493](https://github.com/herwingx/inventario-ti-lds/commit/6002493cf26e574b33648e64fd945de714174c3a))
-* **equipos:** añadir información de mantenimiento en la vista de detalle y refinar formulario ([c1c0c82](https://github.com/herwingx/inventario-ti-lds/commit/c1c0c82450a02d84fdff1fb5722bafb3589fd9fc))
-* **fase2:** gestión de evidencias, roles y auditoría ([9d7a666](https://github.com/herwingx/inventario-ti-lds/commit/9d7a6665ace65219a0ca9a1e30199641f7a6c4cf))
-* **helpdesk:** implementar sistema de tickets qr publicos con validacion y flujo completo ([f3034f9](https://github.com/herwingx/inventario-ti-lds/commit/f3034f9a47840ee24cb94c65c3d84b904de2f6b1))
-* **layout:** hacer clicable el logo de la barra lateral para navegar a inicio ([0bc9a38](https://github.com/herwingx/inventario-ti-lds/commit/0bc9a3895310470bf4b69d69d5072163ff5211a6))
-* **mantenimiento:** automatización de alertas y programación de mantenimientos preventivos ([dca5120](https://github.com/herwingx/inventario-ti-lds/commit/dca5120f29bacb6bf9a2905751b3624d1e45c28a))
-* **mantenimiento:** implementacion completa modulo auditoria y refactor UX formularios ([8a3466a](https://github.com/herwingx/inventario-ti-lds/commit/8a3466a9300df2eb387d7d63a25547b5745bbc62))
-* **ui:** implementar scroll behavior en el router y resetear menús expandidos del sidebar al sincronizar el elemento activo. ([df55359](https://github.com/herwingx/inventario-ti-lds/commit/df5535944725f36becdca3042bfefd221064466a))
-
-
-### Bug Fixes
-
-* **asignaciones:** corregir gestión de componentes adicionales y mejorar visualización de tipos ([7002e30](https://github.com/herwingx/inventario-ti-lds/commit/7002e3094dc1d82ee18ea68b6c6f466788affe8b))
-* **ui:** sincronizar la prop `rows` en el componente `DataTable` y ajustar el número de filas a 10 en `DireccionesIpView`. ([6f308a2](https://github.com/herwingx/inventario-ti-lds/commit/6f308a2b697eb3b95e35234c10c04049ca2e8662))
-
-## [1.0.0](https://github.com/herwingx/inventario-ti-lds/compare/v2.0.0...v1.0.0) (2026-02-10)
-
-
-### ⚠ BREAKING CHANGES
-
-* **mantenimiento:** implementacion completa modulo auditoria y refactor UX formularios
-
-### Features
-
-* **assignments:** implementar firma digital autógrafa y generación de hoja de resguardo institucional ([a944dac](https://github.com/herwingx/inventario-ti-lds/commit/a944dac0f9155c7d2c8a9c8e34ad649b215e300d))
-* **DataTable:** implementar selector de filas por página con opción 'Todos' y actualizar la lógica de paginación. ([6002493](https://github.com/herwingx/inventario-ti-lds/commit/6002493cf26e574b33648e64fd945de714174c3a))
-* **equipos:** añadir información de mantenimiento en la vista de detalle y refinar formulario ([c1c0c82](https://github.com/herwingx/inventario-ti-lds/commit/c1c0c82450a02d84fdff1fb5722bafb3589fd9fc))
-* **fase2:** gestión de evidencias, roles y auditoría ([9d7a666](https://github.com/herwingx/inventario-ti-lds/commit/9d7a6665ace65219a0ca9a1e30199641f7a6c4cf))
-* **helpdesk:** implementar sistema de tickets qr publicos con validacion y flujo completo ([f3034f9](https://github.com/herwingx/inventario-ti-lds/commit/f3034f9a47840ee24cb94c65c3d84b904de2f6b1))
-* **layout:** hacer clicable el logo de la barra lateral para navegar a inicio ([0bc9a38](https://github.com/herwingx/inventario-ti-lds/commit/0bc9a3895310470bf4b69d69d5072163ff5211a6))
-* **mantenimiento:** automatización de alertas y programación de mantenimientos preventivos ([dca5120](https://github.com/herwingx/inventario-ti-lds/commit/dca5120f29bacb6bf9a2905751b3624d1e45c28a))
-* **mantenimiento:** implementacion completa modulo auditoria y refactor UX formularios ([8a3466a](https://github.com/herwingx/inventario-ti-lds/commit/8a3466a9300df2eb387d7d63a25547b5745bbc62))
-* **ui:** implementar scroll behavior en el router y resetear menús expandidos del sidebar al sincronizar el elemento activo. ([df55359](https://github.com/herwingx/inventario-ti-lds/commit/df5535944725f36becdca3042bfefd221064466a))
-
-
-### Bug Fixes
-
-* **asignaciones:** corregir gestión de componentes adicionales y mejorar visualización de tipos ([7002e30](https://github.com/herwingx/inventario-ti-lds/commit/7002e3094dc1d82ee18ea68b6c6f466788affe8b))
-* **ui:** sincronizar la prop `rows` en el componente `DataTable` y ajustar el número de filas a 10 en `DireccionesIpView`. ([6f308a2](https://github.com/herwingx/inventario-ti-lds/commit/6f308a2b697eb3b95e35234c10c04049ca2e8662))
-
-## [1.2.0] - 2026-02-10
-### Added (Añadido)
-- **Firma Digital:** Implementación de un Pad de Firma (Canvas HTML5) para captura de firmas autógrafas digitales.
-- **Motor de PDF (pdfmake):** Generación dinámica de "Hojas de Resguardo" con formato institucional de Línea Digital del Sureste.
-- **Almacenamiento Privado:** Capa de almacenamiento fuera de la carpeta pública para documentos legales y firmas (.pdf y .png).
-- **Incrustación de SVG:** Integración de logos corporativos vectoriales en documentos PDF.
-
-### Changed (Cambiado)
-- **UX/UI Mobile-First:** El componente `DataTable` ahora se transforma automáticamente en tarjetas (Cards) en dispositivos móviles.
-- **Resiliencia de Archivos:** El sistema detecta automáticamente si un PDF fue borrado del disco y permite volver a firmar.
-- **Naming Dinámico:** Los archivos PDF se generan con nombres descriptivos basados en el empleado y equipo.
-
-### Fixed (Corregido)
-- Error de desbordamiento horizontal en el detalle de asignaciones.
-- Validación de filtros en la API para evitar errores de tipo `NaN`.
-
-## [1.1.0] - 2026-02-10
-### Added (Añadido)
-- **Helpdesk QR (Fase 2):** Implementación completa del módulo de tickets con acceso público mediante tokens QR.
-- **Auditoría:** Middleware y tabla `logs_sistema` para registrar cambios (CREATE, UPDATE, DELETE) con snapshots JSON.
-- **Documentación:** Diagramas de arquitectura C4 Model (Contexto y Contenedores) en Mermaid.js.
-- **ADRs:** Inicio del registro de decisiones de arquitectura (`docs/ADR/`).
-- **DX:** Script `npm run setup` en raíz para automatizar la instalación del entorno.
-
-### Changed (Cambiado)
-- **Seguridad:** Implementación de `helmet` en Express para hardening de cabeceras HTTP.
-- **Rate Limiting:** Configuración de límites de petición para API pública (`/q/*`).
-- **Refactor:** Migración de consultas SQL nativas a Prisma ORM en controladores críticos.
-
-### Fixed (Corregido)
-- Error de CORS en despliegues con prefijo `/soporte`.
-- Corrección en la validación de unicidad de direcciones IP en el módulo de asignaciones.
-
-## [1.0.0] - 2025-12-01
+## [Unreleased]
 ### Added
-- Lanzamiento inicial del sistema (MVP).
-- Módulos de Inventario, Empleados, Asignaciones y Mantenimientos.
-- Autenticación JWT y Roles de usuario.
+- Nuevo endpoint `/api/reports/pdf` para exportación masiva de responsivas.
+- Implementación de `audit.middleware.js` para registro forense de cambios.
+
+## [1.1.0] - 2026-02-13
+### Added
+- **Auth:** Implementación de Swagger UI en `/api-docs` para documentación viva.
+- **Tickets:** Soporte para carga de múltiples imágenes como evidencia en reportes de fallo.
+- **Docs:** Inclusión de Diagramas C4 y ADRs para auditoría de arquitectura.
+
+### Changed
+- Refactorización del middleware `auth.middleware.js` para usar `Bearer` token estándar.
+- Actualización de `Prisma` a v6.19.2 para mejor compatibilidad con MySQL 8.0.
+- Mejora en la estructura del `README.md` para onboarding de desarrolladores.
+
+### Fixed
+- Error de CORS en preflight requests desde clientes externos.
+- Bug crítico donde los equipos "En Mantenimiento" aparecían como "Disponibles" en el selector de asignación.
+
+### Security
+- Actualización de `helmet` para prevenir vulnerabilidades web comunes.
+- Implementación de Rate Limiting en rutas de Login y QR público.
