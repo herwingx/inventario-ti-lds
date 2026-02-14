@@ -54,8 +54,7 @@ location /soporte/ {
 
 5.  **Permisos de Directorios:**
     El sistema requiere permisos de escritura para el almacenamiento dinámico:
-    - `server/public/uploads` (Evidencias de tickets/mantenimiento)
-    - `server/storage` (Vault privado de firmas y PDFs)
+    - `server/storage` (Evidencias, firmas, tickets y PDFs)
 
 ---
 

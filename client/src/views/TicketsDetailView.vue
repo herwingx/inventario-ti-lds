@@ -230,9 +230,8 @@ const getFullUrl = (path) => {
   
   let cleanPath = path.startsWith('/') ? path : `/${path}`
   
-  // Soporte para rutas antiguas que no tenían /storage/ o /uploads/
-  // Si la ruta empieza con /tickets/ pero no con /storage/tickets/, se añade /storage
-  if (cleanPath.startsWith('/tickets/') && !cleanPath.startsWith('/storage/')) {
+  // Asegurar que la ruta comience con /storage si no lo tiene
+  if (!cleanPath.startsWith('/storage/')) {
     cleanPath = `/storage${cleanPath}`
   }
   

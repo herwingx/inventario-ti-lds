@@ -84,4 +84,4 @@ Sistema de gestión de incidentes.
 ## 📝 Notas de Implementación
 *   **Soft Delete:** Se aplica filtro global `where: { id_status: 1 }` para lecturas estándar.
 *   **Fechas:** Todas las marcas de tiempo se almacenan en UTC.
-*   **Uploads:** Las evidencias de tickets se guardan en el sistema de archivos, la BD solo guarda la ruta relativa.
+*   **Almacenamiento (Storage):** Las evidencias y documentos se guardan en el sistema de archivos (`/server/storage/`), la BD solo guarda la ruta relativa.

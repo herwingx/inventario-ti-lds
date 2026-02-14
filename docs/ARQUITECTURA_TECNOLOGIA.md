@@ -24,7 +24,7 @@ graph LR
 
     subgraph "Capa de Datos"
         DB[(Base de Datos<br/>MySQL 8.0)]
-        FS[File System<br/>Uploads/Evidencias]
+        FS[File System<br/>Storage/Evidencias]
     end
 
     SPA -- "HTTPS / JSON (REST)" --> API

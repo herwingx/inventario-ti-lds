@@ -52,15 +52,31 @@ const createMantenimiento = asyncHandler(async (req, res) => {
     }
 
     const userId = req.user ? req.user.userId : null;
-    const newManto = await MantenimientoService.create(validation.data.body, userId);
+    
+    try {
+        const newManto = await MantenimientoService.create(validation.data.body, userId);
 
-    logger.info(`Mantenimiento programado: ${newManto.titulo} (ID: ${newManto.id})`);
+        logger.info(`Mantenimiento programado: ${newManto.titulo} (ID: ${newManto.id})`);
 
-    res.status(201).json({
-        status: 'success',
-        message: 'Mantenimiento programado exitosamente',
-        data: { id: newManto.id }
-    });
+        res.status(201).json({
+            status: 'success',
+            message: 'Mantenimiento programado exitosamente',
+            data: { id: newManto.id }
+        });
+    } catch (error) {
+        if (error.code === 'P2003') {
+            const field = error.meta?.field_name || 'un campo relacionado';
+            const errorMsg = field.includes('id_equipo') 
+                ? 'El ID del equipo proporcionado no existe.' 
+                : 'No se puede crear el mantenimiento debido a una referencia inválida (equipo o técnico no encontrado).';
+            
+            const conflictError = new Error(errorMsg);
+            conflictError.statusCode = 400; // Bad Request because the input ID is wrong
+            conflictError.isOperational = true;
+            throw conflictError;
+        }
+        throw error;
+    }
 });
 
 /**
@@ -233,16 +249,20 @@ const deleteEvidencia = asyncHandler(async (req, res) => {
 
     // Eliminar archivo físico (Soft fail)
     try {
-        const filePath = path.join(__dirname, '../../public', evidencia.url_archivo); // Asumiendo que uploads está en public/uploads o mapped
-        // Nota: En la configuración de express, uploads está en root/uploads pero servido en /uploads
-        // Ajustar path.join(__dirname, '../../uploads', ...) si está fuera de src
-
-        // Mejor ajuste según estructura original:
-        // server/uploads/evidencias/...
-        // url_archivo: /uploads/evidencias/filename
-        const relativePath = evidencia.url_archivo.replace(/^\//, ''); // Quitar slash inicial
-        const absolutePath = path.join(process.cwd(), relativePath); // Usar CWD (server root)
-
+        // En Express server.js: app.use('/storage', express.static(path.join(__dirname, 'storage')));
+        // url_archivo se guarda como: /storage/evidencias/filename
+        
+        // Quitar el slash inicial y convertir a ruta absoluta del sistema
+        const relativePath = evidencia.url_archivo.replace(/^\//, ''); // e.g. "storage/evidencias/file.jpg"
+        
+        // El CWD debería ser la raíz del proyecto (donde está server/ o server.js se ejecuta desde dentro)
+        // PERO aquí estamos asumiendo que server.js se ejecuta desde "server/".
+        // Si usamos process.cwd() al lanzar "npm start" dentro de server, será /path/to/server
+        // Si url_archivo es "storage/evidencias/...", entonces:
+        // /path/to/server/storage/evidencias/... CORRECTO
+        
+        const absolutePath = path.join(process.cwd(), relativePath); 
+        
         await fs.unlink(absolutePath);
     } catch (fileError) {
         logger.warn(`[EVIDENCIAS] No se pudo eliminar archivo físico: ${fileError.message}`);

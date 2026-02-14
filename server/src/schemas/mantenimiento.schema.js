@@ -9,7 +9,7 @@ const maintenanceTipo = z.enum(['PREVENTIVO', 'CORRECTIVO', 'ACTUALIZACION']);
 
 const createMantenimientoSchema = z.object({
   body: z.object({
-    id_equipo: z.number({ required_error: 'El ID del equipo es obligatorio' }).int().positive(),
+    id_equipo: z.coerce.number({ required_error: 'El ID del equipo es obligatorio' }).int().positive(),
     tipo: maintenanceTipo.default('PREVENTIVO'),
     titulo: z.string({ required_error: 'El título es obligatorio' }).trim().min(3, 'El título debe tener al menos 3 caracteres'),
     descripcion: z.string().trim().optional().nullable(),
@@ -29,6 +29,7 @@ const updateMantenimientoSchema = z.object({
     })
   }),
   body: z.object({
+    id_equipo: z.coerce.number().int().positive().optional(),
     estatus: maintenanceEstatus.optional(),
     notas_cierre: z.string().trim().optional().nullable(),
     costo: z.coerce.number().min(0).optional(),

@@ -103,9 +103,8 @@ app.use((req, res, next) => {
 // Serve public static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Securely serve uploads (Fase 2)
+// Securely serve storage (Fase 2)
 // NOTE: In production, consider protecting these with authentication middleware
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/storage', express.static(path.join(__dirname, 'storage')));
 
 // --- SWAGGER DOCUMENTATION ---

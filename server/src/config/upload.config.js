@@ -42,7 +42,7 @@ const createStorage = (subdir) => {
         finalSubdir = path.join(subdir, String(req.mantenimientoId));
       }
 
-      const uploadPath = path.join(__dirname, '../../storage', finalSubdir); // CAMBIO AQUÍ: 'storage' en lugar de 'uploads'
+      const uploadPath = path.join(__dirname, '../../storage', finalSubdir);
 
       // Asegurarse de que el directorio exista
       fs.mkdirSync(uploadPath, { recursive: true });
