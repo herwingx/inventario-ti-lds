@@ -42,11 +42,15 @@ class QrPublicService {
         empresa: e.sucursales?.empresas?.nombre
       },
       tickets_activos: ticketsActivos.map(t => ({
+        token_acceso: t.token_acceso,
+        id: t.id,
         tipo_falla: t.tipo_falla,
         estatus: t.estatus,
         fecha_creacion: t.fecha_creacion
       })),
       tickets_historial: historial.map(t => ({
+        token_acceso: t.token_acceso,
+        id: t.id,
         tipo_falla: t.tipo_falla,
         estatus: t.estatus,
         fecha_creacion: t.fecha_creacion
