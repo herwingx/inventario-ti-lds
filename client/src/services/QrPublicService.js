@@ -25,30 +25,30 @@ export default {
    * Obtiene información de un equipo por token QR.
    */
   getEquipoByToken(token) {
-    return publicApi.get(`/${token}`).then(res => res.data);
+    return publicApi.get(`/equipo/${token}`).then(res => res.data);
   },
 
   /**
    * Reporta una falla desde escaneo QR o entrada manual.
    */
   reportFalla(token, data) {
-    // Coincide con router.post('/:token', ...) en el backend
-    return publicApi.post(`/${token}`, data).then(res => res.data);
+    // Coincide con router.post('/ticket/:token', ...) en el backend
+    return publicApi.post(`/ticket/${token}`, data).then(res => res.data);
   },
 
   /**
    * Obtiene el estado de un ticket por token de seguimiento.
    */
   getTicketStatus(ticketToken) {
-    // Coincide con router.get('/ticket/:ticketToken', ...) en el backend
-    return publicApi.get(`/ticket/${ticketToken}`).then(res => res.data);
+    // Coincide con router.get('/status/:ticketToken', ...) en el backend
+    return publicApi.get(`/status/${ticketToken}`).then(res => res.data);
   },
 
   /**
    * Agrega un comentario público a un ticket.
    */
   addComment(ticketToken, contenido, nombre = '') {
-    return publicApi.post(`/ticket/${ticketToken}/comment`, {
+    return publicApi.post(`/comment/${ticketToken}`, {
       contenido,
       nombre
     }).then(res => res.data);
@@ -61,7 +61,7 @@ export default {
     const formData = new FormData();
     formData.append('archivo', archivo);
 
-    return publicApi.post(`/ticket/${ticketToken}/evidence`, formData, {
+    return publicApi.post(`/attachment/${ticketToken}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -74,7 +74,7 @@ export default {
   uploadAttachment(ticketToken, file) {
     const formData = new FormData();
     formData.append('file', file);
-    return publicApi.post(`/ticket/${ticketToken}/attachment`, formData, {
+    return publicApi.post(`/attachment/${ticketToken}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data);
   }
