@@ -7,7 +7,7 @@
 import { useThemeStore } from '../../stores/theme'
 import { useAuthStore } from '../../stores/auth'
 import { useRoute } from 'vue-router'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Menu, Sun, Moon, ChevronDown, User, LogOut } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -22,6 +22,7 @@ const emit = defineEmits(['toggleSidebar'])
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
 const route = useRoute()
+const showDropdown = ref(false)
 
 const pageTitle = computed(() => route.meta.title || 'Panel de Control')
 
@@ -32,6 +33,14 @@ const headerStyle = computed(() => {
   }
   return { left: props.sidebarCollapsed ? '5rem' : '16rem' }
 })
+
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value
+}
+
+const closeDropdown = () => {
+  showDropdown.value = false
+}
 </script>
 
 <template>
@@ -73,8 +82,11 @@ const headerStyle = computed(() => {
       </button>
 
       <!-- User Dropdown -->
-      <div class="relative group">
-        <button class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors">
+      <div class="relative">
+        <button 
+          @click="toggleDropdown"
+          class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
+        >
           <!-- Avatar -->
           <div 
             class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm"
@@ -89,14 +101,18 @@ const headerStyle = computed(() => {
             </span>
           </div>
           
-          <ChevronDown class="text-gray-500 hidden sm:block" :size="16" />
+          <ChevronDown class="text-gray-500 hidden sm:block transition-transform" :class="showDropdown ? 'rotate-180' : ''" :size="16" />
         </button>
 
         <!-- Dropdown Menu -->
-        <div class="absolute right-0 top-full mt-2 w-48 bg-light-card dark:bg-dark-card border border-light-border dark:border-dark-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+        <div 
+          v-if="showDropdown"
+          class="absolute right-0 top-full mt-2 w-48 bg-light-card dark:bg-dark-card border border-light-border dark:border-dark-border rounded-lg shadow-lg z-50 animate-fade-in"
+        >
           <div class="py-2">
             <router-link 
               :to="{ name: 'perfil' }"
+              @click="closeDropdown"
               class="flex items-center gap-3 px-4 py-2 text-sm text-light-text dark:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
             >
               <User class="text-primary" :size="18" />

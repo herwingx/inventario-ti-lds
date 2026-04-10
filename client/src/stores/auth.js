@@ -32,11 +32,17 @@ export const useAuthStore = defineStore('auth', () => {
   /** Verifica si el usuario tiene rol de Administrador. */
   const isAdmin = computed(() => user.value?.roleId === 1) // Asumiendo rol 1 es admin
 
-  /** Obtiene el nombre de usuario o un valor por defecto. */
-  const username = computed(() => user.value?.username || 'Usuario')
+  /** Obtiene el nombre visible del usuario o un valor por defecto. */
+  const username = computed(() => {
+    const nombres = [user.value?.nombres, user.value?.apellidos].filter(Boolean).join(' ').trim()
+    return nombres || user.value?.username || 'Usuario'
+  })
 
   /** Obtiene la inicial del usuario para avatares. */
-  const userInitial = computed(() => user.value?.username?.charAt(0).toUpperCase() || 'U')
+  const userInitial = computed(() => {
+    const displayName = [user.value?.nombres, user.value?.apellidos].filter(Boolean).join(' ').trim()
+    return (displayName.charAt(0) || user.value?.username?.charAt(0) || 'U').toUpperCase()
+  })
 
   // ==========================================
   // Acciones (Actions)
@@ -49,13 +55,13 @@ export const useAuthStore = defineStore('auth', () => {
    * actualiza el estado global y el localStorage. Redirige al usuario
    * a la página intentada anteriormente o al home.
    * 
-   * @param {string} username - Nombre de usuario.
+   * @param {string} identifier - Correo o nombre de usuario.
    * @param {string} password - Contraseña.
    * @returns {Promise<Object>} Objeto con { success: boolean, message?: string }.
    */
-  async function login(username, password) {
+  async function login(identifier, password) {
     try {
-      const response = await AuthService.login({ username, password })
+      const response = await AuthService.login({ identifier, password })
 
       token.value = response.data.token
       user.value = response.data.user
@@ -63,8 +69,9 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('token', response.data.token)
       localStorage.setItem('userData', JSON.stringify(response.data.user))
 
-      // Redirigir a la URL intentada o al home
-      router.replace(returnUrl.value || '/home')
+      // Redirigir a la URL intentada o a la vista principal según el rol
+      const defaultRoute = response.data.user?.roleId === 2 ? '/tickets' : '/home'
+      router.replace(returnUrl.value || defaultRoute)
       returnUrl.value = null
 
       return { success: true }

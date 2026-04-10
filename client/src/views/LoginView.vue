@@ -16,7 +16,7 @@ import { Layers } from 'lucide-vue-next'
 const authStore = useAuthStore()
 const { error: toastError, warning: toastWarning } = useSwal()
 
-const username = ref('')
+const identifier = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const loading = ref(false)
@@ -29,14 +29,14 @@ const loading = ref(false)
  * de éxito o error según el resultado.
  */
 const handleLogin = async () => {
-  if (!username.value || !password.value) {
-    toastWarning('Por favor ingrese usuario y contraseña')
+  if (!identifier.value || !password.value) {
+    toastWarning('Por favor ingrese correo y contraseña')
     return
   }
 
   loading.value = true
   
-  const result = await authStore.login(username.value, password.value)
+  const result = await authStore.login(identifier.value, password.value)
   
   loading.value = false
   
@@ -65,8 +65,8 @@ const handleLogin = async () => {
       <form @submit.prevent="handleLogin" class="flex flex-col gap-5">
         
         <div class="flex flex-col gap-2">
-          <label for="username" class="text-xs font-bold text-gray-300">Nombre de usuario</label>
-          <InputText id="username" v-model="username" class="w-full !rounded-md !py-2.5" placeholder="Nombre de usuario" :disabled="loading" autofocus />
+          <label for="identifier" class="text-xs font-bold text-gray-300">Correo electrónico</label>
+          <InputText id="identifier" v-model="identifier" class="w-full !rounded-md !py-2.5" placeholder="correo@empresa.com" :disabled="loading" autofocus />
         </div>
 
         <div class="flex flex-col gap-2">
@@ -80,7 +80,7 @@ const handleLogin = async () => {
         <Button type="submit" label="Iniciar Sesión" :loading="loading" class="w-full !mt-2 !bg-[#1ea97c] !border-none hover:!bg-[#158763] !font-bold !py-2.5 !rounded-md !text-white" />
       
         <div class="text-center mt-2">
-            <span class="text-sm text-gray-400">¿No tienes una cuenta? <a href="#" class="text-[#1ea97c] hover:underline">Regístrate</a></span>
+            <span class="text-sm text-gray-400">¿No tienes una cuenta? <router-link :to="{ name: 'register' }" class="text-[#1ea97c] hover:underline">Regístrate</router-link></span>
         </div>
 
         <!-- Botón de Pánico / Ayuda para Usuarios Finales -->

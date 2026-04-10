@@ -14,13 +14,24 @@ try {
   TicketNotificationService = require('../services/ticketNotification.service');
 } catch (e) {}
 
+const isRestrictedUser = (req) => req.user?.roleId === 2;
+
+const ensureOwnTicket = (req, ticket) => {
+        if (isRestrictedUser(req) && ticket?.id_usuario_reporta !== req.user?.userId) {
+                const error = new Error('No tienes permisos para ver este ticket.');
+                error.statusCode = 403;
+                error.isOperational = true;
+                throw error;
+        }
+};
+
 
 /**
  * Obtiene todos los tickets con filtros.
  * @route GET /api/tickets
  */
 const getAllTickets = asyncHandler(async (req, res) => {
-    const tickets = await TicketService.findAll(req.query);
+    const tickets = await TicketService.findAll(req.query, req.user?.userId, req.user?.roleId);
     res.status(200).json(tickets);
 });
 
@@ -38,6 +49,8 @@ const getTicketById = asyncHandler(async (req, res) => {
         error.isOperational = true;
         throw error;
     }
+
+    ensureOwnTicket(req, ticket);
 
     res.status(200).json(ticket);
 });
@@ -74,6 +87,13 @@ const createTicket = asyncHandler(async (req, res) => {
  * @route PUT /api/tickets/:id
  */
 const updateTicket = asyncHandler(async (req, res) => {
+    if (isRestrictedUser(req)) {
+        const error = new Error('No tienes permisos para actualizar tickets.');
+        error.statusCode = 403;
+        error.isOperational = true;
+        throw error;
+    }
+
     const { id } = req.params;
     const validation = updateTicketSchema.safeParse({ params: { id }, body: req.body });
 
@@ -106,6 +126,13 @@ const updateTicket = asyncHandler(async (req, res) => {
  * @route DELETE /api/tickets/:id
  */
 const deleteTicket = asyncHandler(async (req, res) => {
+    if (isRestrictedUser(req)) {
+        const error = new Error('No tienes permisos para eliminar tickets.');
+        error.statusCode = 403;
+        error.isOperational = true;
+        throw error;
+    }
+
     const { id } = req.params;
     const deleted = await TicketService.delete(id);
     
@@ -139,6 +166,17 @@ const getTecnicos = asyncHandler(async (req, res) => {
 const getComments = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { incluir_internos } = req.query;
+    const ticket = await TicketService.findById(id);
+
+    if (!ticket) {
+        const error = new Error('Ticket no encontrado.');
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
+
+    ensureOwnTicket(req, ticket);
+
     const comments = await TicketService.getComments(id, incluir_internos === 'true');
     res.status(200).json(comments);
 });
@@ -158,6 +196,8 @@ const addComment = asyncHandler(async (req, res) => {
         error.isOperational = true;
         throw error;
     }
+
+    ensureOwnTicket(req, ticket);
     
     if (['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
          const error = new Error('No se pueden agregar mensajes a un ticket finalizado.');
@@ -209,6 +249,8 @@ const uploadTicketAttachment = [
             error.isOperational = true;
             throw error;
         }
+
+        ensureOwnTicket(req, ticket);
 
         const fileUrl = `/storage/tickets/${id}/${file.filename}`;
         await TicketService.addAttachment(id, userId, fileUrl, file.originalname);

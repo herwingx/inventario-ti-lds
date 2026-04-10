@@ -10,19 +10,68 @@ const sendEmail = require('../utils/email');
 
 class AuthService {
 
+  static normalizeText(value) {
+    return String(value || '')
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '.')
+      .replace(/\.+/g, '.')
+      .replace(/^\.|\.$/g, '')
+      .toLowerCase();
+  }
+
+  static async generateUniqueUsername(baseUsername) {
+    const cleanBase = this.normalizeText(baseUsername) || 'usuario';
+    let candidate = cleanBase;
+    let suffix = 1;
+
+    while (await prisma.usuarios_sistema.findUnique({ where: { username: candidate }, select: { id: true } })) {
+      suffix += 1;
+      candidate = `${cleanBase}${suffix}`;
+    }
+
+    return candidate;
+  }
+
+  static generateTemporaryPassword() {
+    return crypto.randomBytes(6).toString('base64url').slice(0, 10);
+  }
+
+  static async resolveDefaultRoleId() {
+    const role = await prisma.roles.findFirst({
+      where: {
+        nombre_rol: {
+          in: ['VIEWER', 'Usuario Normal', 'Usuario', 'USER']
+        }
+      },
+      select: { id: true }
+    });
+
+    return role?.id || 2;
+  }
+
   /**
    * Autentica un usuario.
    * @param {string} username 
    * @param {string} password 
    */
-  static async login(username, password) {
+  static async login(identifier, password) {
+    const cleanIdentifier = String(identifier || '').trim();
+    const normalizedIdentifier = cleanIdentifier.toLowerCase();
+
     // 1. Buscar usuario con Prisma (incluyendo rol)
-    const user = await prisma.usuarios_sistema.findUnique({
+    const user = await prisma.usuarios_sistema.findFirst({
       where: {
-        username: username,
+        OR: [
+          { username: cleanIdentifier },
+          { email: cleanIdentifier },
+          { email: normalizedIdentifier }
+        ]
       },
       include: {
-        roles: true // JOIN automático con la tabla roles
+        roles: true,
+        empleados: true
       }
     });
 
@@ -38,8 +87,7 @@ class AuthService {
       userId: user.id,
       username: user.username,
       roleId: user.id_rol,
-      // sucursalId: user.id_sucursal // Prisma no trajo id_sucursal porque no está en el modelo usuarios_sistema según el schema.prisma
-      // Ah, espera, usuarios_sistema tiene id_empleado que tiene id_sucursal.
+      sucursalId: user.empleados?.id_sucursal || null
     };
 
     // Si necesitas sucursal, podrías hacer un include profundo: include: { empleados: true }
@@ -53,9 +101,123 @@ class AuthService {
       user: {
         id: user.id,
         username: user.username,
+        nombres: user.nombres || user.empleados?.nombres || '',
+        apellidos: user.apellidos || user.empleados?.apellidos || '',
+        email: user.email || user.empleados?.email_personal || '',
         roleId: user.id_rol,
-        roleName: user.roles ? user.roles.nombre_rol : 'UNKNOWN'
+        roleName: user.roles ? user.roles.nombre_rol : 'UNKNOWN',
+        idEmpleado: user.id_empleado || null
       }
+    };
+  }
+
+  static async signup({ nombres, apellidos, email }) {
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const cleanNombres = String(nombres || '').trim();
+    const cleanApellidos = String(apellidos || '').trim();
+
+    const existingUser = await prisma.usuarios_sistema.findFirst({
+      where: {
+        OR: [
+          { email: cleanEmail },
+          { username: cleanEmail }
+        ]
+      },
+      select: { id: true }
+    });
+
+    if (existingUser) {
+      const error = new Error('El correo ya tiene una cuenta vinculada.');
+      error.statusCode = 409;
+      error.isOperational = true;
+      throw error;
+    }
+
+    const empleado = await prisma.empleados.findFirst({
+      where: {
+        OR: [
+          { email_personal: cleanEmail },
+          {
+            cuentas_email_corporativo: {
+              some: {
+                email: cleanEmail
+              }
+            }
+          }
+        ]
+      },
+      select: {
+        id: true,
+        nombres: true,
+        apellidos: true
+      }
+    });
+
+    const roleId = await this.resolveDefaultRoleId();
+    const tempPassword = this.generateTemporaryPassword();
+    const password_hash = await bcrypt.hash(tempPassword, 10);
+    const usernameBase = cleanEmail.split('@')[0] || `${cleanNombres}.${cleanApellidos}`;
+    const username = await this.generateUniqueUsername(usernameBase);
+
+    const createdUser = await prisma.usuarios_sistema.create({
+      data: {
+        username,
+        email: cleanEmail,
+        nombres: cleanNombres,
+        apellidos: cleanApellidos,
+        password_hash,
+        id_rol: roleId,
+        id_status: 1,
+        id_empleado: empleado?.id || null
+      },
+      include: {
+        roles: true,
+        empleados: true
+      }
+    });
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+        <h2 style="margin: 0 0 16px;">Acceso al sistema de TI</h2>
+        <p>Hola ${cleanNombres} ${cleanApellidos},</p>
+        <p>Tu cuenta fue creada correctamente. Usa estas credenciales para ingresar:</p>
+        <ul>
+          <li><strong>Usuario:</strong> ${username}</li>
+          <li><strong>Correo:</strong> ${cleanEmail}</li>
+          <li><strong>Contraseña temporal:</strong> ${tempPassword}</li>
+        </ul>
+        <p>Después de iniciar sesión, conserva esta información en un lugar seguro.</p>
+      </div>
+    `;
+
+    let emailDelivered = false;
+    let emailErrorMessage = null;
+
+    try {
+      await sendEmail({
+        to: cleanEmail,
+        subject: 'Tus credenciales de acceso al sistema',
+        html
+      });
+      emailDelivered = true;
+    } catch (error) {
+      emailErrorMessage = error?.message || 'No fue posible enviar el correo de acceso.';
+      console.error('No se pudo enviar el correo de registro:', emailErrorMessage);
+    }
+
+    return {
+      id: createdUser.id,
+      username: createdUser.username,
+      nombres: createdUser.nombres,
+      apellidos: createdUser.apellidos,
+      email: createdUser.email,
+      roleId: createdUser.id_rol,
+      roleName: createdUser.roles?.nombre_rol || 'UNKNOWN',
+      idEmpleado: createdUser.id_empleado || null,
+      emailDelivered,
+      warning: emailDelivered ? null : 'La cuenta se creó, pero no se pudo enviar el correo. Guarda esta contraseña temporal para iniciar sesión.',
+      tempPassword: emailDelivered ? null : tempPassword,
+      emailErrorMessage
     };
   }
 

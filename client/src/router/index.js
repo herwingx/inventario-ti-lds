@@ -257,6 +257,12 @@ const routes = [
         meta: { title: 'Tickets Activos' }
       },
       {
+        path: 'tickets/nuevo',
+        name: 'tickets-nuevo',
+        component: () => import('../views/TicketCreateView.vue'),
+        meta: { title: 'Nuevo Ticket' }
+      },
+      {
         path: 'tickets/historial',
         name: 'tickets-historial',
         component: () => import('../views/TicketsHistoryView.vue'),
@@ -296,6 +302,12 @@ const routes = [
     meta: { title: 'Iniciar Sesión' }
   },
   {
+    path: '/register',
+    name: 'register',
+    component: () => import('../views/RegisterView.vue'),
+    meta: { title: 'Crear cuenta' }
+  },
+  {
     path: '/forgot-password',
     name: 'forgot-password',
     component: () => import('../views/ForgotPasswordView.vue'),
@@ -332,7 +344,7 @@ router.beforeEach((to, from, next) => {
   document.title = `${to.meta.title || 'Soporte'} - Linea Digital`
 
   // Definir nombres de rutas públicas
-  const publicNames = ['login', 'forgot-password', 'reset-password']
+  const publicNames = ['login', 'register', 'forgot-password', 'reset-password']
 
   // Validar si la ruta hacia la que vamos es pública
   const isPublic = publicNames.includes(to.name) || to.meta?.public
@@ -342,9 +354,24 @@ router.beforeEach((to, from, next) => {
     return next('/login')
   }
 
-  // Si ya tiene token y quiere ir a login, redirigir a home
-  if (to.path === '/login' && token) {
-    return next('/home')
+  const userData = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('userData') || 'null')
+    } catch {
+      return null
+    }
+  })()
+
+  if (token && userData?.roleId === 2 && !isPublic) {
+    const allowedNames = ['tickets', 'tickets-detalle', 'tickets-nuevo']
+    if (!allowedNames.includes(to.name)) {
+      return next('/tickets')
+    }
+  }
+
+  // Si ya tiene token y quiere ir a login o registro, redirigir a su vista principal
+  if ((to.path === '/login' || to.path === '/register') && token) {
+    return next(userData?.roleId === 2 ? '/tickets' : '/home')
   }
 
   next()

@@ -38,8 +38,8 @@ export default {
   /**
    * Crea un nuevo ticket.
    * @param {Object} data - Datos del ticket
-   * @param {number} data.id_equipo - ID del equipo
-   * @param {string} data.tipo_falla - Tipo de falla
+    * @param {string} data.titulo - Título del ticket
+    * @param {string} data.categoria - Categoría funcional del ticket
    * @param {string} data.descripcion - Descripción del problema
    * @param {string} [data.prioridad] - Prioridad del ticket
    * @returns {Promise<Object>}

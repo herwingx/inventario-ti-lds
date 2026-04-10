@@ -85,12 +85,14 @@ router.get('/:id', ticketsController.getTicketById);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [titulo, descripcion]
+ *             required: [titulo, categoria, descripcion]
  *             properties:
  *               titulo: { type: string }
+ *               categoria: { type: string }
  *               descripcion: { type: string }
  *               prioridad: { type: string, enum: [BAJA, MEDIA, ALTA, URGENTE, CRITICA], default: MEDIA }
- *               id_equipo_relacionado: { type: integer }
+ *               tipo_falla: { type: string, enum: [HARDWARE, SOFTWARE, RED, IMPRESORA, OTRO], default: OTRO }
+ *               id_equipo_relacionado: { type: integer, nullable: true }
  *               id_sucursal: { type: integer }
  *     responses:
  *       201:

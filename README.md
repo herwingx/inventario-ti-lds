@@ -115,6 +115,7 @@ Para una comprensión profunda de las decisiones técnicas:
 *   [📘 Manual Técnico](docs/MANUAL_TECNICO.md) - Guías de despliegue, backups y troubleshooting.
 *   [🗂️ Diccionario de Datos](docs/DICCIONARIO_DATOS.md) - Esquema de base de datos y enumeraciones.
 *   [📘 Manual de Funcionamiento](docs/MANUAL_FUNCIONAMIENTO.md) - Lógica interna y flujos de datos detallados.
+*   [🎫 Manual de Acceso y Tickets](docs/MANUAL_ACCESO_Y_TICKETS.md) - Flujo actualizado de registro, login y soporte general TI.
 
 ---
 

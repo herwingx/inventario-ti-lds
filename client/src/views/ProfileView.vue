@@ -19,7 +19,7 @@ import Password from 'primevue/password'
 import Avatar from 'primevue/avatar'
 import Dialog from 'primevue/dialog'
 
-const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useSwal()
+const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo, confirmWarning } = useSwal()
 const authStore = useAuthStore()
 
 // Estados

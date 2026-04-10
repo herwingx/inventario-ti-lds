@@ -10,15 +10,17 @@
 
 El sistema utiliza una arquitectura de autenticación **Stateless** basada en JSON Web Tokens (JWT).
 
-### Flujo de Inicio de Sesión
-1.  **Solicitud:** El usuario envía `username` y `password` a `/api/auth/login`.
-2.  **Validación:** El servidor verifica las credenciales y genera un token firmado con `JWT_SECRET`.
-3.  **Entrega:** El servidor responde con el token y los datos básicos del usuario (rol, nombre).
-4.  **Persistencia:** El cliente (Vue) guarda el token en `localStorage` y lo inyecta en el estado global de **Pinia**.
+### Flujo de Registro e Inicio de Sesión
+1.  **Solicitud de alta:** El usuario envía `nombres`, `apellidos` y `email` a `/api/auth/signup`.
+2.  **Validación:** El servidor crea el acceso, genera una contraseña temporal y la envía por correo.
+3.  **Solicitud de login:** El usuario entra a `/api/auth/login` con `identifier` o `username` y `password`.
+4.  **Entrega:** El servidor responde con el token y los datos básicos del usuario (rol, nombre visible, correo).
+5.  **Persistencia:** El cliente (Vue) guarda el token en `localStorage` y lo inyecta en el estado global de **Pinia**.
 
 ### Protección de Rutas (Middleware)
 *   **`protect`:** Middleware que intercepta las peticiones al backend, verifica que el header `Authorization: Bearer <token>` sea válido y decodifica la identidad del usuario.
-*   **`isSupportOrAdmin`:** Filtro de autorización que bloquea acciones de escritura para usuarios con roles de solo lectura.
+*   **`hasRole` / `isSupportOrAdmin`:** Middleware de autorización granular para bloquear operaciones administrativas según rol.
+*   **Control por backend:** El usuario normal solo puede ver y operar sus propios tickets; el frontend solo oculta opciones, no decide permisos.
 
 ---
 
@@ -57,6 +59,14 @@ Una de las características innovadoras es el flujo de soporte desacoplado.
 2.  **Acceso Público:** Al escanear el QR, el sistema redirige a una landing page pública (`/q/:token`).
 3.  **Reporte de Falla (Wizard):** El usuario interactúa con un asistente paso a paso diseñado con principios de accesibilidad para adultos mayores (iconos grandes, lenguaje no técnico).
 4.  **Seguimiento:** El reportante recibe un token de seguimiento para consultar el estado de su ticket sin loguearse.
+
+### 4.5 Tickets Generales de TI
+El módulo de soporte ahora soporta solicitudes de TI sin equipo asociado.
+- **Casos típicos:** accesos, software, red, consultoría, cambios internos y soporte general.
+- **Creación interna:** el usuario autenticado crea un ticket con título, categoría, prioridad y descripción.
+- **Equipo opcional:** si aplica un activo, se vincula; si no, el ticket sigue siendo válido.
+- **Compatibilidad QR:** los tickets de equipos conservan el flujo anterior y siguen generando bitácora histórica.
+- **Panel limitado:** el usuario normal ve únicamente su propia cola de tickets.
 
 ### 4.1 Accesibilidad y Entrada Manual (Portal de Ayuda)
 Para garantizar la operatividad en casos donde el hardware de captura (cámara/celular) no esté disponible:

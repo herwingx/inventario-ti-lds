@@ -88,6 +88,8 @@ class QrPublicService {
       data: {
         id_equipo: equipo.id,
         token_acceso,
+        titulo: `Reporte QR - ${tipo_falla}`,
+        categoria: 'Equipos',
         tipo_falla: fallaEnum,
         descripcion: descripcionFinal,
         prioridad: 'MEDIA',

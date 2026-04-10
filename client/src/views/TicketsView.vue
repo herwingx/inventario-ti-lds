@@ -6,6 +6,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import TicketsService from '../services/TicketsService'
+import { useAuthStore } from '../stores/auth'
 import { useSwal } from '../composables/useSwal'
 import DataTable from '../components/ui/DataTable.vue'
 import { getStatusSeverity } from '../utils/status'
@@ -13,7 +14,8 @@ import {
   Search, 
   Check, 
   Eye, 
-  Trash2
+  Trash2,
+  Plus
 } from 'lucide-vue-next'
 
 // PrimeVue
@@ -22,11 +24,14 @@ import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const { error: toastError, success: toastSuccess, confirmWarning, confirmDelete } = useSwal()
 
 // Data
 const tickets = ref([])
 const loading = ref(true)
+
+const canManageTickets = computed(() => authStore.user?.roleId !== 2)
 
 // Filtros
 const globalFilter = ref('')
@@ -56,6 +61,10 @@ const columns = [
   { field: 'fecha_creacion', header: 'Registro', sortable: true, width: '18%' },
   { field: 'actions', header: 'Acciones', sortable: false, width: '13%', align: 'right' }
 ]
+
+const createTicket = () => {
+  router.push({ name: 'tickets-nuevo' })
+}
 
 const filteredTickets = computed(() => {
   let result = tickets.value
@@ -164,6 +173,13 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
         </div>
 
         <div class="flex gap-2 w-full md:w-auto justify-end">
+          <button
+            @click="createTicket"
+            class="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl font-bold text-sm transition-all"
+          >
+            <Plus :size="16" />
+            Nuevo Ticket
+          </button>
            <div class="bg-primary/10 px-4 py-2 rounded-xl border border-primary/20 flex items-center gap-2">
               <span class="text-xs font-bold text-primary uppercase tracking-wide">{{ filteredTickets.length }} Pendientes</span>
            </div>
@@ -230,6 +246,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
               class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all"
               @click="markAsResolved(data)"
               title="Marcar como resuelto"
+              v-if="canManageTickets"
             >
               <Check :size="16" />
             </button>
@@ -244,6 +261,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
               class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center transition-all"
               @click="confirmDeleteTicket(data)"
               title="Eliminar"
+              v-if="canManageTickets"
             >
               <Trash2 :size="16" />
             </button>

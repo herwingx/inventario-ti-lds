@@ -28,13 +28,12 @@ const authController = require('../controllers/auth.controller');
  *           schema:
  *             type: object
  *             required:
- *               - username
  *               - password
  *             properties:
- *               username:
+ *               identifier:
  *                 type: string
- *                 example: admin
- *                 description: Nombre de usuario del sistema
+ *                 example: admin@lds.com
+ *                 description: Correo o nombre de usuario del sistema
  *               password:
  *                 type: string
  *                 format: password
@@ -72,6 +71,40 @@ const authController = require('../controllers/auth.controller');
  *         description: Demasiados intentos fallidos.
  */
 router.post('/login', authController.login);
+
+/**
+ * @openapi
+ * /api/auth/signup:
+ *   post:
+ *     summary: Crear usuario normal y enviar credenciales por correo
+ *     tags: [Autenticación]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [nombres, apellidos, email]
+ *             properties:
+ *               nombres:
+ *                 type: string
+ *                 example: Juan
+ *               apellidos:
+ *                 type: string
+ *                 example: Pérez
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: juan.perez@empresa.com
+ *     responses:
+ *       201:
+ *         description: Cuenta creada y credenciales enviadas.
+ *       400:
+ *         description: Datos inválidos.
+ *       409:
+ *         description: El correo ya tiene una cuenta vinculada.
+ */
+router.post('/signup', authController.signup);
 
 /**
  * @openapi

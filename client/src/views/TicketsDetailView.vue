@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import { useSwal } from '../composables/useSwal'
 import TicketsService from '../services/TicketsService'
 import { ArrowLeft, Monitor, User, Calendar, Clock, AlertCircle, CheckCircle, Send, MessageSquare, Loader2, ShieldCheck, Info, Settings2, History, Paperclip, X, Eye } from 'lucide-vue-next'
@@ -13,6 +14,7 @@ import Dialog from 'primevue/dialog'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const { success: toastSuccess, error: toastError } = useSwal()
 
 // Data
@@ -75,6 +77,11 @@ const quickReplies = {
 }
 
 const ticketId = computed(() => route.params.id)
+const canManageTicket = computed(() => authStore.user?.roleId !== 2)
+const ticketHeadline = computed(() => {
+  const teamName = [ticket.value?.equipos?.marca, ticket.value?.equipos?.modelo].filter(Boolean).join(' ').trim()
+  return ticket.value?.titulo || ticket.value?.categoria || teamName || 'Ticket general'
+})
 
 const loadTicket = async (isAutoRefresh = false) => {
   if (!isAutoRefresh) loading.value = true
@@ -271,7 +278,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
           <div class="flex items-center gap-2 mt-0.5">
             <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
             <p class="text-[9px] font-bold text-light-muted uppercase tracking-widest opacity-70 truncate max-w-[150px] sm:max-w-none">
-              {{ ticket?.equipos?.marca }} {{ ticket?.equipos?.modelo }}
+              {{ ticketHeadline }}
             </p>
           </div>
         </div>
@@ -321,7 +328,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
           <!-- Burbujas Dinámicas -->
           <div 
             v-for="c in comentarios" :key="c.id"
-            :class="['flex flex-col mb-4 animate-fade-in', c.autor_nombre === 'SISTEMA' ? 'items-center' : (c.id_usuario ? 'items-end' : 'items-start')]"
+            :class="['flex flex-col mb-4 animate-fade-in', c.autor_nombre === 'SISTEMA' ? 'items-center' : (c.id_usuario === authStore.user?.id ? 'items-end' : 'items-start')]"
           >
             <!-- Caso: Mensaje de Sistema -->
             <div v-if="c.autor_nombre === 'SISTEMA'" class="bg-slate-100 dark:bg-dark-bg/50 px-4 py-2 rounded-xl border border-light-border dark:border-dark-border shadow-sm mx-4">
@@ -331,13 +338,13 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
             <!-- Caso: Burbuja Normal con Avatar -->
             <div 
               v-else-if="c.autor_nombre !== 'SISTEMA'"
-              :class="['flex gap-3 max-w-[90%]', c.id_usuario ? 'flex-row-reverse self-end' : 'flex-row self-start']"
+              :class="['flex gap-3 max-w-[90%]', c.id_usuario === authStore.user?.id ? 'flex-row-reverse self-end' : 'flex-row self-start']"
             >
               <!-- Avatar -->
               <div 
                 :class="[
                   'w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 shadow-sm font-black text-[9px] tracking-tighter', 
-                  c.id_usuario 
+                  c.id_usuario === authStore.user?.id 
                     ? 'bg-primary text-white border-primary-dark' 
                     : (c.es_interno ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700' : 'bg-white dark:bg-dark-card text-light-text dark:text-dark-text border-slate-200 dark:border-zinc-700')
                 ]"
@@ -349,12 +356,12 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
               <div 
                 :class="[
                   'p-3 sm:p-4 rounded-2xl shadow-sm relative transition-all min-w-[120px]',
-                  c.id_usuario 
+                  c.id_usuario === authStore.user?.id 
                     ? 'bg-primary text-white rounded-tr-none shadow-primary/10' 
                     : (c.es_interno ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-tl-none' : 'bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-tl-none')
                 ]"
               >
-                <div :class="['text-[9px] font-black uppercase tracking-widest mb-1 opacity-60 flex justify-between gap-4', c.id_usuario ? 'text-white' : 'text-primary']">
+                <div :class="['text-[9px] font-black uppercase tracking-widest mb-1 opacity-60 flex justify-between gap-4', c.id_usuario === authStore.user?.id ? 'text-white' : 'text-primary']">
                   <span>{{ c.autor_nombre }}</span>
                   <span v-if="c.es_interno" class="flex items-center gap-1"><ShieldCheck :size="10" /> INTERNAL</span>
                 </div>
@@ -384,7 +391,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
                 <p v-if="parseAttachment(c.contenido) && cleanContent(c.contenido)" class="text-sm font-medium leading-relaxed whitespace-pre-wrap mt-2">{{ cleanContent(c.contenido) }}</p>
                 <p v-else-if="!parseAttachment(c.contenido)" class="text-sm font-medium leading-relaxed whitespace-pre-wrap">{{ c.contenido }}</p>
 
-                <div :class="['mt-1 text-[8px] font-bold text-right opacity-50', c.id_usuario ? 'text-white' : 'text-light-muted']">
+                <div :class="['mt-1 text-[8px] font-bold text-right opacity-50', c.id_usuario === authStore.user?.id ? 'text-white' : 'text-light-muted']">
                   {{ new Date(c.fecha_creacion).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}
                 </div>
               </div>
@@ -469,7 +476,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
 
             <!-- Shift + Enter Hint -->
             <div class="px-1 flex justify-between items-center">
-              <label class="inline-flex items-center gap-2 cursor-pointer group">
+              <label v-if="canManageTicket" class="inline-flex items-center gap-2 cursor-pointer group">
                 <Checkbox v-model="esInterno" :binary="true" />
                 <span class="text-[9px] font-black text-light-muted group-hover:text-amber-600 transition-colors uppercase tracking-[0.2em]">Marcar como Nota Interna</span>
               </label>
@@ -499,22 +506,50 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
           </div>
           
           <div class="space-y-6">
-            <div class="space-y-1.5">
+            <!-- Información del Usuario Reportante -->
+            <div class="bg-slate-50 dark:bg-dark-bg/50 p-4 rounded-2xl border border-light-border dark:border-dark-border">
+              <p class="text-[8px] font-black uppercase text-light-muted mb-3 tracking-widest opacity-70">Reportado Por</p>
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-700 dark:text-amber-400 font-bold text-xs border border-amber-200 dark:border-amber-700">
+                  {{ ticket?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.username ? ticket.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema.username.substring(0, 2).toUpperCase() : '?' }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[9px] font-bold truncate">{{ ticket?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.username || ticket?.nombre_reporta || 'Usuario Externo' }}</p>
+                  <p class="text-[8px] opacity-50 truncate">{{ ticket?.email_reporta }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información del Técnico Asignado -->
+            <div v-if="ticket?.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema" class="bg-slate-50 dark:bg-dark-bg/50 p-4 rounded-2xl border border-light-border dark:border-dark-border">
+              <p class="text-[8px] font-black uppercase text-light-muted mb-3 tracking-widest opacity-70">Asignado a</p>
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs border border-primary/30">
+                  {{ ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema.username.substring(0, 2).toUpperCase() }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[9px] font-bold truncate">{{ ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema.username }}</p>
+                  <p class="text-[8px] opacity-50">Técnico Asignado</p>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="canManageTicket" class="space-y-1.5">
               <label class="text-[9px] font-black text-light-muted uppercase ml-1">Estatus</label>
               <Select v-model="selectedEstatus" :options="estatusOptions" optionLabel="label" optionValue="value" class="w-full !rounded-xl" />
             </div>
 
-            <div class="space-y-1.5">
+            <div v-if="canManageTicket" class="space-y-1.5">
               <label class="text-[9px] font-black text-light-muted uppercase ml-1">Prioridad</label>
               <Select v-model="selectedPrioridad" :options="prioridadOptions" optionLabel="label" optionValue="value" class="w-full !rounded-xl" />
             </div>
 
-            <div class="space-y-1.5">
+            <div v-if="canManageTicket" class="space-y-1.5">
               <label class="text-[9px] font-black text-light-muted uppercase ml-1">Técnico</label>
               <Select v-model="selectedTecnico" :options="tecnicos" optionLabel="nombre_usuario" optionValue="id" placeholder="Asignar..." showClear class="w-full !rounded-xl" />
             </div>
 
-            <button @click="updateTicket" :disabled="saving" class="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-primary-hover active:scale-95 transition-all mt-4">
+            <button v-if="canManageTicket" @click="updateTicket" :disabled="saving" class="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-primary-hover active:scale-95 transition-all mt-4">
               <span v-if="!saving">Actualizar Registro</span>
               <Loader2 v-else class="animate-spin mx-auto" />
             </button>

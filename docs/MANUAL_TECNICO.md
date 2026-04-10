@@ -46,7 +46,7 @@ OPTIMIZE TABLE equipos, asignaciones, tickets, logs_sistema;
     *   **Acción:** El sistema forzará logout. Si el problema persiste para todos, verificar sincronización de hora del servidor (`ntp`).
 *   **Error:** `PrismaClientKnownRequestError`
     *   **Causa:** Inconsistencia entre el código y la base de datos (migraciones pendientes).
-    *   **Acción:** Ejecutar `npx prisma migrate deploy` para aplicar cambios pendientes en producción.
+    *   **Acción:** Ejecutar `npx prisma migrate deploy --schema prisma/schema.prisma` para aplicar cambios pendientes en producción.
 *   **Error:** `MulterError: File too large`
     *   **Causa:** Intento de subida de archivo mayor a 5MB.
     *   **Acción:** El cliente debe comprimir el archivo. No se recomienda aumentar el límite por seguridad.
@@ -73,6 +73,28 @@ El sistema depende estrictamente de las variables de entorno.
 | Rotación de logs de servidor (`pm2 flush`) | Mensual | DevOps/Soporte |
 | Prueba de restauración de Backup (Sandbox) | Trimestral | DevOps |
 | Actualización de dependencias (`npm audit`) | Trimestral | Desarrollador |
+
+## 🧱 Flujo Prisma Recomendado
+
+### Desarrollo
+```bash
+cd server
+npx prisma migrate dev --schema prisma/schema.prisma
+```
+
+### Producción o servidor remoto
+```bash
+cd server
+npx prisma migrate deploy --schema prisma/schema.prisma
+```
+
+### Verificación del estado
+```bash
+cd server
+npx prisma migrate status --schema prisma/schema.prisma
+```
+
+Si la base ya existe y no fue creada con Prisma, primero se debe baselinear o registrar el estado antes de volver a desplegar migraciones.
 
 ---
 

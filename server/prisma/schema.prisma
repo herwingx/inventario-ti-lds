@@ -336,9 +336,11 @@ model ticket_comentarios {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model tickets {
   id                                                            Int                  @id @default(autoincrement())
-  id_equipo                                                     Int
+  id_equipo                                                     Int?
   id_usuario_reporta                                            Int?
   token_acceso                                                  String               @unique(map: "token_acceso") @db.VarChar(64)
+  titulo                                                        String?              @db.VarChar(150)
+  categoria                                                     String?              @db.VarChar(100)
   tipo_falla                                                    tickets_tipo_falla
   descripcion                                                   String               @db.Text
   prioridad                                                     tickets_prioridad?   @default(MEDIA)
@@ -351,7 +353,7 @@ model tickets {
   email_reporta                                                 String?              @db.VarChar(255)
   nombre_reporta                                                String?              @db.VarChar(100)
   ticket_comentarios                                            ticket_comentarios[]
-  equipos                                                       equipos              @relation(fields: [id_equipo], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tickets_ibfk_1")
+  equipos                                                       equipos?             @relation(fields: [id_equipo], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tickets_ibfk_1")
   usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema usuarios_sistema?    @relation("tickets_id_usuario_reportaTousuarios_sistema", fields: [id_usuario_reporta], references: [id], onUpdate: Restrict, map: "tickets_ibfk_2")
   usuarios_sistema_tickets_id_asignado_aTousuarios_sistema      usuarios_sistema?    @relation("tickets_id_asignado_aTousuarios_sistema", fields: [id_asignado_a], references: [id], onUpdate: Restrict, map: "tickets_ibfk_3")
 
@@ -382,6 +384,8 @@ model usuarios_sistema {
   id                                                   Int                  @id @default(autoincrement())
   username                                             String               @unique(map: "username") @db.VarChar(50)
   email                                                String?              @unique(map: "email") @db.VarChar(100)
+  nombres                                              String?              @db.VarChar(100)
+  apellidos                                            String?              @db.VarChar(100)
   password_hash                                        String               @db.VarChar(255)
   reset_password_token                                 String?              @db.VarChar(255)
   reset_password_expires                               DateTime?            @db.DateTime(0)

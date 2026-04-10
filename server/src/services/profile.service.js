@@ -18,9 +18,12 @@ class ProfileService {
 
     if (!u) return null;
 
-    const { password_hash, ...rest } = u;
+    const { password_hash, reset_password_token, reset_password_expires, ...rest } = u;
     return {
       ...rest,
+      email: u.email || '',
+      nombres: u.nombres || '',
+      apellidos: u.apellidos || '',
       nombre_empleado: u.empleados?.nombres,
       apellido_empleado: u.empleados?.apellidos,
       puesto: u.empleados?.puesto,

@@ -15,13 +15,18 @@ class AuthService {
    * Si es exitoso, el backend retornará un token JWT y los datos del usuario.
    * 
    * @param {Object} credentials - Objeto con las credenciales.
-   * @param {string} credentials.username - Nombre de usuario.
+   * @param {string} credentials.identifier - Correo o nombre de usuario.
    * @param {string} credentials.password - Contraseña del usuario.
    * @returns {Promise<Object>} Promesa que resuelve con la respuesta del servidor (token + user).
    * @throws {Error} Si las credenciales son inválidas o hay error de conexión.
    */
   async login(credentials) {
     const response = await api.post('/auth/login', credentials)
+    return response.data
+  }
+
+  async register(credentials) {
+    const response = await api.post('/auth/signup', credentials)
     return response.data
   }
 

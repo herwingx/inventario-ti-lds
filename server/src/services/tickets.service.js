@@ -6,10 +6,13 @@ const prisma = require('../config/prisma');
 const logger = require('../utils/logger'); // Importar logger
 
 class TicketService {
-  static async findAll(filters) {
+  static async findAll(filters, userId = null, roleId = null) {
     const { estatus, prioridad, tecnicoId, id_equipo } = filters;
 
     let where = {};
+    if (roleId === 2 && userId) {
+      where.id_usuario_reporta = userId;
+    }
     if (estatus) where.estatus = estatus;
     if (prioridad) where.prioridad = prioridad;
     if (tecnicoId) where.id_asignado_a = parseInt(tecnicoId);
@@ -52,14 +55,16 @@ class TicketService {
     }
 
     // Obtener otros tickets del mismo equipo (Historial)
-    const historialEquipo = await prisma.tickets.findMany({
-      where: {
-        id_equipo: ticket.id_equipo,
-        id: { not: ticket.id } // Excluir el ticket actual
-      },
-      orderBy: { fecha_creacion: 'desc' },
-      take: 5
-    });
+    const historialEquipo = ticket.id_equipo
+      ? await prisma.tickets.findMany({
+          where: {
+            id_equipo: ticket.id_equipo,
+            id: { not: ticket.id }
+          },
+          orderBy: { fecha_creacion: 'desc' },
+          take: 5
+        })
+      : [];
 
     // Procesar comentarios para que el frontend reciba un autor coherente
     ticket.ticket_comentarios = ticket.ticket_comentarios.map(c => {
@@ -95,10 +100,16 @@ class TicketService {
     // Generar token_acceso si no viene (para tickets internos)
     const { v4: uuidv4 } = require('uuid');
     const token = uuidv4().replace(/-/g, '').substring(0, 16);
+    const idEquipo = data.id_equipo_relacionado ?? data.id_equipo ?? null;
 
     return await prisma.tickets.create({
       data: {
-        ...data,
+        titulo: data.titulo,
+        categoria: data.categoria,
+        descripcion: data.descripcion,
+        prioridad: data.prioridad || 'MEDIA',
+        tipo_falla: data.tipo_falla || 'OTRO',
+        id_equipo: idEquipo,
         id_usuario_reporta: userId,
         token_acceso: token,
         estatus: 'ABIERTO'

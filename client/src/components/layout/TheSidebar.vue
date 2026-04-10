@@ -3,8 +3,9 @@
  * @fileoverview Barra Lateral de Navegación.
  * Contiene el menú principal de la aplicación, soportando modo colapsado y móvil.
  */
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '../../stores/auth'
 
 import { 
   Home, 
@@ -27,6 +28,7 @@ import {
 
 const router = useRouter()
 const route = useRoute()
+const authStore = useAuthStore()
 
 const props = defineProps({
   collapsed: {
@@ -139,6 +141,23 @@ const menuItems = ref([
   }
 ])
 
+const visibleMenuItems = computed(() => {
+  if (authStore.user?.roleId === 2) {
+    return [
+      {
+        id: 'soporte',
+        label: 'Tickets',
+        icon: Ticket,
+        children: [
+          { id: 'tickets-activos', label: 'Mis Tickets', route: '/tickets' }
+        ]
+      }
+    ]
+  }
+
+  return menuItems.value
+})
+
 // Estado de submenús expandidos
 const expandedMenus = ref({})
 
@@ -171,7 +190,7 @@ const syncActiveItem = () => {
   // Primero cerrar todos los menús (acordeón)
   expandedMenus.value = {}
   
-  for (const item of menuItems.value) {
+  for (const item of visibleMenuItems.value) {
     if (isActiveRoute(item)) {
       activeItemId.value = item.id
       // Expandir solo el menú padre del item activo
@@ -183,9 +202,7 @@ const syncActiveItem = () => {
   }
 }
 
-// Watch route changes to sync active state
-import { watch } from 'vue'
-watch(() => route.path, () => {
+watch(() => [route.path, authStore.user?.roleId], () => {
   syncActiveItem()
 }, { immediate: true })
 
@@ -300,7 +317,7 @@ function navigateTo(routePath) {
       :class="isCollapsed ? 'px-0' : 'px-0'"
     >
       <ul class="space-y-1">
-        <li v-for="item in menuItems" :key="item.id" class="relative group">
+        <li v-for="item in visibleMenuItems" :key="item.id" class="relative group">
           
           <!-- Item SIN hijos (link directo) -->
           <template v-if="!item.children">

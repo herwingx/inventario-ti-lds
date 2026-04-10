@@ -3,7 +3,7 @@
  * @description Controlador de autenticación.
  */
 const AuthService = require('../services/auth.service');
-const { loginSchema, forgotPasswordSchema, resetPasswordSchema } = require('../schemas/auth.schema');
+const { loginSchema, signupSchema, forgotPasswordSchema, resetPasswordSchema } = require('../schemas/auth.schema');
 const logger = require('../utils/logger');
 const asyncHandler = require('../utils/asyncHandler');
 
@@ -22,22 +22,49 @@ const login = asyncHandler(async (req, res) => {
         throw error;
     }
 
-    const { username, password } = validation.data;
-    const result = await AuthService.login(username, password);
+    const identifier = validation.data.identifier || validation.data.username || validation.data.email;
+    const result = await AuthService.login(identifier, validation.data.password);
 
     if (!result) {
-        logger.warn(`Intento de login fallido: "${username}"`);
+        logger.warn(`Intento de login fallido: "${identifier}"`);
         const error = new Error('Credenciales inválidas o cuenta inactiva');
         error.statusCode = 401;
         error.isOperational = true;
         throw error;
     }
 
-    logger.info(`Login exitoso: "${username}"`);
+    logger.info(`Login exitoso: "${identifier}"`);
     res.status(200).json({
         status: 'success',
         message: 'Inicio de sesión exitoso.',
         data: result
+    });
+});
+
+/**
+ * @function signup
+ * @description Crea una cuenta de usuario normal y envía las credenciales por correo.
+ */
+const signup = asyncHandler(async (req, res) => {
+    const validation = signupSchema.safeParse(req.body);
+
+    if (!validation.success) {
+        const error = new Error('Datos de registro inválidos');
+        error.statusCode = 400;
+        error.isOperational = true;
+        error.details = validation.error.errors.map(e => e.message);
+        throw error;
+    }
+
+    const user = await AuthService.signup(validation.data);
+
+    logger.info(`Registro exitoso para correo: "${validation.data.email}"`);
+    res.status(201).json({
+        status: 'success',
+            message: user.emailDelivered
+                ? 'Cuenta creada. Revisa tu correo para obtener tus credenciales.'
+                : 'Cuenta creada, pero no se pudo enviar el correo. Usa la contraseña temporal mostrada en la respuesta.',
+        data: user
     });
 });
 
@@ -95,6 +122,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 
 module.exports = {
     login,
+    signup,
     forgotPassword,
     resetPassword
 };
