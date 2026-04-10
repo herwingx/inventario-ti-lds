@@ -71,9 +71,20 @@ const createTicket = asyncHandler(async (req, res) => {
     }
 
     const userId = req.user?.userId;
-    const newTicket = await TicketService.create(validation.data.body, userId);
+    const roleId = req.user?.roleId;
+    const newTicket = await TicketService.create(validation.data.body, userId, roleId);
     
     logger.info(`Ticket creado: ID ${newTicket.id} por usuario ID ${userId}`);
+
+    // Notificar a soporte también para tickets internos (fire-and-forget).
+    if (TicketNotificationService) {
+        TicketService.findById(newTicket.id)
+            .then(ticketData => {
+                if (!ticketData?.equipos) return;
+                return TicketNotificationService.notifyNewTicket(ticketData, ticketData.equipos);
+            })
+            .catch(err => logger.warn(`[EMAIL] Fallo notif ticket interno: ${err}`));
+    }
 
     res.status(201).json({
         status: 'success',

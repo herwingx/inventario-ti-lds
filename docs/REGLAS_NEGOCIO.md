@@ -49,6 +49,12 @@ El sistema gestiona prioridades basadas en el impacto operativo.
 | **MEDIA** | Trabajo degradado pero funcional. | < 24 Horas |
 | **BAJA** | Consulta o mejora menor. | < 72 Horas |
 
+### Gobernanza de Prioridad por Rol:
+1. **Usuario Normal (roleId=2):** Puede sugerir `BAJA`, `MEDIA` o `ALTA` al crear su ticket.
+2. **Prioridad CRITICA:** Solo puede ser asignada por `Admin Tickets` o `Analista/Técnico`.
+3. **Prioridad Operativa Final:** Siempre queda bajo responsabilidad del equipo de soporte.
+4. **Auditoría:** Todo cambio de prioridad genera mensaje automático de sistema en el chat del ticket.
+
 ### Trazabilidad Automática (Chat Audit):
 Cualquier cambio administrativo en un ticket (Estatus, Prioridad o Técnico asignado) genera automáticamente un mensaje de sistema en el hilo de conversación. Esto asegura que el reportante esté informado en tiempo real de los avances sin necesidad de interacción manual del técnico.
 

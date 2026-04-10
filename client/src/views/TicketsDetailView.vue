@@ -264,7 +264,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
 </script>
 
 <template>
-  <div class="h-[calc(100dvh-160px)] sm:h-[calc(100dvh-120px)] flex flex-col font-sans animate-fade-in overflow-hidden relative px-1 sm:px-4 pb-4 sm:pb-0">
+  <div class="h-full flex flex-col min-h-0 font-sans animate-fade-in overflow-hidden relative px-2 sm:px-4 pt-2 sm:pt-3">
     
     <!-- HEADER FIJO PREMIUM -->
     <header class="flex items-center justify-between mb-4 shrink-0 bg-white dark:bg-dark-card shadow-sm border border-light-border dark:border-dark-border p-3 sm:p-4 rounded-2xl z-20">
@@ -494,9 +494,9 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
       >
         <div @click="showMobileSettings = false" class="absolute inset-0 bg-black/50 backdrop-blur-sm lg:hidden"></div>
 
-        <div class="relative ml-auto lg:ml-0 w-4/5 lg:w-full h-full lg:h-auto bg-white dark:bg-dark-card p-8 lg:p-6 shadow-2xl lg:shadow-lg border-l lg:border border-light-border dark:border-dark-border lg:rounded-[2.5rem] flex flex-col overflow-y-auto">
+        <div class="relative ml-auto lg:ml-0 w-4/5 lg:w-full h-full lg:h-full bg-white dark:bg-dark-card p-6 lg:p-5 shadow-2xl lg:shadow-lg border-l lg:border border-light-border dark:border-dark-border lg:rounded-[2.5rem] flex flex-col overflow-y-auto lg:overflow-visible">
           
-          <div class="flex items-center justify-between mb-8 lg:mb-6">
+          <div class="flex items-center justify-between mb-6 lg:mb-5">
             <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-light-muted flex items-center gap-2">
               <ShieldCheck :size="14" class="text-primary" /> Panel de Control
             </h3>
@@ -505,10 +505,10 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
             </button>
           </div>
           
-          <div class="space-y-6">
+          <div class="space-y-4">
             <!-- Información del Usuario Reportante -->
-            <div class="bg-slate-50 dark:bg-dark-bg/50 p-4 rounded-2xl border border-light-border dark:border-dark-border">
-              <p class="text-[8px] font-black uppercase text-light-muted mb-3 tracking-widest opacity-70">Reportado Por</p>
+            <div class="bg-slate-50 dark:bg-dark-bg/50 p-3 rounded-2xl border border-light-border dark:border-dark-border">
+              <p class="text-[8px] font-black uppercase text-light-muted mb-2 tracking-widest opacity-70">Reportado Por</p>
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-700 dark:text-amber-400 font-bold text-xs border border-amber-200 dark:border-amber-700">
                   {{ ticket?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.username ? ticket.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema.username.substring(0, 2).toUpperCase() : '?' }}
@@ -521,8 +521,8 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
             </div>
 
             <!-- Información del Técnico Asignado -->
-            <div v-if="ticket?.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema" class="bg-slate-50 dark:bg-dark-bg/50 p-4 rounded-2xl border border-light-border dark:border-dark-border">
-              <p class="text-[8px] font-black uppercase text-light-muted mb-3 tracking-widest opacity-70">Asignado a</p>
+            <div v-if="ticket?.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema" class="bg-slate-50 dark:bg-dark-bg/50 p-3 rounded-2xl border border-light-border dark:border-dark-border">
+              <p class="text-[8px] font-black uppercase text-light-muted mb-2 tracking-widest opacity-70">Asignado a</p>
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs border border-primary/30">
                   {{ ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema.username.substring(0, 2).toUpperCase() }}
@@ -549,14 +549,14 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
               <Select v-model="selectedTecnico" :options="tecnicos" optionLabel="nombre_usuario" optionValue="id" placeholder="Asignar..." showClear class="w-full !rounded-xl" />
             </div>
 
-            <button v-if="canManageTicket" @click="updateTicket" :disabled="saving" class="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-primary-hover active:scale-95 transition-all mt-4">
+            <button v-if="canManageTicket" @click="updateTicket" :disabled="saving" class="w-full py-3 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-primary-hover active:scale-95 transition-all mt-2">
               <span v-if="!saving">Actualizar Registro</span>
               <Loader2 v-else class="animate-spin mx-auto" />
             </button>
           </div>
 
           <!-- Historial -->
-          <div v-if="ticket?.historial_equipo?.length > 0" class="mt-10 pt-6 border-t border-light-border dark:border-dark-border">
+          <div v-if="ticket?.historial_equipo?.length > 0" class="mt-6 pt-4 border-t border-light-border dark:border-dark-border">
             <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-light-muted mb-4 flex items-center gap-2">
               <History :size="14" class="text-primary" /> Reportes Previos
             </h3>

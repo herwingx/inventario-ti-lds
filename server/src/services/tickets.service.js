@@ -6,6 +6,22 @@ const prisma = require('../config/prisma');
 const logger = require('../utils/logger'); // Importar logger
 
 class TicketService {
+  static USER_ROLE_ID = 2;
+
+  static resolveCreatePriority(requestedPriority, roleId) {
+    const priority = requestedPriority || 'MEDIA';
+
+    // Usuario normal puede sugerir BAJA, MEDIA o ALTA. CRITICA queda reservada para soporte/admin.
+    if (roleId === this.USER_ROLE_ID && priority === 'CRITICA') {
+      const error = new Error('La prioridad CRITICA solo puede ser asignada por el equipo de soporte.');
+      error.statusCode = 403;
+      error.isOperational = true;
+      throw error;
+    }
+
+    return priority;
+  }
+
   static async findAll(filters, userId = null, roleId = null) {
     const { estatus, prioridad, tecnicoId, id_equipo } = filters;
 
@@ -96,18 +112,19 @@ class TicketService {
     return result;
   }
 
-  static async create(data, userId) {
+  static async create(data, userId, roleId = null) {
     // Generar token_acceso si no viene (para tickets internos)
     const { v4: uuidv4 } = require('uuid');
     const token = uuidv4().replace(/-/g, '').substring(0, 16);
     const idEquipo = data.id_equipo_relacionado ?? data.id_equipo ?? null;
+    const prioridad = this.resolveCreatePriority(data.prioridad, roleId);
 
     return await prisma.tickets.create({
       data: {
         titulo: data.titulo,
         categoria: data.categoria,
         descripcion: data.descripcion,
-        prioridad: data.prioridad || 'MEDIA',
+        prioridad,
         tipo_falla: data.tipo_falla || 'OTRO',
         id_equipo: idEquipo,
         id_usuario_reporta: userId,
@@ -181,7 +198,11 @@ class TicketService {
 
   static async getTecnicos() {
     const users = await prisma.usuarios_sistema.findMany({
-      where: { id_status: 1 }, // Solo activos
+      // Excluir usuario normal para evitar asignaciones incorrectas.
+      where: {
+        id_status: 1,
+        id_rol: { not: this.USER_ROLE_ID }
+      },
       select: { id: true, username: true, id_rol: true }
     });
 

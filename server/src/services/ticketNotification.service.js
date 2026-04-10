@@ -20,16 +20,20 @@ const COLORS = {
  * Transporter de nodemailer configurado con variables de entorno.
  */
 const createTransporter = () => {
+  const secureByEnv = String(process.env.EMAIL_SECURE || '').toLowerCase() === 'true';
+  const secureByPort = String(process.env.EMAIL_PORT || '') === '465';
+
   console.log('[EMAIL] Configurando transporter con:', {
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
-    user: process.env.EMAIL_USER
+    user: process.env.EMAIL_USER,
+    secure: secureByEnv || secureByPort
   });
 
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT) || 587,
-    secure: process.env.EMAIL_PORT === '465',
+    port: parseInt(process.env.EMAIL_PORT, 10) || 587,
+    secure: secureByEnv || secureByPort,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
@@ -38,6 +42,20 @@ const createTransporter = () => {
       rejectUnauthorized: false
     }
   });
+};
+
+const getFromAddress = () => {
+  const configuredFrom = (process.env.EMAIL_FROM || '').trim();
+  if (!configuredFrom) return '"Soporte TI" <soporte@empresa.com>';
+
+  // Si ya viene con formato "Nombre <correo>", se reutiliza tal cual.
+  if (configuredFrom.includes('<') && configuredFrom.includes('>')) return configuredFrom;
+
+  return `"Soporte TI" <${configuredFrom}>`;
+};
+
+const getAlertEmail = () => {
+  return (process.env.ALERT_EMAIL || process.env.EMAIL_USER || '').trim();
 };
 
 /**
@@ -127,7 +145,7 @@ const actionButton = (text, url) => `
  * Envía notificación de nuevo ticket al equipo de soporte.
  */
 const notifyNewTicket = async (ticket, equipo) => {
-  const alertEmail = process.env.ALERT_EMAIL || process.env.EMAIL_FROM;
+  const alertEmail = getAlertEmail();
   if (!alertEmail) {
     console.log('[EMAIL] No hay email de alerta configurado');
     return;
@@ -187,7 +205,7 @@ const notifyNewTicket = async (ticket, equipo) => {
     `;
 
     await transporter.sendMail({
-      from: `"Soporte TI" <${process.env.EMAIL_FROM || 'soporte@empresa.com'}>`,
+      from: getFromAddress(),
       to: alertEmail,
       subject: `🎫 Nuevo Ticket #${ticket.id}: ${ticket.tipo_falla} - ${equipo.marca} ${equipo.modelo}`,
       html: emailWrapper(content)
@@ -243,7 +261,7 @@ const notifyUserComment = async (ticket, comentario, emailUsuario) => {
     `;
 
     await transporter.sendMail({
-      from: `"Soporte TI" <${process.env.EMAIL_FROM || 'soporte@empresa.com'}>`,
+      from: getFromAddress(),
       to: emailUsuario,
       subject: `💬 Respuesta a tu Ticket #${ticket.id}`,
       html: emailWrapper(content)
@@ -259,7 +277,7 @@ const notifyUserComment = async (ticket, comentario, emailUsuario) => {
  * Envía notificación al admin cuando usuario comenta.
  */
 const notifyAdminComment = async (ticket, comentario, nombreUsuario) => {
-  const alertEmail = process.env.ALERT_EMAIL || process.env.EMAIL_FROM;
+  const alertEmail = getAlertEmail();
   if (!alertEmail) return;
 
   try {
@@ -295,7 +313,7 @@ const notifyAdminComment = async (ticket, comentario, nombreUsuario) => {
     `;
 
     await transporter.sendMail({
-      from: `"Soporte TI" <${process.env.EMAIL_FROM || 'soporte@empresa.com'}>`,
+      from: getFromAddress(),
       to: alertEmail,
       subject: `💬 ${nombreUsuario || 'Usuario'} respondió en Ticket #${ticket.id}`,
       html: emailWrapper(content)
@@ -373,7 +391,7 @@ const notifyTicketCreated = async (ticket, equipo, emailUsuario, nombreUsuario) 
     `;
 
     await transporter.sendMail({
-      from: `"Soporte TI" <${process.env.EMAIL_FROM || 'soporte@empresa.com'}>`,
+      from: getFromAddress(),
       to: emailUsuario,
       subject: `✅ Ticket #${ticket.id} Registrado - ${equipo.marca} ${equipo.modelo}`,
       html: emailWrapper(content)

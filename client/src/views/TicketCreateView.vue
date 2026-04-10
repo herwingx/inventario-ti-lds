@@ -1,13 +1,15 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import TicketsService from '../services/TicketsService'
 import { useSwal } from '../composables/useSwal'
+import { useAuthStore } from '../stores/auth'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import { ClipboardList, ArrowLeft, Loader2 } from 'lucide-vue-next'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const { success: toastSuccess, error: toastError, warning: toastWarning } = useSwal()
 
 const titulo = ref('')
@@ -34,6 +36,18 @@ const prioridadOptions = [
   { label: 'Crítica', value: 'CRITICA' }
 ]
 
+const canSetCriticalPriority = computed(() => authStore.user?.roleId !== 2)
+const availablePriorityOptions = computed(() => {
+  if (canSetCriticalPriority.value) return prioridadOptions
+  return prioridadOptions.filter(option => option.value !== 'CRITICA')
+})
+
+watch(canSetCriticalPriority, (canSetCritical) => {
+  if (!canSetCritical && prioridad.value === 'CRITICA') {
+    prioridad.value = 'ALTA'
+  }
+}, { immediate: true })
+
 const submitTicket = async () => {
   if (!titulo.value.trim() || !categoria.value || !descripcion.value.trim()) {
     toastWarning('Completa título, categoría y descripción')
@@ -43,6 +57,11 @@ const submitTicket = async () => {
   loading.value = true
 
   try {
+    if (!canSetCriticalPriority.value && prioridad.value === 'CRITICA') {
+      toastWarning('La prioridad CRITICA solo puede validarla soporte o administración.')
+      return
+    }
+
     await TicketsService.create({
       titulo: titulo.value.trim(),
       categoria: categoria.value,
@@ -105,12 +124,13 @@ const submitTicket = async () => {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div class="space-y-2">
             <label class="text-xs font-black uppercase tracking-wide text-gray-500">Prioridad</label>
-            <Select v-model="prioridad" :options="prioridadOptions" optionLabel="label" optionValue="value" class="w-full !rounded-xl" />
+            <Select v-model="prioridad" :options="availablePriorityOptions" optionLabel="label" optionValue="value" class="w-full !rounded-xl" />
           </div>
 
           <div class="flex items-end">
             <div class="w-full rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-900/30 p-4 text-sm text-emerald-700 dark:text-emerald-300">
-              No necesitas elegir equipo. Si aplica, el área de TI lo asignará después.
+              <span v-if="canSetCriticalPriority">No necesitas elegir equipo. Si aplica, el área de TI lo asignará después.</span>
+              <span v-else>No necesitas elegir equipo. Puedes sugerir BAJA, MEDIA o ALTA; CRITICA la valida soporte.</span>
             </div>
           </div>
         </div>

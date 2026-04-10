@@ -90,10 +90,10 @@ router.get('/:id', ticketsController.getTicketById);
  *               titulo: { type: string }
  *               categoria: { type: string }
  *               descripcion: { type: string }
- *               prioridad: { type: string, enum: [BAJA, MEDIA, ALTA, URGENTE, CRITICA], default: MEDIA }
+ *               prioridad: { type: string, enum: [BAJA, MEDIA, ALTA, CRITICA], default: MEDIA }
+ *               # Nota: CRITICA es exclusiva para soporte/admin.
  *               tipo_falla: { type: string, enum: [HARDWARE, SOFTWARE, RED, IMPRESORA, OTRO], default: OTRO }
  *               id_equipo_relacionado: { type: integer, nullable: true }
- *               id_sucursal: { type: integer }
  *     responses:
  *       201:
  *         description: Ticket creado.
@@ -122,8 +122,8 @@ router.post('/', ticketsController.createTicket);
  *           schema:
  *             type: object
  *             properties:
- *               estatus: { type: string, enum: [ABIERTO, EN_PROGRESO, PENDIENTE, RESUELTO, CERRADO, CANCELADO] }
- *               prioridad: { type: string, enum: [BAJA, MEDIA, ALTA, URGENTE, CRITICA] }
+ *               estatus: { type: string, enum: [ABIERTO, EN_PROGRESO, PENDIENTE, RESUELTO, CERRADO] }
+ *               prioridad: { type: string, enum: [BAJA, MEDIA, ALTA, CRITICA] }
  *               id_asignado_a: { type: integer }
  *               comentarios_tecnicos: { type: string }
  *     responses:

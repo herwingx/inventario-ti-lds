@@ -412,12 +412,12 @@ function navigateTo(routePath) {
     <!-- Footer / Toggle -->
     <div 
       v-if="!isMobile" 
-      class="flex-none p-4 border-t border-light-border dark:border-dark-border"
+      class="flex-none p-2 border-t border-light-border dark:border-dark-border"
     >
       <button 
         @click="emit('toggle')"
         class="flex items-center w-full rounded-lg text-light-muted dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-200 group"
-        :class="showText ? 'px-4 py-3 gap-3' : 'justify-center py-3'"
+        :class="showText ? 'px-4 py-2 gap-3' : 'justify-center py-2'"
       >
         <component 
             :is="collapsed ? ChevronsRight : ChevronsLeft" 

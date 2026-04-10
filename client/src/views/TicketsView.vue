@@ -51,16 +51,33 @@ const priorityOptions = [
   { label: 'Crítica', value: 'CRITICA' }
 ]
 
-// Definición de columnas
-const columns = [
-  { field: 'id', header: 'ID', sortable: true, width: '5%' },
-  { field: 'equipo_display', header: 'Equipo/Modelo', sortable: true, width: '25%' },
-  { field: 'tipo_falla', header: 'Tipo de Falla', sortable: true, width: '15%' },
-  { field: 'prioridad', header: 'Prioridad', sortable: true, width: '12%' },
-  { field: 'estatus', header: 'Estado', sortable: true, width: '12%' },
-  { field: 'fecha_creacion', header: 'Registro', sortable: true, width: '18%' },
-  { field: 'actions', header: 'Acciones', sortable: false, width: '13%', align: 'right' }
-]
+const columns = computed(() => {
+  const baseColumns = [
+    { field: 'id', header: 'ID', sortable: true, width: '6%' },
+    { field: 'equipo_display', header: 'Equipo/Modelo', sortable: true, width: '26%' },
+    { field: 'tipo_falla', header: 'Tipo de Falla', sortable: true, width: '16%' },
+    { field: 'prioridad', header: 'Prioridad', sortable: true, width: '12%' },
+    { field: 'estatus', header: 'Estado', sortable: true, width: '12%' },
+    { field: 'fecha_creacion', header: 'Registro', sortable: true, width: '12%' },
+    { field: 'actions', header: 'Acciones', sortable: false, width: '10%', align: 'right' }
+  ]
+
+  if (!canManageTickets.value) {
+    return baseColumns
+  }
+
+  return [
+    { field: 'id', header: 'ID', sortable: true, width: '5%' },
+    { field: 'equipo_display', header: 'Equipo/Modelo', sortable: true, width: '25%' },
+    { field: 'reporta_nombre', header: 'Reportó', sortable: true, width: '14%' },
+    { field: 'tecnico_asignado', header: 'Asignado a', sortable: true, width: '14%' },
+    { field: 'tipo_falla', header: 'Tipo de Falla', sortable: true, width: '15%' },
+    { field: 'prioridad', header: 'Prioridad', sortable: true, width: '12%' },
+    { field: 'estatus', header: 'Estado', sortable: true, width: '12%' },
+    { field: 'fecha_creacion', header: 'Registro', sortable: true, width: '10%' },
+    { field: 'actions', header: 'Acciones', sortable: false, width: '8%', align: 'right' }
+  ]
+})
 
 const createTicket = () => {
   router.push({ name: 'tickets-nuevo' })
@@ -73,6 +90,10 @@ const filteredTickets = computed(() => {
     result = result.filter(t => 
       t.equipo_marca?.toLowerCase().includes(s) ||
       t.equipo_modelo?.toLowerCase().includes(s) ||
+      t.reporta_nombre?.toLowerCase().includes(s) ||
+      t.tecnico_asignado?.toLowerCase().includes(s) ||
+      t.titulo?.toLowerCase().includes(s) ||
+      t.categoria?.toLowerCase().includes(s) ||
       t.tipo_falla?.toLowerCase().includes(s) ||
       String(t.id).includes(s)
     )
@@ -90,7 +111,15 @@ const loadTickets = async () => {
       ...t,
       equipo_marca: t.equipos?.marca || 'N/A',
       equipo_modelo: t.equipos?.modelo || 'S/N',
-      equipo_display: `${t.equipos?.marca || 'N/A'} ${t.equipos?.modelo || ''}`
+      equipo_display: `${t.equipos?.marca || 'N/A'} ${t.equipos?.modelo || ''}`,
+      reporta_nombre:
+        t.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.username ||
+        t.nombre_reporta ||
+        t.email_reporta ||
+        'Usuario Externo',
+      tecnico_asignado:
+        t.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema?.username ||
+        'Sin asignar'
     })).filter(t => {
       const s = (t.estatus || '').toUpperCase()
       return s !== 'RESUELTO' && s !== 'CERRADO'
@@ -154,7 +183,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
 </script>
 
 <template>
-  <div class="animate-fade-in-up">
+  <div class="animate-fade-in-up pt-2 sm:pt-3">
     <div class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 border border-gray-200 dark:border-dark-border transition-all duration-300">
       
       <!-- Toolbar -->
@@ -222,6 +251,16 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
         <!-- Falla -->
         <template #tipo_falla="{ data }">
           <span class="text-gray-600 dark:text-gray-300 text-xs font-bold uppercase tracking-wide italic">{{ data.tipo_falla }}</span>
+        </template>
+
+        <!-- Reportó -->
+        <template #reporta_nombre="{ data }">
+          <span class="text-gray-700 dark:text-gray-200 text-xs font-semibold">{{ data.reporta_nombre }}</span>
+        </template>
+
+        <!-- Asignado -->
+        <template #tecnico_asignado="{ data }">
+          <span class="text-gray-700 dark:text-gray-200 text-xs font-semibold">{{ data.tecnico_asignado }}</span>
         </template>
 
         <!-- Prioridad -->

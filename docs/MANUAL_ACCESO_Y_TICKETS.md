@@ -19,7 +19,7 @@ El proyecto ya no opera únicamente como helpdesk de equipos. Ahora soporta:
 ### 2.1 Admin Tickets
 - Ve todos los tickets.
 - Asigna técnicos.
-- Cambia estatus y prioridad.
+- Cambia estatus y prioridad final.
 - Elimina tickets si el proceso operativo lo requiere.
 - Responde y agrega notas internas.
 
@@ -34,6 +34,8 @@ El proyecto ya no opera únicamente como helpdesk de equipos. Ahora soporta:
 - Inicia sesión con correo o username.
 - Solo ve sus propios tickets.
 - Puede crear nuevos tickets desde su panel.
+- Puede sugerir prioridad `BAJA`, `MEDIA` o `ALTA`.
+- No puede establecer `CRITICA`.
 - Puede comentar sobre sus tickets.
 
 ## 3. Flujo de acceso
@@ -58,10 +60,15 @@ El proyecto ya no opera únicamente como helpdesk de equipos. Ahora soporta:
 
 ### 4.1 Ticket general de TI
 1. El usuario entra a "Nuevo Ticket".
-2. Captura título, categoría, descripción y prioridad.
+2. Captura título, categoría, descripción y prioridad sugerida.
 3. No es obligatorio seleccionar equipo.
 4. El backend crea el ticket con estatus `ABIERTO`.
 5. El usuario lo ve en su lista y puede dar seguimiento.
+
+Regla de prioridad:
+- `Usuario Normal` solo puede crear tickets con prioridad `BAJA`, `MEDIA` o `ALTA`.
+- `CRITICA` es exclusiva de `Admin Tickets` y `Analista/Técnico`.
+- La prioridad operativa final siempre la valida soporte.
 
 ### 4.2 Ticket por QR de equipo
 1. El usuario escanea el QR del equipo.
@@ -84,6 +91,7 @@ El proyecto ya no opera únicamente como helpdesk de equipos. Ahora soporta:
 - Solo ve la opción Tickets.
 - Solo ve sus tickets.
 - No puede actualizar prioridad, estatus ni asignación.
+- No puede crear tickets con prioridad `CRITICA`.
 - No puede eliminar tickets.
 - No puede marcar notas internas.
 

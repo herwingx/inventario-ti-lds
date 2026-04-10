@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { RouterView } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
 import TheSidebar from '../components/layout/TheSidebar.vue'
 import TheHeader from '../components/layout/TheHeader.vue'
 import { useAuthStore } from '../stores/auth'
@@ -8,9 +8,11 @@ import Toast from 'primevue/toast'
 import ConfirmDialog from 'primevue/confirmdialog'
 
 const authStore = useAuthStore()
+const route = useRoute()
 const sidebarCollapsed = ref(false)
 const sidebarOpen = ref(false) // Para móvil
 const isMobile = ref(false)
+const mainScrollRef = ref(null)
 
 // Detectar si es móvil
 function checkMobile() {
@@ -51,10 +53,20 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
 })
+
+watch(
+  () => route.fullPath,
+  async () => {
+    await nextTick()
+    if (mainScrollRef.value) {
+      mainScrollRef.value.scrollTo({ top: 0, behavior: 'auto' })
+    }
+  }
+)
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen bg-light-bg dark:bg-dark-bg transition-colors duration-300">
+  <div class="flex flex-col h-screen overflow-hidden bg-light-bg dark:bg-dark-bg transition-colors duration-300">
     <!-- Overlay para móvil -->
     <transition name="fade">
       <div 
@@ -82,35 +94,34 @@ onUnmounted(() => {
       @toggleSidebar="toggleSidebar"
     />
 
-    <!-- Main Content - flex-1 para ocupar todo el espacio disponible -->
+    <!-- Main Content: footer fijo + área scrollable -->
     <main 
-      class="flex-1 pt-[6rem] pb-6 px-6 transition-all duration-300"
+      class="h-[calc(100vh-5rem)] mt-20 px-6 overflow-hidden flex flex-col transition-all duration-300"
       :style="{ marginLeft: isMobile ? '0' : (sidebarCollapsed ? '5rem' : '16rem') }"
     >
-      <RouterView v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </RouterView>
-    </main>
+      <div ref="mainScrollRef" class="flex-1 overflow-y-auto py-4">
+        <RouterView v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </RouterView>
+      </div>
 
-    <!-- Footer - siempre al fondo -->
-    <footer 
-      class="py-4 px-6 text-center text-sm text-light-muted dark:text-dark-muted border-t border-light-border dark:border-dark-border transition-all duration-300 mt-auto"
-      :style="{ marginLeft: isMobile ? '0' : (sidebarCollapsed ? '5rem' : '16rem') }"
-    >
-      <p>
-        Copyright © Desarrollado con ❤️ por 
-        <a 
-          href="https://github.com/herwingx" 
-          target="_blank" 
-          class="text-primary hover:text-primary-hover transition-colors"
-        >
-          herwingx
-        </a> 
-        {{ new Date().getFullYear() }}
-      </p>
-    </footer>
+      <!-- Footer: vive dentro del main para no generar scroll global -->
+      <footer class="flex-none py-4 text-center text-sm text-light-muted dark:text-dark-muted border-t border-light-border dark:border-dark-border">
+        <p>
+          Copyright © Desarrollado con ❤️ por
+          <a
+            href="https://github.com/herwingx"
+            target="_blank"
+            class="text-primary hover:text-primary-hover transition-colors"
+          >
+            herwingx
+          </a>
+          {{ new Date().getFullYear() }}
+        </p>
+      </footer>
+    </main>
   </div>
   <Toast />
   <ConfirmDialog />
