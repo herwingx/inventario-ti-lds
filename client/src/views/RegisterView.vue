@@ -10,14 +10,12 @@ import { Layers } from 'lucide-vue-next'
 const router = useRouter()
 const { error: toastError, success: toastSuccess, warning: toastWarning, Swal } = useSwal()
 
-const nombres = ref('')
-const apellidos = ref('')
 const email = ref('')
 const loading = ref(false)
 
 const handleRegister = async () => {
-  if (!nombres.value || !apellidos.value || !email.value) {
-    toastWarning('Completa nombre, apellidos y correo')
+  if (!email.value) {
+    toastWarning('Ingresa tu correo corporativo')
     return
   }
 
@@ -25,8 +23,6 @@ const handleRegister = async () => {
 
   try {
     const response = await AuthService.register({
-      nombres: nombres.value,
-      apellidos: apellidos.value,
       email: email.value
     })
 
@@ -68,25 +64,16 @@ const handleRegister = async () => {
           <Layers class="text-gray-400" :size="60" stroke-width="1.5" />
         </div>
         <h1 class="text-xl font-medium text-white">Crear cuenta</h1>
-        <p class="text-sm text-gray-400 mt-2 text-center">Ingresa tus datos para recibir tus credenciales por correo.</p>
+        <p class="text-sm text-gray-400 mt-2 text-center">Regístrate con tu correo corporativo para recibir tus credenciales.</p>
       </div>
 
       <form @submit.prevent="handleRegister" class="flex flex-col gap-5">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="flex flex-col gap-2">
-            <label for="nombres" class="text-xs font-bold text-gray-300">Nombre(s)</label>
-            <InputText id="nombres" v-model="nombres" class="w-full !rounded-md !py-2.5" placeholder="Juan" :disabled="loading" autofocus />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label for="apellidos" class="text-xs font-bold text-gray-300">Apellidos</label>
-            <InputText id="apellidos" v-model="apellidos" class="w-full !rounded-md !py-2.5" placeholder="Pérez" :disabled="loading" />
-          </div>
-        </div>
-
         <div class="flex flex-col gap-2">
-          <label for="email" class="text-xs font-bold text-gray-300">Correo electrónico</label>
-          <InputText id="email" v-model="email" type="email" class="w-full !rounded-md !py-2.5" placeholder="nombre@empresa.com" :disabled="loading" />
+          <label for="email" class="text-xs font-bold text-gray-300">Correo corporativo</label>
+          <InputText id="email" v-model="email" type="email" class="w-full !rounded-md !py-2.5" placeholder="nombre@empresa.com" :disabled="loading" autofocus />
+          <p class="text-xs text-gray-400">
+            Solo se permiten correos corporativos activos ya vinculados a un empleado.
+          </p>
         </div>
 
         <Button type="submit" label="Crear cuenta" :loading="loading" class="w-full !mt-2 !bg-[#1ea97c] !border-none hover:!bg-[#158763] !font-bold !py-2.5 !rounded-md !text-white" />

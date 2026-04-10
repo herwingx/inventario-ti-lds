@@ -43,7 +43,7 @@ const login = asyncHandler(async (req, res) => {
 
 /**
  * @function signup
- * @description Crea una cuenta de usuario normal y envía las credenciales por correo.
+ * @description Crea una cuenta de usuario usando correo corporativo y envía las credenciales por correo.
  */
 const signup = asyncHandler(async (req, res) => {
     const validation = signupSchema.safeParse(req.body);
@@ -62,7 +62,7 @@ const signup = asyncHandler(async (req, res) => {
     res.status(201).json({
         status: 'success',
             message: user.emailDelivered
-                ? 'Cuenta creada. Revisa tu correo para obtener tus credenciales.'
+                ? 'Cuenta creada. Revisa tu correo corporativo para obtener tus credenciales.'
                 : 'Cuenta creada, pero no se pudo enviar el correo. Usa la contraseña temporal mostrada en la respuesta.',
         data: user
     });

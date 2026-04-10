@@ -7,6 +7,115 @@ const logger = require('../utils/logger'); // Importar logger
 
 class TicketService {
   static USER_ROLE_ID = 2;
+  static ANALYST_ROLE_ID = 3;
+  static ADMIN_ROLE_ID = 1;
+  static ACTIVE_ASIGNACION_STATUS_ID = 1;
+  static FINAL_STATUSES = new Set(['RESUELTO', 'CERRADO']);
+
+  static ALLOWED_STATUS_TRANSITIONS = {
+    ABIERTO: new Set(['EN_PROGRESO', 'PENDIENTE', 'RESUELTO', 'CERRADO']),
+    EN_PROGRESO: new Set(['ABIERTO', 'PENDIENTE', 'RESUELTO', 'CERRADO']),
+    PENDIENTE: new Set(['ABIERTO', 'EN_PROGRESO', 'RESUELTO', 'CERRADO']),
+    RESUELTO: new Set(['ABIERTO', 'EN_PROGRESO', 'PENDIENTE', 'CERRADO']),
+    CERRADO: new Set() // No transitions allowed FROM CERRADO - it's terminal for non-admin
+  };
+
+  /**
+   * Valida si una transición de estado es permitida
+   * 
+   * REGLA CRÍTICA: Estado CERRADO es TERMINAL
+   * - Un ticket CERRADO NO puede volver a ABIERTO automáticamente
+   * - Solo ADMIN (roleId=1) puede hacer CERRADO → ABIERTO (reabrir)
+   * - Todos los demás intentos de transicionar desde CERRADO serán rechazados
+   * 
+   * MATRIZ DE TRANSICIONES:
+   * ABIERTO      → {EN_PROGRESO, PENDIENTE, RESUELTO, CERRADO}
+   * EN_PROGRESO  → {ABIERTO, PENDIENTE, RESUELTO, CERRADO}
+   * PENDIENTE    → {ABIERTO, EN_PROGRESO, RESUELTO, CERRADO}
+   * RESUELTO     → {ABIERTO, EN_PROGRESO, PENDIENTE, CERRADO}
+   * CERRADO      → {} (Terminal) ⚠️ EXCEPTO si ADMIN quiere reabrir
+   * 
+   * EJEMPLO:
+   * - User cierra: EN_PROGRESO → CERRADO ✅
+   * - User reabre: CERRADO → ABIERTO ❌
+   * - ADMIN reabre: CERRADO → ABIERTO ✅
+   */
+  static validateStatusTransition(currentStatus, nextStatus, roleId = null) {
+    if (!nextStatus || !currentStatus || nextStatus === currentStatus) {
+      return;
+    }
+
+    // ✨ EXCEPCIÓN: Solo ADMIN puede reabrir tickets cerrados
+    if (roleId === this.ADMIN_ROLE_ID && currentStatus === 'CERRADO' && nextStatus === 'ABIERTO') {
+      return;
+    }
+
+    const allowed = this.ALLOWED_STATUS_TRANSITIONS[currentStatus];
+    if (!allowed || !allowed.has(nextStatus)) {
+      const error = new Error(`Transición de estatus no permitida: ${currentStatus} -> ${nextStatus}.`);
+      error.statusCode = 400;
+      error.isOperational = true;
+      throw error;
+    }
+  }
+
+  /**
+   * Vincula automáticamente el equipo asignado al usuario que reporta
+   * 
+   * LÓGICA:
+   * Si el usuario que crea el ticket es un VIEWER (usuario externo):
+   * 1. Busca su ASIGNACIÓN ACTIVA (fecha_fin = null, status = 1)
+   * 2. Obtiene el equipo de esa asignación
+   * 3. Lo vincula automáticamente al ticket
+   * 
+   * BENEFICIO:
+   * - Usuario no tiene que seleccionar equipo manualmente
+   * - Menos errores de mapeo
+   * - Técnico recibe contexto completo del problema
+   * 
+   * CASOS:
+   * ✅ Viewer con 1 equipo → Se vincula automáticamente
+   * ❌ Viewer sin equipo → ticket.equipos = null
+   * ❌ Viewer múltiples equipos → Usa el más reciente
+   */
+  static async resolveTicketEquipo(data, userId, roleId) {
+    const explicitEquipo = data.id_equipo_relacionado ?? data.id_equipo ?? null;
+    if (explicitEquipo) {
+      return explicitEquipo;  // Si viene en el request, priorizar eso
+    }
+
+    // Para usuario final, usar automáticamente su equipo activo asignado cuando exista.
+    if (!userId || roleId !== this.USER_ROLE_ID) {
+      return null;
+    }
+
+    const user = await prisma.usuarios_sistema.findUnique({
+      where: { id: parseInt(userId) },
+      select: {
+        id_empleado: true,
+        empleados: {
+          select: {
+            asignaciones: {
+              where: {
+                fecha_fin_asignacion: null,
+                id_status_asignacion: this.ACTIVE_ASIGNACION_STATUS_ID
+              },
+              select: {
+                id_equipo: true
+              },
+              orderBy: [
+                { fecha_asignacion: 'desc' },
+                { id: 'desc' }
+              ],
+              take: 1
+            }
+          }
+        }
+      }
+    });
+
+    return user?.empleados?.asignaciones?.[0]?.id_equipo || null;
+  }
 
   static resolveCreatePriority(requestedPriority, roleId) {
     const priority = requestedPriority || 'MEDIA';
@@ -20,6 +129,21 @@ class TicketService {
     }
 
     return priority;
+  }
+
+  static resolveTipoFalla(tipoFalla, categoria) {
+    const rawTipo = String(tipoFalla || '').trim().toUpperCase();
+    if (['HARDWARE', 'SOFTWARE', 'RED', 'IMPRESORA', 'OTRO'].includes(rawTipo)) {
+      return rawTipo;
+    }
+
+    const source = String(categoria || '').toLowerCase();
+    if (source.includes('impresora')) return 'IMPRESORA';
+    if (source.includes('equipo') || source.includes('hardware') || source.includes('mantenimiento')) return 'HARDWARE';
+    if (source.includes('red') || source.includes('internet')) return 'RED';
+    if (source.includes('software') || source.includes('licencia') || source.includes('acceso') || source.includes('permiso')) return 'SOFTWARE';
+
+    return 'OTRO';
   }
 
   static async findAll(filters, userId = null, roleId = null) {
@@ -70,6 +194,25 @@ class TicketService {
       return null;
     }
 
+    // Si hay equipo, cargar su asignacion activa con IP en una consulta separada
+    // para mantener estable la consulta principal del ticket.
+    if (ticket.equipos && ticket.equipos.id) {
+      const asignacionesConIP = await prisma.asignaciones.findMany({
+        where: {
+          id_equipo: ticket.equipos.id,
+          fecha_fin_asignacion: null,
+          id_status_asignacion: 1
+        },
+        include: {
+          direcciones_ip: true
+        },
+        orderBy: { fecha_asignacion: 'desc' },
+        take: 1
+      });
+      
+      ticket.equipos.asignaciones = asignacionesConIP;
+    }
+
     // Obtener otros tickets del mismo equipo (Historial)
     const historialEquipo = ticket.id_equipo
       ? await prisma.tickets.findMany({
@@ -116,8 +259,9 @@ class TicketService {
     // Generar token_acceso si no viene (para tickets internos)
     const { v4: uuidv4 } = require('uuid');
     const token = uuidv4().replace(/-/g, '').substring(0, 16);
-    const idEquipo = data.id_equipo_relacionado ?? data.id_equipo ?? null;
+    const idEquipo = await this.resolveTicketEquipo(data, userId, roleId);
     const prioridad = this.resolveCreatePriority(data.prioridad, roleId);
+    const tipoFalla = this.resolveTipoFalla(data.tipo_falla, data.categoria);
 
     return await prisma.tickets.create({
       data: {
@@ -125,7 +269,7 @@ class TicketService {
         categoria: data.categoria,
         descripcion: data.descripcion,
         prioridad,
-        tipo_falla: data.tipo_falla || 'OTRO',
+        tipo_falla: tipoFalla,
         id_equipo: idEquipo,
         id_usuario_reporta: userId,
         token_acceso: token,
@@ -134,7 +278,7 @@ class TicketService {
     });
   }
 
-  static async update(id, data) {
+  static async update(id, data, roleId = null) {
     const ticketId = parseInt(id);
     try {
       const oldTicket = await prisma.tickets.findUnique({
@@ -144,9 +288,24 @@ class TicketService {
       if (!oldTicket) return null;
 
       let updateData = { ...data };
-      if (data.estatus === 'RESUELTO' || data.estatus === 'CERRADO') {
-        updateData.fecha_cierre = new Date();
+      const nextStatus = data.estatus;
+
+      if (nextStatus) {
+        this.validateStatusTransition(oldTicket.estatus, nextStatus, roleId);
+
+        if (this.FINAL_STATUSES.has(nextStatus)) {
+          if (!this.FINAL_STATUSES.has(oldTicket.estatus)) {
+            updateData.fecha_cierre = new Date();
+          } else {
+            updateData.fecha_cierre = oldTicket.fecha_cierre || new Date();
+          }
+        } else if (this.FINAL_STATUSES.has(oldTicket.estatus)) {
+          // Reapertura: limpiar fecha de cierre para reflejar estado activo nuevamente.
+          updateData.fecha_cierre = null;
+        }
       }
+
+      updateData.fecha_actualizacion = new Date();
 
       const updated = await prisma.tickets.update({
         where: { id: ticketId },
@@ -198,17 +357,17 @@ class TicketService {
 
   static async getTecnicos() {
     const users = await prisma.usuarios_sistema.findMany({
-      // Excluir usuario normal para evitar asignaciones incorrectas.
+      // Técnico asignable = analista o admin activo (admin puede autoasignarse).
       where: {
         id_status: 1,
-        id_rol: { not: this.USER_ROLE_ID }
+        id_rol: { in: [this.ANALYST_ROLE_ID, this.ADMIN_ROLE_ID] }
       },
-      select: { id: true, username: true, id_rol: true }
+      select: { id: true, username: true, email: true, id_rol: true }
     });
 
     return users.map(u => ({
       id: u.id,
-      nombre_usuario: u.username
+      nombre_usuario: u.email ? u.email.split('@')[0] : u.username
     }));
   }
 
@@ -231,13 +390,22 @@ class TicketService {
       throw new Error('No se pueden agregar comentarios a un ticket finalizado o cerrado');
     }
 
-    return await prisma.ticket_comentarios.create({
-      data: {
-        id_ticket: parseInt(ticketId),
-        id_usuario: userId,
-        contenido: data.contenido,
-        es_interno: data.es_interno || false
-      }
+    return await prisma.$transaction(async (tx) => {
+      const comment = await tx.ticket_comentarios.create({
+        data: {
+          id_ticket: parseInt(ticketId),
+          id_usuario: userId,
+          contenido: data.contenido,
+          es_interno: data.es_interno || false
+        }
+      });
+
+      await tx.tickets.update({
+        where: { id: parseInt(ticketId) },
+        data: { fecha_actualizacion: new Date() }
+      });
+
+      return comment;
     });
   }
 
@@ -255,13 +423,22 @@ class TicketService {
     // [ADJUNTO: TIPO | NOMBRE | URL]
     const content = `[ADJUNTO:${tipo}|${fileName}|${fileUrl}]`;
 
-    return await prisma.ticket_comentarios.create({
-      data: {
-        id_ticket: parseInt(ticketId),
-        id_usuario: userId,
-        contenido: content,
-        es_interno: false // Los adjuntos por defecto son visibles, o podríamos parametrizarlo
-      }
+    return await prisma.$transaction(async (tx) => {
+      const attachmentComment = await tx.ticket_comentarios.create({
+        data: {
+          id_ticket: parseInt(ticketId),
+          id_usuario: userId,
+          contenido: content,
+          es_interno: false // Los adjuntos por defecto son visibles, o podríamos parametrizarlo
+        }
+      });
+
+      await tx.tickets.update({
+        where: { id: parseInt(ticketId) },
+        data: { fecha_actualizacion: new Date() }
+      });
+
+      return attachmentComment;
     });
   }
 }

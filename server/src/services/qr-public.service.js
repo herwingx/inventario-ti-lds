@@ -191,13 +191,22 @@ class QrPublicService {
     const autorNombre = nombre || ticket.nombre_reporta || 'Usuario Externo';
     const contenidoFinal = `[${autorNombre}]: ${contenido.trim()}`;
 
-    return await prisma.ticket_comentarios.create({
-      data: {
-        id_ticket: ticket.id,
-        id_usuario: null, // Es un comentario público
-        contenido: contenidoFinal,
-        es_interno: false
-      }
+    return await prisma.$transaction(async (tx) => {
+      const comment = await tx.ticket_comentarios.create({
+        data: {
+          id_ticket: ticket.id,
+          id_usuario: null, // Es un comentario público
+          contenido: contenidoFinal,
+          es_interno: false
+        }
+      });
+
+      await tx.tickets.update({
+        where: { id: ticket.id },
+        data: { fecha_actualizacion: new Date() }
+      });
+
+      return comment;
     });
   }
 
@@ -225,13 +234,22 @@ class QrPublicService {
     // Formato final en DB: [Nombre]: [ADJUNTO:...]
     const contenidoFinal = `[${autorNombre}]: [ADJUNTO:${tipo}|${fileName}|${fileUrl}]`;
 
-    return await prisma.ticket_comentarios.create({
-      data: {
-        id_ticket: ticket.id,
-        id_usuario: null,
-        contenido: contenidoFinal,
-        es_interno: false
-      }
+    return await prisma.$transaction(async (tx) => {
+      const attachmentComment = await tx.ticket_comentarios.create({
+        data: {
+          id_ticket: ticket.id,
+          id_usuario: null,
+          contenido: contenidoFinal,
+          es_interno: false
+        }
+      });
+
+      await tx.tickets.update({
+        where: { id: ticket.id },
+        data: { fecha_actualizacion: new Date() }
+      });
+
+      return attachmentComment;
     });
   }
 }

@@ -3,9 +3,10 @@
  * @fileoverview Barra Lateral de Navegación.
  * Contiene el menú principal de la aplicación, soportando modo colapsado y móvil.
  */
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import TicketsService from '../../services/TicketsService'
 
 import { 
   Home, 
@@ -42,6 +43,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['toggle', 'close'])
+const newTicketsCount = ref(0)
+let ticketsBadgeInterval = null
+const STORAGE_KEY_PREFIX = 'ticketsBadgeLastSeen'
 
 // ... (rest of script remains same until template)
 
@@ -180,6 +184,11 @@ const isCollapsed = computed(() => {
   return props.collapsed && !props.isMobile
 })
 
+const isAdmin = computed(() => authStore.user?.roleId === 1)
+const isAnalyst = computed(() => authStore.user?.roleId === 3)
+const canSeeTicketsBadge = computed(() => isAdmin.value || isAnalyst.value)
+const userStorageKey = computed(() => `${STORAGE_KEY_PREFIX}:${authStore.user?.id || 'anon'}:${authStore.user?.roleId || 'none'}`)
+
 // Estado del item visualmente activo (seleccionado por click)
 const activeItemId = ref(null)
 
@@ -204,6 +213,162 @@ const syncActiveItem = () => {
 
 watch(() => [route.path, authStore.user?.roleId], () => {
   syncActiveItem()
+}, { immediate: true })
+
+const shouldShowTicketBadge = (child) => {
+  return child?.id === 'tickets-activos' && canSeeTicketsBadge.value && newTicketsCount.value > 0
+}
+
+const ticketBadgeLabel = computed(() => {
+  return newTicketsCount.value > 99 ? '99+' : String(newTicketsCount.value)
+})
+
+const getLastSeenAt = () => {
+  const raw = localStorage.getItem(userStorageKey.value)
+  const value = Number(raw)
+  return Number.isFinite(value) && value > 0 ? value : 0
+}
+
+const setLastSeenAt = (timestamp = Date.now()) => {
+  localStorage.setItem(userStorageKey.value, String(timestamp))
+}
+
+const getTicketTimestamp = (ticket) => {
+  const raw = ticket?.fecha_actualizacion || ticket?.fecha_creacion
+  const ts = Date.parse(raw)
+  return Number.isFinite(ts) ? ts : 0
+}
+
+const isRoleRelevantTicket = (ticket) => {
+  if (isAdmin.value) {
+    // Admin: tickets por triage pendientes de asignacion y no finalizados.
+    return !ticket.id_asignado_a && !['CERRADO', 'RESUELTO'].includes(ticket.estatus)
+  }
+
+  if (isAnalyst.value) {
+    // Analista: tickets asignados a su usuario y no finalizados.
+    return (
+      ticket.id_asignado_a === authStore.user?.id &&
+      !['CERRADO', 'RESUELTO'].includes(ticket.estatus)
+    )
+  }
+
+  return false
+}
+
+const getMaxRelevantTicketTimestamp = (tickets = []) => {
+  const relevant = tickets.filter(isRoleRelevantTicket)
+  if (!relevant.length) return 0
+  return Math.max(...relevant.map(getTicketTimestamp), 0)
+}
+
+const markTicketsAsSeen = () => {
+  if (!canSeeTicketsBadge.value) return
+  // Fallback solo cuando no tenemos snapshot del servidor.
+  setLastSeenAt(Date.now())
+  newTicketsCount.value = 0
+}
+
+const markTicketsAsSeenFromSnapshot = (tickets = []) => {
+  if (!canSeeTicketsBadge.value) return
+  const maxTs = getMaxRelevantTicketTimestamp(tickets)
+
+  if (maxTs > 0) {
+    setLastSeenAt(maxTs)
+  } else if (!getLastSeenAt()) {
+    // Primer uso sin tickets relevantes.
+    setLastSeenAt(Date.now())
+  }
+
+  newTicketsCount.value = 0
+}
+
+async function loadNewTicketsCount() {
+  if (!canSeeTicketsBadge.value) {
+    newTicketsCount.value = 0
+    return
+  }
+
+  try {
+    const tickets = await TicketsService.getAll()
+
+    // Si ya esta en tickets, consideramos todo lo relevante como visto usando reloj del servidor.
+    if (route.path?.startsWith('/tickets')) {
+      markTicketsAsSeenFromSnapshot(tickets)
+      return
+    }
+
+    const lastSeenAt = getLastSeenAt()
+
+    // Primera ejecucion para este usuario/rol: baseline al ultimo ticket relevante del servidor.
+    if (!lastSeenAt) {
+      setLastSeenAt(getMaxRelevantTicketTimestamp(tickets) || Date.now())
+      newTicketsCount.value = 0
+      return
+    }
+
+    newTicketsCount.value = tickets.filter((ticket) => {
+      if (!isRoleRelevantTicket(ticket)) return false
+      return getTicketTimestamp(ticket) > lastSeenAt
+    }).length
+  } catch (error) {
+    newTicketsCount.value = 0
+  }
+}
+
+function stopTicketsBadgePolling() {
+  if (ticketsBadgeInterval) {
+    clearInterval(ticketsBadgeInterval)
+    ticketsBadgeInterval = null
+  }
+}
+
+/**
+ * Sistema de Polling Coordinado - Sidebar (10s)
+ * 
+ * ARQUITECTURA DE SINCRONIZACIÓN:
+ * Sidebar (10s) ← CRÍTICO: Notificaciones frecuentes
+ * TicketsView (15s) ← Mediobajo: Lista con refresh regular
+ * TicketsDetail (30s) ← Bajo: Comments + estado
+ * 
+ * RATIONALE:
+ * - 10s: Sidebar badge es lo primero que ve el usuario
+ * - Si hay tickets nuevos, debe enterarse rápido
+ * - 10s es balance entre UX y carga del servidor
+ * - No más rápido (consumo innecesario)
+ * - No más lento (datos desactualizados)
+ * 
+ * DINÁMICO POR ROL:
+ * ADMIN (1): Cuenta tickets SIN ASIGNAR
+ * ANALYST (3): Cuenta tickets ASIGNADOS A MÍ EN PROGRESO
+ * VIEWER (2): No ve badge
+ * 
+ * CLEANUP: onUnmounted detiene el interval automáticamente
+ */
+function startTicketsBadgePolling() {
+  stopTicketsBadgePolling()  // Limpiar interval anterior
+  if (!canSeeTicketsBadge.value) return  // No iniciar si no tiene permisos
+
+  loadNewTicketsCount()  // Carga inmediata
+  ticketsBadgeInterval = setInterval(loadNewTicketsCount, 10000)  // Cada 10s sincronización
+}
+
+onMounted(() => {
+  startTicketsBadgePolling()
+})
+
+onUnmounted(() => {
+  stopTicketsBadgePolling()
+})
+
+watch(() => [authStore.user?.id, authStore.user?.roleId], () => {
+  startTicketsBadgePolling()
+}, { immediate: true })
+
+watch(() => route.path, (path) => {
+  if (path?.startsWith('/tickets')) {
+    markTicketsAsSeen()
+  }
 }, { immediate: true })
 
 /**
@@ -348,10 +513,19 @@ function navigateTo(routePath) {
           <template v-else>
             <div 
               @click="!isCollapsed && handleItemClick(item)"
-              class="sidebar-item p-4"
+              class="sidebar-item p-4 relative"
               :class="{ 'active': isItemActive(item) }"
             >
               <component :is="item.icon" :size="20" stroke-width="2" />
+              
+              <!-- Badge SIEMPRE visible cuando collapsed (absolute afuera del flujo) -->
+              <span
+                v-if="isCollapsed && item.id === 'soporte' && canSeeTicketsBadge && newTicketsCount > 0"
+                class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-black leading-none pointer-events-none"
+              >
+                {{ ticketBadgeLabel }}
+              </span>
+              
               <span v-if="showText" class="text-sm font-semibold flex-1">{{ item.label }}</span>
               
               <component 
@@ -375,7 +549,15 @@ function navigateTo(routePath) {
                   :class="{ 'active': isChildActive(child) }"
                 >
                   <Circle :size="6" fill="currentColor" />
-                  <span>{{ child.label }}</span>
+                  <span class="flex items-center gap-2">
+                    <span>{{ child.label }}</span>
+                    <span
+                      v-if="shouldShowTicketBadge(child)"
+                      class="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-black leading-none"
+                    >
+                      {{ ticketBadgeLabel }}
+                    </span>
+                  </span>
                 </div>
               </li>
             </ul>
@@ -398,10 +580,16 @@ function navigateTo(routePath) {
                 v-for="child in item.children" 
                 :key="child.id"
                 @click.stop="navigateTo(child.route)"
-                class="px-4 py-2 text-sm text-light-muted dark:text-dark-muted hover:bg-primary/20 hover:text-primary cursor-pointer transition-colors"
+                class="px-4 py-2 text-sm text-light-muted dark:text-dark-muted hover:bg-primary/20 hover:text-primary cursor-pointer transition-colors flex items-center justify-between gap-2"
                 :class="{ '!text-primary !bg-primary/10': isChildActive(child) }"
               >
-                {{ child.label }}
+                <span>{{ child.label }}</span>
+                <span
+                  v-if="shouldShowTicketBadge(child)"
+                  class="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-black leading-none"
+                >
+                  {{ ticketBadgeLabel }}
+                </span>
               </div>
             </div>
           </template>

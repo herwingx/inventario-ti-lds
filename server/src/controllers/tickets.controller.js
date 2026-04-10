@@ -15,6 +15,7 @@ try {
 } catch (e) {}
 
 const isRestrictedUser = (req) => req.user?.roleId === 2;
+const isAnalystUser = (req) => req.user?.roleId === 3;
 
 const ensureOwnTicket = (req, ticket) => {
         if (isRestrictedUser(req) && ticket?.id_usuario_reporta !== req.user?.userId) {
@@ -76,12 +77,27 @@ const createTicket = asyncHandler(async (req, res) => {
     
     logger.info(`Ticket creado: ID ${newTicket.id} por usuario ID ${userId}`);
 
-    // Notificar a soporte también para tickets internos (fire-and-forget).
+    // Notificar a soporte y confirmar al solicitante (fire-and-forget).
     if (TicketNotificationService) {
         TicketService.findById(newTicket.id)
             .then(ticketData => {
-                if (!ticketData?.equipos) return;
-                return TicketNotificationService.notifyNewTicket(ticketData, ticketData.equipos);
+                if (!ticketData) return;
+
+                const reporterEmail =
+                    ticketData?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.email ||
+                    ticketData?.email_reporta ||
+                    null;
+                const reporterName =
+                    ticketData?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.username ||
+                    ticketData?.nombre_reporta ||
+                    'Usuario';
+
+                return Promise.all([
+                    TicketNotificationService.notifyNewTicket(ticketData, ticketData.equipos),
+                    reporterEmail
+                        ? TicketNotificationService.notifyTicketCreated(ticketData, ticketData.equipos, reporterEmail, reporterName)
+                        : Promise.resolve()
+                ]);
             })
             .catch(err => logger.warn(`[EMAIL] Fallo notif ticket interno: ${err}`));
     }
@@ -106,6 +122,22 @@ const updateTicket = asyncHandler(async (req, res) => {
     }
 
     const { id } = req.params;
+    const previousTicket = await TicketService.findById(id);
+
+    if (!previousTicket) {
+        const error = new Error(`Ticket con ID ${id} no encontrado.`);
+        error.statusCode = 404;
+        error.isOperational = true;
+        throw error;
+    }
+
+    if (isAnalystUser(req) && previousTicket.id_asignado_a !== req.user?.userId) {
+        const error = new Error('Solo puedes actualizar tickets asignados a tu usuario.');
+        error.statusCode = 403;
+        error.isOperational = true;
+        throw error;
+    }
+
     const validation = updateTicketSchema.safeParse({ params: { id }, body: req.body });
 
     if (!validation.success) {
@@ -116,13 +148,100 @@ const updateTicket = asyncHandler(async (req, res) => {
         throw error;
     }
 
-    const updated = await TicketService.update(id, validation.data.body);
+    let payload = { ...validation.data.body };
+
+    if (isAnalystUser(req)) {
+        const hasRestrictedFields = payload.prioridad !== undefined || payload.id_asignado_a !== undefined;
+        if (hasRestrictedFields) {
+            const error = new Error('El rol Analista solo puede gestionar estatus del ticket.');
+            error.statusCode = 403;
+            error.isOperational = true;
+            throw error;
+        }
+
+        if (payload.estatus === undefined) {
+            const error = new Error('Debes enviar el estatus para actualizar el ticket.');
+            error.statusCode = 400;
+            error.isOperational = true;
+            throw error;
+        }
+
+        payload = { estatus: payload.estatus };
+    }
+
+    const updated = await TicketService.update(id, payload, req.user?.roleId);
 
     if (!updated) {
         const error = new Error(`Ticket con ID ${id} no encontrado.`);
         error.statusCode = 404;
         error.isOperational = true;
         throw error;
+    }
+
+    // Notificación de reapertura (solo para ADMIN)
+    if (
+        TicketNotificationService &&
+        req.user?.roleId === 1 &&
+        payload.estatus === 'ABIERTO' &&
+        previousTicket.estatus === 'CERRADO'
+    ) {
+        const analyst = updated.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema;
+        if (analyst?.email) {
+            TicketNotificationService.notifyAnalystAssignment(
+                {
+                    id: updated.id,
+                    prioridad: updated.prioridad,
+                    tipo_falla: updated.tipo_falla,
+                    descripcion: updated.descripcion
+                },
+                analyst
+            ).catch(err => logger.warn(`[EMAIL] Fallo notif reaper ticket: ${err}`));
+        }
+    }
+
+    if (
+        TicketNotificationService &&
+        payload.id_asignado_a !== undefined &&
+        payload.id_asignado_a !== null &&
+        payload.id_asignado_a !== previousTicket.id_asignado_a
+    ) {
+        const analyst = updated.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema;
+        if (analyst?.email) {
+            TicketNotificationService.notifyAnalystAssignment(
+                {
+                    id: updated.id,
+                    prioridad: updated.prioridad,
+                    tipo_falla: updated.tipo_falla,
+                    descripcion: updated.descripcion
+                },
+                analyst,
+                req.user?.username || 'Administrador'
+            ).catch(err => logger.warn(`[EMAIL] Fallo notif asignación analista: ${err}`));
+        }
+    }
+
+    if (
+        TicketNotificationService &&
+        payload.estatus &&
+        payload.estatus !== previousTicket.estatus
+    ) {
+        const fullTicket = await TicketService.findById(id);
+        const recipientEmail =
+            fullTicket?.email_reporta ||
+            fullTicket?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.email ||
+            null;
+
+        if (recipientEmail) {
+            TicketNotificationService.notifyUserStatusChange(
+                {
+                    id: fullTicket.id,
+                    token_acceso: fullTicket.token_acceso
+                },
+                payload.estatus,
+                recipientEmail,
+                req.user?.username || 'Soporte'
+            ).catch(err => logger.warn(`[EMAIL] Fallo notif cambio estatus: ${err}`));
+        }
     }
 
     logger.info(`Ticket ID ${id} actualizado.`);
@@ -199,6 +318,7 @@ const getComments = asyncHandler(async (req, res) => {
 const addComment = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const userId = req.user?.userId;
+    const roleId = req.user?.roleId;
 
     const ticket = await TicketService.findById(id);
     if (!ticket) {
@@ -217,12 +337,45 @@ const addComment = asyncHandler(async (req, res) => {
          throw error;
     }
 
+    // ADMIN PERMISSION CHECK: Admin can read all conversations but cannot write in viewer-analyst threads
+    // A viewer-analyst conversation exists if:
+    // - There's a viewer (id_usuario_reporta) who is NOT the one commenting
+    // - AND there's an assigned analyst (id_asignado_a)
+    if (roleId === 1) { // Admin role
+        const hasViewerReporter = ticket.id_usuario_reporta && ticket.id_usuario_reporta !== userId;
+        const hasAssignedAnalyst = ticket.id_asignado_a;
+        
+        if (hasViewerReporter && hasAssignedAnalyst) {
+            const error = new Error('Admin no puede participar en conversaciones entre solicitante y analista. Solo lectura permitida.');
+            error.statusCode = 403;
+            error.isOperational = true;
+            throw error;
+        }
+    }
+
     const comment = await TicketService.addComment(id, userId, req.body);
 
-    // Notificaciones
-    if (!req.body.es_interno && ticket.email_reporta && TicketNotificationService) {
-        TicketNotificationService.notifyUserComment(ticket, req.body.contenido, ticket.email_reporta)
-            .catch(err => logger.warn(`[EMAIL] Fallo notif usuario: ${err}`));
+    // Notificaciones de comentarios solo si se habilitan explícitamente para evitar saturación.
+    const allowCommentEmails = Boolean(TicketNotificationService?.isCommentNotificationEnabled?.());
+
+    if (allowCommentEmails && roleId !== 2 && !req.body.es_interno) {
+        const recipientEmail = ticket.email_reporta || ticket?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.email;
+        if (recipientEmail) {
+            TicketNotificationService.notifyUserComment(ticket, req.body.contenido, recipientEmail)
+                .catch(err => logger.warn(`[EMAIL] Fallo notif usuario: ${err}`));
+        }
+    }
+
+    if (allowCommentEmails && roleId === 2) {
+        const analyst = ticket?.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema;
+        if (analyst?.email) {
+            TicketNotificationService.notifyAnalystPublicComment(
+                { id: ticket.id },
+                req.body.contenido,
+                req.user?.username || 'Solicitante',
+                analyst
+            ).catch(err => logger.warn(`[EMAIL] Fallo notif analista comentario viewer: ${err}`));
+        }
     }
 
     res.status(201).json(comment);

@@ -6,11 +6,39 @@ const prisma = require('../config/prisma');
 const bcrypt = require('bcrypt');
 
 class ProfileService {
+  static ACTIVE_ASIGNACION_STATUS_ID = 1;
+
   static async getProfile(userId) {
     const u = await prisma.usuarios_sistema.findUnique({
       where: { id: parseInt(userId) },
       include: {
-        empleados: true,
+        empleados: {
+          include: {
+            cuentas_email_corporativo: {
+              where: { id_status: 1 },
+              select: {
+                id: true,
+                email: true
+              },
+              orderBy: { id: 'asc' },
+              take: 1
+            },
+            asignaciones: {
+              where: {
+                fecha_fin_asignacion: null,
+                id_status_asignacion: this.ACTIVE_ASIGNACION_STATUS_ID
+              },
+              select: {
+                id_equipo: true
+              },
+              orderBy: [
+                { fecha_asignacion: 'desc' },
+                { id: 'desc' }
+              ],
+              take: 1
+            }
+          }
+        },
         roles: true,
         status: true
       }
@@ -27,6 +55,8 @@ class ProfileService {
       nombre_empleado: u.empleados?.nombres,
       apellido_empleado: u.empleados?.apellidos,
       puesto: u.empleados?.puesto,
+      email_corporativo: u.empleados?.cuentas_email_corporativo?.[0]?.email || u.email || '',
+      id_equipo_asignado: u.empleados?.asignaciones?.[0]?.id_equipo || null,
       nombre_rol: u.roles?.nombre_rol,
       status_nombre: u.status?.nombre_status
     };

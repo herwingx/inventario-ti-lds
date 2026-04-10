@@ -2,208 +2,170 @@
 
 > **Sistema de Gestión de Activos TI & Helpdesk**
 >
-> Este manual describe el flujo actual de autenticación, alta de usuarios, creación de tickets generales de TI, asignación y operación diaria. Está pensado para soporte, administración y desarrollo.
+> Este manual describe el flujo vigente de autenticación, gestión de roles, operación de tickets y notificaciones.
 
 ## 1. Objetivo
 
-El proyecto ya no opera únicamente como helpdesk de equipos. Ahora soporta:
-- Registro de usuarios internos con nombre, apellidos y correo.
-- Inicio de sesión con correo o nombre de usuario.
+El sistema soporta:
+- Registro de usuarios finales por correo corporativo existente y vinculado a empleado.
+- Inicio de sesión con correo o username.
 - Envío de contraseña temporal por correo.
-- Tickets de TI generales, no solo incidentes ligados a un equipo.
-- Tickets de QR para equipos, manteniendo compatibilidad con el flujo histórico.
-- Restricción de acceso para que el usuario normal vea solo sus propios tickets.
+- Tickets internos y tickets públicos por QR.
+- Asignación explícita de responsable operativo (analista o admin).
+- Trazabilidad por chat y notificaciones por eventos.
 
 ## 2. Roles del sistema
 
-### 2.1 Admin Tickets
+### 2.1 Administrador (roleId = 1)
 - Ve todos los tickets.
-- Asigna técnicos.
-- Cambia estatus y prioridad final.
-- Elimina tickets si el proceso operativo lo requiere.
-- Responde y agrega notas internas.
+- Asigna responsable (analista o él mismo).
+- Cambia prioridad y estatus.
+- Elimina tickets.
+- Gestiona usuarios de sistema (alta/edición/baja).
 
-### 2.2 Analista o Técnico
-- Atiende tickets asignados.
-- Cambia estado y prioridad cuando le corresponde.
-- Agrega comentarios internos.
-- Recibe notificaciones de asignación.
+### 2.2 Analista (roleId = 3)
+- Ve consola administrativa de tickets.
+- Atiende tickets asignados a su usuario.
+- Cambia **solo estatus** en tickets asignados.
+- Puede comentar y adjuntar evidencia en tickets asignados.
+- No puede cambiar prioridad, reasignar ni eliminar.
 
-### 2.3 Usuario Normal
-- Se registra con nombre, apellidos y correo.
-- Inicia sesión con correo o username.
+### 2.3 Usuario Final / Viewer (roleId = 2)
+- Se registra con correo corporativo válido y vinculado a empleado.
 - Solo ve sus propios tickets.
-- Puede crear nuevos tickets desde su panel.
+- Puede crear tickets internos.
 - Puede sugerir prioridad `BAJA`, `MEDIA` o `ALTA`.
 - No puede establecer `CRITICA`.
-- Puede comentar sobre sus tickets.
 
 ## 3. Flujo de acceso
 
-### 3.1 Alta de usuario
+### 3.1 Alta de usuario final
 1. El usuario abre la ruta pública de registro.
-2. Captura nombre, apellidos y correo.
-3. El backend valida que el correo no esté registrado.
-4. Se crea el acceso en `usuarios_sistema`.
-5. El sistema genera una contraseña temporal.
-6. La contraseña se envía por correo.
-7. El usuario inicia sesión con sus credenciales.
+2. Captura solo correo corporativo.
+3. El backend valida que el correo corporativo exista, esté activo y esté ligado a un empleado activo.
+4. Se crea el acceso en `usuarios_sistema` con vínculo `id_empleado`.
+5. Se genera contraseña temporal y se envía por correo.
 
 ### 3.2 Inicio de sesión
 1. El usuario ingresa correo o username.
-2. El backend busca coincidencia en `usuarios_sistema`.
-3. Si la contraseña es válida y la cuenta está activa, se genera JWT.
-4. El cliente guarda token y datos de usuario en `localStorage`.
-5. El usuario normal es redirigido a Tickets.
+2. Si credenciales y estado son válidos, el backend emite JWT.
+3. El cliente guarda token y perfil localmente.
+4. El usuario final redirige a tickets; roles administrativos al panel.
 
 ## 4. Flujo de tickets
 
-### 4.1 Ticket general de TI
-1. El usuario entra a "Nuevo Ticket".
-2. Captura título, categoría, descripción y prioridad sugerida.
-3. No es obligatorio seleccionar equipo.
-4. El backend crea el ticket con estatus `ABIERTO`.
-5. El usuario lo ve en su lista y puede dar seguimiento.
+### 4.1 Ticket interno
+1. El usuario final captura título, categoría, descripción y prioridad sugerida.
+2. El backend crea el ticket en `ABIERTO`.
+3. Para usuario final, si existe asignación activa de equipo en su empleado, se vincula automáticamente `id_equipo`.
 
-Regla de prioridad:
-- `Usuario Normal` solo puede crear tickets con prioridad `BAJA`, `MEDIA` o `ALTA`.
-- `CRITICA` es exclusiva de `Admin Tickets` y `Analista/Técnico`.
-- La prioridad operativa final siempre la valida soporte.
+### 4.2 Asignación de responsable
+1. El admin define responsable en detalle del ticket.
+2. Responsable permitido: analista o admin activo.
+3. Al asignar, se envía correo al responsable.
 
-### 4.2 Ticket por QR de equipo
-1. El usuario escanea el QR del equipo.
-2. Se abre la landing pública del activo.
-3. Se reporta la falla sin autenticación.
-4. El sistema conserva la compatibilidad con `token_acceso`.
-5. Si el ticket sí está ligado a un equipo, se mantiene la bitácora histórica del activo.
+### 4.3 Operación por responsable
+1. El analista opera solo tickets asignados a él.
+2. El admin opera cualquier ticket.
+3. Cambios de estatus notifican al solicitante.
 
-### 4.3 Asignación
-1. El admin abre el detalle del ticket.
-2. Selecciona técnico, estatus y prioridad.
-3. Al guardar, el sistema registra el cambio.
-4. El técnico recibe notificación por correo.
-5. El reportante también recibe notificación si aplica.
+### 4.4 Ticket público por QR
+1. Se crea ticket desde token QR.
+2. Si no hay responsable, comentarios del solicitante notifican canal admin (triage).
+3. Si hay responsable asignado, comentarios notifican al responsable.
 
-## 5. Permisos y restricciones
+## 5. Reglas de negocio activas
 
-### Usuario Normal
-- Puede entrar al panel.
-- Solo ve la opción Tickets.
-- Solo ve sus tickets.
-- No puede actualizar prioridad, estatus ni asignación.
-- No puede crear tickets con prioridad `CRITICA`.
-- No puede eliminar tickets.
-- No puede marcar notas internas.
+### 5.1 Prioridad
+- Usuario final: `BAJA`, `MEDIA`, `ALTA`.
+- `CRITICA`: solo admin.
+- Analista no puede modificar prioridad.
 
-### Admin / Técnico
-- Tiene acceso a la consola completa.
-- Puede ver, editar y administrar tickets.
-- Puede responder, asignar y cerrar.
+### 5.2 Transiciones de estatus
+Estados: `ABIERTO`, `EN_PROGRESO`, `PENDIENTE`, `RESUELTO`, `CERRADO`.
 
-## 6. Modelo de datos relevante
+Reglas implementadas:
+- Se validan transiciones permitidas.
+- Al pasar a `RESUELTO`/`CERRADO`, se setea `fecha_cierre`.
+- Si se reabre un ticket finalizado, `fecha_cierre` se limpia.
 
-### `usuarios_sistema`
-Campos clave para acceso:
-- `username`
-- `email`
-- `nombres`
-- `apellidos`
-- `password_hash`
-- `id_rol`
-- `id_empleado` opcional
-- `id_status`
+### 5.3 Chat y adjuntos
+- No se permite comentar ni adjuntar en tickets `RESUELTO` o `CERRADO`.
+- Comentarios y adjuntos actualizan `fecha_actualizacion` del ticket para trazabilidad.
 
-### `tickets`
-Campos clave para soporte:
-- `titulo`
-- `categoria`
-- `descripcion`
-- `tipo_falla`
-- `prioridad`
-- `estatus`
-- `id_equipo` opcional
-- `id_usuario_reporta`
-- `id_asignado_a`
-- `token_acceso`
-- `email_reporta`
-- `nombre_reporta`
+## 6. Notificaciones por correo
 
-## 7. Endpoints principales
+- **Nuevo ticket:** admins (canal alerta + usuarios admin con correo).
+- **Asignación de ticket:** responsable asignado.
+- **Comentario de soporte:** solicitante (interno o público).
+- **Comentario del solicitante:** responsable asignado; si no existe, canal admin.
+- **Cambio de estatus:** solicitante.
 
-### Autenticación
-- `POST /api/auth/signup` crea el usuario y envía credenciales.
-- `POST /api/auth/login` acepta correo o username.
-- `POST /api/auth/forgot-password` solicita reseteo.
-- `POST /api/auth/reset-password` cambia contraseña.
+## 7. Permisos por endpoint (resumen)
 
-### Tickets
-- `GET /api/tickets` lista tickets.
-- `POST /api/tickets` crea ticket general.
-- `GET /api/tickets/:id` devuelve detalle.
-- `PUT /api/tickets/:id` actualiza ticket.
-- `GET /api/tickets/:id/comments` consulta conversación.
-- `POST /api/tickets/:id/comments` agrega comentario.
-- `POST /api/tickets/:id/attachments` adjunta archivo.
+- `POST /api/auth/signup`: público (registro final).
+- `GET /api/tickets`: autenticado, con filtro por rol.
+- `PUT /api/tickets/:id`:
+	- Admin: completo.
+	- Analista: solo estatus y solo tickets asignados a él.
+	- Viewer: denegado.
+- `POST /api/tickets/:id/comments`:
+	- Admin/Analista/Viewer autenticados según visibilidad del ticket.
 
-### QR público
-- `GET /api/q/:token` obtiene datos del equipo.
-- `POST /api/q/ticket/:token` crea ticket público.
-- `GET /api/q/status/:ticketToken` consulta seguimiento.
+## 8. Checklist de validación operativa
 
-## 8. Comandos de operación
+- [ ] Registro final requiere correo corporativo existente y vinculado.
+- [ ] Admin puede asignar tickets a analista o a sí mismo.
+- [ ] Analista solo actualiza estatus en tickets asignados.
+- [ ] Analista no puede reasignar ni cambiar prioridad.
+- [ ] Viewer no puede actualizar tickets.
+- [ ] Cambio de estatus notifica solicitante.
+- [ ] Comentario del solicitante notifica al responsable asignado.
+- [ ] Comentarios/adjuntos actualizan `fecha_actualizacion`.
 
-### Backend
-```bash
-cd server
-npm install
-npx prisma migrate deploy --schema prisma/schema.prisma
-npm run dev
-```
-
-### Frontend
-```bash
-cd client
-npm install
-npm run dev
-```
-
-### Verificación Prisma
-```bash
-cd server
-npx prisma migrate status --schema prisma/schema.prisma
-```
-
-## 9. Checklist de validación
-
-Antes de entregar o modificar el flujo:
-- [ ] Un usuario nuevo se registra con nombre, apellidos y correo.
-- [ ] El correo recibe contraseña temporal.
-- [ ] El login acepta correo o username.
-- [ ] El usuario normal solo ve Tickets.
-- [ ] El usuario normal solo ve sus tickets.
-- [ ] El admin puede asignar y cerrar tickets.
-- [ ] El flujo QR de equipos sigue funcionando.
-- [ ] La base quedó sincronizada con las migraciones.
-
-## 10. Archivos clave del flujo
+## 9. Archivos clave del flujo
 
 ### Backend
 - [server/src/services/auth.service.js](../server/src/services/auth.service.js)
 - [server/src/controllers/auth.controller.js](../server/src/controllers/auth.controller.js)
-- [server/src/routes/auth.routes.js](../server/src/routes/auth.routes.js)
 - [server/src/services/tickets.service.js](../server/src/services/tickets.service.js)
 - [server/src/controllers/tickets.controller.js](../server/src/controllers/tickets.controller.js)
-- [server/src/schemas/auth.schema.js](../server/src/schemas/auth.schema.js)
-- [server/src/schemas/ticket.schema.js](../server/src/schemas/ticket.schema.js)
+- [server/src/services/ticketNotification.service.js](../server/src/services/ticketNotification.service.js)
+- [server/src/controllers/qr-public.controller.js](../server/src/controllers/qr-public.controller.js)
+- [server/src/services/qr-public.service.js](../server/src/services/qr-public.service.js)
+- [server/src/middleware/auth.middleware.js](../server/src/middleware/auth.middleware.js)
 
 ### Frontend
 - [client/src/views/RegisterView.vue](../client/src/views/RegisterView.vue)
-- [client/src/views/LoginView.vue](../client/src/views/LoginView.vue)
-- [client/src/views/TicketCreateView.vue](../client/src/views/TicketCreateView.vue)
 - [client/src/views/TicketsView.vue](../client/src/views/TicketsView.vue)
 - [client/src/views/TicketsDetailView.vue](../client/src/views/TicketsDetailView.vue)
 - [client/src/components/layout/TheSidebar.vue](../client/src/components/layout/TheSidebar.vue)
 
-## 11. Nota de mantenimiento
+## 10. Nota de mantenimiento
 
-La regla principal es simple: **el frontend solo oculta opciones; el backend define el acceso real**. Si en el futuro se agregan nuevos roles o categorías, primero se ajusta el esquema y después el panel.
+La autoridad final de seguridad y permisos está en backend. El frontend solo refleja y guía la operación.
+
+## 11. Historial de cambios de negocio
+
+### 2026-04-10
+- Registro de usuario final endurecido: ahora solo permite correo corporativo activo y vinculado a empleado.
+- Vinculación automática de cuenta de usuario con empleado (`id_empleado`) durante el alta.
+- Incorporación de `idEquipoAsignado` en sesión/perfil para trazabilidad operativa.
+- Política de prioridad actualizada: `CRITICA` reservada a admin; usuario final solo sugiere `BAJA/MEDIA/ALTA`.
+- Asignación de tickets ajustada para permitir responsable analista o admin (autoasignación).
+- Permisos por rol reforzados en backend:
+	- Admin: control total de ticket.
+	- Analista: solo estatus/comentarios/adjuntos y solo en tickets asignados.
+	- Viewer: sin permisos de actualización.
+- Validación de transiciones de estatus implementada en servicio de tickets.
+- Manejo consistente de `fecha_cierre`:
+	- Se establece al finalizar (`RESUELTO`/`CERRADO`).
+	- Se limpia al reabrir.
+- Comentarios y adjuntos (internos y públicos) ahora actualizan `fecha_actualizacion` del ticket.
+- Notificaciones por correo reordenadas por responsabilidad:
+	- Nuevo ticket: canal admin.
+	- Asignación: responsable asignado.
+	- Comentario del solicitante: responsable asignado (o admin si no hay responsable).
+	- Comentario de soporte: solicitante.
+	- Cambio de estatus: solicitante.
+- Badge de "nuevos" en sidebar mejorado para admin/analista usando "último visto" persistido por usuario.

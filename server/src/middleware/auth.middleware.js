@@ -25,6 +25,13 @@ const ROLES = {
 };
 
 const logger = require('../utils/logger');
+const READ_ONLY_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+const SUPERVISOR_WRITE_ALLOWLIST = [
+    { method: 'PUT', pattern: /^\/api\/tickets\/\d+$/ },
+    { method: 'POST', pattern: /^\/api\/tickets\/\d+\/comments$/ },
+    { method: 'POST', pattern: /^\/api\/tickets\/\d+\/attachments$/ }
+];
 
 /**
  * Middleware que verifica la presencia y validez de un token JWT en el encabezado Authorization.
@@ -139,6 +146,32 @@ const hasRole = (allowedRoles) => {
 };
 
 /**
+ * Bloquea mutaciones para rol SUPERVISOR (analista en modo solo lectura).
+ */
+const enforceReadOnlySupervisor = (req, res, next) => {
+    if (!req.user?.roleId) {
+        return res.status(401).json({ message: 'No autorizado, rol no identificado.' });
+    }
+
+    if (req.user.roleId === ROLES.SUPERVISOR && READ_ONLY_METHODS.has(req.method)) {
+        const path = String(req.originalUrl || '').split('?')[0];
+        const isAllowedMutation = SUPERVISOR_WRITE_ALLOWLIST.some(rule => {
+            return req.method === rule.method && rule.pattern.test(path);
+        });
+
+        if (isAllowedMutation) {
+            return next();
+        }
+
+        return res.status(403).json({
+            message: 'Acceso de solo lectura: el rol Analista no puede crear, editar o eliminar registros.'
+        });
+    }
+
+    next();
+};
+
+/**
  * Middleware para filtrar datos por sucursal (SUPERVISOR scope).
  * Inyecta `req.scopeFilter` con la condición SQL para filtrar por sucursal.
  * Solo aplica si el usuario es SUPERVISOR, otros roles ven todo.
@@ -205,6 +238,7 @@ module.exports = {
     isAdmin,
     isSupervisor,
     hasRole,
+    enforceReadOnlySupervisor,
     scopeBySucursal,
     getUserWithSucursal,
     ROLES

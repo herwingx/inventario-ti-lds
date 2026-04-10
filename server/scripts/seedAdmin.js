@@ -10,11 +10,11 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') }); // Necesito
 
 // * Defino los datos del usuario administrador que quiero crear.
 const adminUser = {
-    username: 'linea', // Usuario según README
-    password: 'digital', // Contraseña según README
-    email: '',
-    id_rol: 1, // Asumo que el ID 1 corresponde al rol 'Admin'
-    id_status: 1 // Asumo que el ID 1 corresponde al status 'Activo'
+    username: 'linea', 
+    password: 'digital', 
+    email: 'ba17270734@comitan.tecnm.mx',
+    id_rol: 1,
+    id_status: 1 
 };
 
 // * Configuración de la conexión a la DB (la misma que en db.js).
@@ -38,7 +38,11 @@ async function seedAdminUser() {
         // * Verifico si el usuario 'admin' ya existe para no duplicarlo.
         const [existingUsers] = await connection.execute('SELECT id FROM usuarios_sistema WHERE username = ?', [adminUser.username]);
         if (existingUsers.length > 0) {
-            console.log(`El usuario "${adminUser.username}" ya existe. No se creará uno nuevo.`);
+            await connection.execute(
+                'UPDATE usuarios_sistema SET email = ? WHERE username = ?',
+                [adminUser.email, adminUser.username]
+            );
+            console.log(`El usuario "${adminUser.username}" ya existe. Se actualizó su correo a ${adminUser.email}.`);
             return; // Salgo del script si ya existe.
         }
 

@@ -51,18 +51,48 @@ El sistema gestiona prioridades basadas en el impacto operativo.
 
 ### Gobernanza de Prioridad por Rol:
 1. **Usuario Normal (roleId=2):** Puede sugerir `BAJA`, `MEDIA` o `ALTA` al crear su ticket.
-2. **Prioridad CRITICA:** Solo puede ser asignada por `Admin Tickets` o `Analista/Técnico`.
+2. **Prioridad CRITICA:** Solo puede ser asignada por `Admin`.
 3. **Prioridad Operativa Final:** Siempre queda bajo responsabilidad del equipo de soporte.
 4. **Auditoría:** Todo cambio de prioridad genera mensaje automático de sistema en el chat del ticket.
+
+### Gobernanza de Operación por Rol:
+1. **Admin (roleId=1):** Puede asignar responsable (analista o admin), cambiar prioridad, cambiar estatus y eliminar tickets.
+2. **Analista (roleId=3):** Solo puede cambiar estatus y comentar en tickets asignados a su usuario.
+3. **Usuario Normal (roleId=2):** Solo puede crear/consultar/comentar sus tickets.
+
+### Responsable Operativo:
+1. Si un ticket tiene responsable asignado (`id_asignado_a`), la atención operativa recae en ese usuario.
+2. Si no tiene responsable, el ticket permanece en triage de administración.
 
 ### Trazabilidad Automática (Chat Audit):
 Cualquier cambio administrativo en un ticket (Estatus, Prioridad o Técnico asignado) genera automáticamente un mensaje de sistema en el hilo de conversación. Esto asegura que el reportante esté informado en tiempo real de los avances sin necesidad de interacción manual del técnico.
 
+### Máquina de Estados de Ticket:
+Estados permitidos: `ABIERTO`, `EN_PROGRESO`, `PENDIENTE`, `RESUELTO`, `CERRADO`.
+
+Reglas activas:
+1. Se validan transiciones permitidas por backend.
+2. Al pasar a `RESUELTO` o `CERRADO` se registra `fecha_cierre`.
+3. Si un ticket se reabre desde un estado final, `fecha_cierre` se limpia para mantener consistencia histórica.
+
 ### Política de Cierre de Comunicación:
 Para garantizar que los registros de soporte no se alteren después de haber sido solucionados:
 1. **Bloqueo por Estatus:** Al transicionar a `RESUELTO` o `CERRADO`, el canal de comunicación se cierra de forma bidireccional.
-2. **Inmutabilidad:** No se permite la reapertura del chat por parte del usuario o técnico una vez finalizado; cualquier problema nuevo debe generar un nuevo ticket para mantener métricas de SLA limpias.
+2. **Reapertura controlada:** El usuario final no puede comentar en tickets finalizados. La reapertura operativa solo ocurre por actualización de estatus desde soporte.
 3. **Banner Informativo:** El portal público muestra un aviso explícito de "Reporte Finalizado" al detectar estos estados.
+
+### Notificaciones de Soporte:
+1. **Nuevo ticket:** se notifica al canal admin (alerta + admins con correo).
+2. **Confirmación de creación:** se notifica al solicitante cuando hay correo asociado.
+3. **Asignación:** se notifica al responsable asignado.
+4. **Comentario de soporte:** se notifica al solicitante.
+5. **Comentario del solicitante:** se notifica al responsable asignado; si no existe, al canal admin.
+6. **Cambio de estatus:** se notifica al solicitante.
+
+### Política de Canal (Web vs Email):
+1. **Web (badge no leídos):** canal primario para actividad frecuente de conversación.
+2. **Email:** canal transaccional para hitos operativos (creación, asignación, estatus, reapertura).
+3. **Anti-saturación:** evitar envío por cada mensaje cuando existe alta frecuencia de interacción.
 
 ---
 

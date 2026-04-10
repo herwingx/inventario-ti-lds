@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const usuariosSistemaController = require('../controllers/usuarios_sistema.controller');
+const { isAdmin, hasRole, ROLES } = require('../middleware/auth.middleware');
 
 /**
  * @openapi
@@ -25,7 +26,7 @@ const usuariosSistemaController = require('../controllers/usuarios_sistema.contr
  *       200:
  *         description: Lista de usuarios (sin passwords).
  */
-router.get('/', usuariosSistemaController.getAllUsuariosSistema);
+router.get('/', hasRole([ROLES.ADMIN, ROLES.SUPERVISOR]), usuariosSistemaController.getAllUsuariosSistema);
 
 /**
  * @openapi
@@ -44,7 +45,7 @@ router.get('/', usuariosSistemaController.getAllUsuariosSistema);
  *       200:
  *         description: Datos del usuario.
  */
-router.get('/:id', usuariosSistemaController.getUsuarioSistemaById);
+router.get('/:id', hasRole([ROLES.ADMIN, ROLES.SUPERVISOR]), usuariosSistemaController.getUsuarioSistemaById);
 
 /**
  * @openapi
@@ -71,7 +72,7 @@ router.get('/:id', usuariosSistemaController.getUsuarioSistemaById);
  *       201:
  *         description: Usuario creado.
  */
-router.post('/', usuariosSistemaController.createUsuarioSistema);
+router.post('/', isAdmin, usuariosSistemaController.createUsuarioSistema);
 
 /**
  * @openapi
@@ -101,7 +102,7 @@ router.post('/', usuariosSistemaController.createUsuarioSistema);
  *       200:
  *         description: Usuario actualizado.
  */
-router.put('/:id', usuariosSistemaController.updateUsuarioSistema);
+router.put('/:id', isAdmin, usuariosSistemaController.updateUsuarioSistema);
 
 /**
  * @openapi
@@ -120,6 +121,6 @@ router.put('/:id', usuariosSistemaController.updateUsuarioSistema);
  *       200:
  *         description: Usuario eliminado.
  */
-router.delete('/:id', usuariosSistemaController.deleteUsuarioSistema);
+router.delete('/:id', isAdmin, usuariosSistemaController.deleteUsuarioSistema);
 
 module.exports = router;

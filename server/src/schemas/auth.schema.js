@@ -15,9 +15,7 @@ const loginSchema = z.object({
 });
 
 const signupSchema = z.object({
-  nombres: z.string({ required_error: 'El nombre es obligatorio' }).trim().min(2, 'El nombre debe tener al menos 2 caracteres').max(100, 'El nombre no puede exceder 100 caracteres'),
-  apellidos: z.string({ required_error: 'El apellido es obligatorio' }).trim().min(2, 'El apellido debe tener al menos 2 caracteres').max(100, 'El apellido no puede exceder 100 caracteres'),
-  email: z.string({ required_error: 'El correo electrónico es obligatorio' }).trim().email('Formato de correo inválido').max(100, 'El correo no puede exceder 100 caracteres')
+  email: z.string({ required_error: 'El correo corporativo es obligatorio' }).trim().email('Formato de correo inválido').max(100, 'El correo no puede exceder 100 caracteres')
 });
 
 const forgotPasswordSchema = z.object({

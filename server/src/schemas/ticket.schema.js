@@ -4,13 +4,34 @@
  */
 const { z } = require('zod');
 
+const TIPO_FALLA_VALUES = ['HARDWARE', 'SOFTWARE', 'RED', 'IMPRESORA', 'OTRO'];
+
+const normalizeTipoFalla = (value) => {
+  if (value === undefined || value === null || value === '') return undefined;
+
+  const raw = String(value).trim();
+  const upper = raw.toUpperCase();
+  if (TIPO_FALLA_VALUES.includes(upper)) return upper;
+
+  const lower = raw.toLowerCase();
+  if (lower.includes('impresora')) return 'IMPRESORA';
+  if (lower.includes('equipo') || lower.includes('hardware') || lower.includes('mantenimiento')) return 'HARDWARE';
+  if (lower.includes('red') || lower.includes('internet')) return 'RED';
+  if (lower.includes('software') || lower.includes('licencia') || lower.includes('acceso') || lower.includes('permiso')) return 'SOFTWARE';
+
+  return 'OTRO';
+};
+
 const ticketSchema = z.object({
   body: z.object({
     titulo: z.string({ required_error: 'El título es obligatorio' }).trim().min(3, 'El título debe tener al menos 3 caracteres'),
     categoria: z.string({ required_error: 'La categoría es obligatoria' }).trim().min(2, 'La categoría debe tener al menos 2 caracteres'),
     descripcion: z.string({ required_error: 'La descripción es obligatoria' }).trim().min(5, 'La descripción debe ser detallada'),
     prioridad: z.enum(['BAJA', 'MEDIA', 'ALTA', 'CRITICA']).default('MEDIA'),
-    tipo_falla: z.enum(['HARDWARE', 'SOFTWARE', 'RED', 'IMPRESORA', 'OTRO']).optional().default('OTRO'),
+    tipo_falla: z.preprocess(
+      normalizeTipoFalla,
+      z.enum(TIPO_FALLA_VALUES).optional().default('OTRO')
+    ),
     id_equipo_relacionado: z.number().int().optional().nullable()
   })
 });

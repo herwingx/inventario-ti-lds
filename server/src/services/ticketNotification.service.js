@@ -4,6 +4,7 @@
  * Envía alertas cuando se crean tickets o hay nuevos comentarios.
  */
 const nodemailer = require('nodemailer');
+const prisma = require('../config/prisma');
 
 // Colores corporativos
 const COLORS = {
@@ -58,14 +59,50 @@ const getAlertEmail = () => {
   return (process.env.ALERT_EMAIL || process.env.EMAIL_USER || '').trim();
 };
 
+const isCommentNotificationEnabled = () => {
+  return String(process.env.TICKETS_EMAIL_COMMENTS || 'false').trim().toLowerCase() === 'true';
+};
+
+const getAdminRecipients = async () => {
+  const configuredAlert = getAlertEmail();
+  const recipients = new Set();
+
+  if (configuredAlert) recipients.add(configuredAlert.toLowerCase());
+
+  try {
+    const admins = await prisma.usuarios_sistema.findMany({
+      where: {
+        id_rol: 1,
+        id_status: 1,
+        email: { not: null }
+      },
+      select: { email: true }
+    });
+
+    admins
+      .map(a => String(a.email || '').trim().toLowerCase())
+      .filter(Boolean)
+      .forEach(email => recipients.add(email));
+  } catch (error) {
+    console.error('[EMAIL] Error obteniendo correos admin:', error.message);
+  }
+
+  return Array.from(recipients);
+};
+
 /**
  * URL base del frontend para construir links.
+ * Prioridad: FRONTEND_URL → APP_URL → API_URL derivado → localhost fallback
  */
 const getFrontendUrl = () => {
-  // Intentamos obtener la URL del frontend desde la API_URL si no existe FRONTEND_URL
-  // API_URL suele ser http://IP/soporte/api o http://IP/api
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (frontendUrl) return frontendUrl.replace(/\/$/, '');
+  
+  const appUrl = process.env.APP_URL;
+  if (appUrl) return appUrl.replace(/\/$/, '');
+  
   const apiUrl = process.env.API_URL || 'http://localhost:3000/api';
-  const url = process.env.FRONTEND_URL || apiUrl.replace(/\/api\/?$/, '');
+  const url = apiUrl.replace(/\/api\/?$/, '');
   return url.replace(/\/$/, '');
 };
 
@@ -145,11 +182,17 @@ const actionButton = (text, url) => `
  * Envía notificación de nuevo ticket al equipo de soporte.
  */
 const notifyNewTicket = async (ticket, equipo) => {
-  const alertEmail = getAlertEmail();
-  if (!alertEmail) {
-    console.log('[EMAIL] No hay email de alerta configurado');
+  const recipients = await getAdminRecipients();
+  if (recipients.length === 0) {
+    console.log('[EMAIL] No hay destinatarios admin para notificar nuevo ticket');
     return;
   }
+
+  const equipoData = equipo || {
+    marca: 'N/A',
+    modelo: 'N/A',
+    numero_serie: 'N/A'
+  };
 
   try {
     const transporter = createTransporter();
@@ -172,11 +215,11 @@ const notifyNewTicket = async (ticket, equipo) => {
             <tr>
               <td width="50%" style="padding: 15px 20px 15px 0; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Equipo</p>
-                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${equipo.marca} ${equipo.modelo}</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${equipoData.marca} ${equipoData.modelo}</p>
               </td>
               <td width="50%" style="padding: 15px 0 15px 20px; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Número de Serie</p>
-                <p style="margin: 0; color: ${COLORS.text}; font-family: monospace;">${equipo.numero_serie}</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-family: monospace;">${equipoData.numero_serie}</p>
               </td>
             </tr>
             <tr>
@@ -206,8 +249,8 @@ const notifyNewTicket = async (ticket, equipo) => {
 
     await transporter.sendMail({
       from: getFromAddress(),
-      to: alertEmail,
-      subject: `🎫 Nuevo Ticket #${ticket.id}: ${ticket.tipo_falla} - ${equipo.marca} ${equipo.modelo}`,
+      to: recipients,
+      subject: `🎫 Nuevo Ticket #${ticket.id}: ${ticket.tipo_falla} - ${equipoData.marca} ${equipoData.modelo}`,
       html: emailWrapper(content)
     });
 
@@ -277,8 +320,8 @@ const notifyUserComment = async (ticket, comentario, emailUsuario) => {
  * Envía notificación al admin cuando usuario comenta.
  */
 const notifyAdminComment = async (ticket, comentario, nombreUsuario) => {
-  const alertEmail = getAlertEmail();
-  if (!alertEmail) return;
+  const recipients = await getAdminRecipients();
+  if (recipients.length === 0) return;
 
   try {
     const transporter = createTransporter();
@@ -314,7 +357,7 @@ const notifyAdminComment = async (ticket, comentario, nombreUsuario) => {
 
     await transporter.sendMail({
       from: getFromAddress(),
-      to: alertEmail,
+      to: recipients,
       subject: `💬 ${nombreUsuario || 'Usuario'} respondió en Ticket #${ticket.id}`,
       html: emailWrapper(content)
     });
@@ -333,6 +376,11 @@ const notifyTicketCreated = async (ticket, equipo, emailUsuario, nombreUsuario) 
     console.log('[EMAIL] Sin email de usuario para confirmación');
     return;
   }
+
+  const equipoData = equipo || {
+    marca: 'N/A',
+    modelo: 'N/A'
+  };
 
   try {
     const transporter = createTransporter();
@@ -362,7 +410,7 @@ const notifyTicketCreated = async (ticket, equipo, emailUsuario, nombreUsuario) 
             <tr>
               <td width="50%" style="padding: 15px 20px 15px 0; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Equipo Reportado</p>
-                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${equipo.marca} ${equipo.modelo}</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${equipoData.marca} ${equipoData.modelo}</p>
               </td>
               <td width="50%" style="padding: 15px 0 15px 20px; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Tipo de Problema</p>
@@ -393,7 +441,7 @@ const notifyTicketCreated = async (ticket, equipo, emailUsuario, nombreUsuario) 
     await transporter.sendMail({
       from: getFromAddress(),
       to: emailUsuario,
-      subject: `✅ Ticket #${ticket.id} Registrado - ${equipo.marca} ${equipo.modelo}`,
+      subject: `✅ Ticket #${ticket.id} Registrado - ${equipoData.marca} ${equipoData.modelo}`,
       html: emailWrapper(content)
     });
 
@@ -403,9 +451,192 @@ const notifyTicketCreated = async (ticket, equipo, emailUsuario, nombreUsuario) 
   }
 };
 
+/**
+ * Notifica al analista cuando se le asigna un ticket.
+ */
+const notifyAnalystAssignment = async (ticket, analyst, assignedBy = 'Administrador') => {
+  const analystEmail = analyst?.email;
+  if (!analystEmail) return;
+
+  try {
+    const transporter = createTransporter();
+    const analystUrl = `${getFrontendUrl()}/tickets/${ticket.id}`;
+
+    const content = `
+      ${emailHeader('Nuevo Ticket Asignado', 'Tienes un ticket pendiente de atención')}
+      <tr>
+        <td style="padding: 35px 40px;">
+          <table width="100%" style="background: ${COLORS.background}; border-radius: 8px; border-left: 4px solid ${COLORS.primary};">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Ticket asignado</p>
+                <p style="margin: 0; color: ${COLORS.primary}; font-size: 24px; font-weight: bold;">#${ticket.id}</p>
+              </td>
+            </tr>
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid ${COLORS.border};">
+                <p style="margin: 0 0 4px 0; color: ${COLORS.textLight}; font-size: 12px;">Asignado a</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${analyst.username || 'Analista'}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid ${COLORS.border};">
+                <p style="margin: 0 0 4px 0; color: ${COLORS.textLight}; font-size: 12px;">Asignado por</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${assignedBy}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid ${COLORS.border};">
+                <p style="margin: 0 0 4px 0; color: ${COLORS.textLight}; font-size: 12px;">Prioridad</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${ticket.prioridad || 'MEDIA'}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0;">
+                <p style="margin: 0 0 4px 0; color: ${COLORS.textLight}; font-size: 12px;">Tipo de falla</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${ticket.tipo_falla || 'OTRO'}</p>
+              </td>
+            </tr>
+          </table>
+
+          <div style="margin-top: 20px; background: ${COLORS.background}; padding: 16px; border-radius: 8px;">
+            <p style="margin: 0; color: ${COLORS.text}; line-height: 1.6; white-space: pre-wrap;">${ticket.descripcion || ''}</p>
+          </div>
+
+          ${actionButton('Abrir Ticket Asignado', analystUrl)}
+        </td>
+      </tr>
+      <tr><td>${emailFooter()}</td></tr>
+    `;
+
+    await transporter.sendMail({
+      from: getFromAddress(),
+      to: analystEmail,
+      subject: `🆕 Ticket #${ticket.id} asignado para atención`,
+      html: emailWrapper(content)
+    });
+  } catch (error) {
+    console.error('[EMAIL] Error notif analista asignación:', error.message);
+  }
+};
+
+/**
+ * Notifica al analista asignado cuando el solicitante agrega comentario público.
+ */
+const notifyAnalystPublicComment = async (ticket, comentario, nombreUsuario, analyst) => {
+  const analystEmail = analyst?.email;
+  if (!analystEmail) return;
+
+  try {
+    const transporter = createTransporter();
+    const analystUrl = `${getFrontendUrl()}/tickets/${ticket.id}`;
+
+    const content = `
+      ${emailHeader('Nueva Respuesta del Solicitante', 'El usuario respondió en un ticket bajo tu gestión')}
+      <tr>
+        <td style="padding: 35px 40px;">
+          <table width="100%" style="background: ${COLORS.background}; border-radius: 8px; border-left: 4px solid ${COLORS.primary};">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Ticket</p>
+                <p style="margin: 0; color: ${COLORS.primary}; font-size: 24px; font-weight: bold;">#${ticket.id}</p>
+              </td>
+            </tr>
+          </table>
+
+          <div style="margin-top: 20px;">
+            <p style="margin: 0 0 10px 0; color: ${COLORS.textLight}; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
+              Comentario de ${nombreUsuario || 'Solicitante'}
+            </p>
+            <div style="background: #e8f5f1; padding: 20px; border-radius: 8px; border-left: 4px solid ${COLORS.primary};">
+              <p style="margin: 0; color: ${COLORS.text}; line-height: 1.6; white-space: pre-wrap;">${comentario}</p>
+            </div>
+          </div>
+
+          ${actionButton('Responder Ticket', analystUrl)}
+        </td>
+      </tr>
+      <tr><td>${emailFooter()}</td></tr>
+    `;
+
+    await transporter.sendMail({
+      from: getFromAddress(),
+      to: analystEmail,
+      subject: `💬 Nuevo comentario en Ticket #${ticket.id}`,
+      html: emailWrapper(content)
+    });
+  } catch (error) {
+    console.error('[EMAIL] Error notif analista comentario:', error.message);
+  }
+};
+
+/**
+ * Notifica al solicitante cuando cambia el estatus del ticket.
+ */
+const notifyUserStatusChange = async (ticket, newStatus, emailUsuario, changedBy = 'Soporte') => {
+  if (!emailUsuario) return;
+
+  try {
+    const transporter = createTransporter();
+    const trackingUrl = ticket?.token_acceso
+      ? `${getFrontendUrl()}/soporte/q/ticket/${ticket.token_acceso}`
+      : `${getFrontendUrl()}/tickets/${ticket.id}`;
+
+    const content = `
+      ${emailHeader('Actualización de Ticket', 'Tu solicitud cambió de estatus')}
+      <tr>
+        <td style="padding: 35px 40px;">
+          <table width="100%" style="background: ${COLORS.background}; border-radius: 8px; border-left: 4px solid ${COLORS.primary};">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Ticket</p>
+                <p style="margin: 0; color: ${COLORS.primary}; font-size: 24px; font-weight: bold;">#${ticket.id}</p>
+              </td>
+            </tr>
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid ${COLORS.border};">
+                <p style="margin: 0 0 4px 0; color: ${COLORS.textLight}; font-size: 12px;">Nuevo estatus</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 700;">${String(newStatus || '').replace(/_/g, ' ')}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0;">
+                <p style="margin: 0 0 4px 0; color: ${COLORS.textLight}; font-size: 12px;">Actualizado por</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${changedBy}</p>
+              </td>
+            </tr>
+          </table>
+
+          ${actionButton('Ver estado del ticket', trackingUrl)}
+        </td>
+      </tr>
+      <tr><td>${emailFooter()}</td></tr>
+    `;
+
+    await transporter.sendMail({
+      from: getFromAddress(),
+      to: emailUsuario,
+      subject: `🔔 Ticket #${ticket.id} actualizado a ${newStatus}`,
+      html: emailWrapper(content)
+    });
+  } catch (error) {
+    console.error('[EMAIL] Error notif cambio estatus:', error.message);
+  }
+};
+
 module.exports = {
   notifyNewTicket,
   notifyUserComment,
   notifyAdminComment,
-  notifyTicketCreated
+  notifyTicketCreated,
+  notifyAnalystAssignment,
+  notifyAnalystPublicComment,
+  notifyUserStatusChange,
+  isCommentNotificationEnabled
 };

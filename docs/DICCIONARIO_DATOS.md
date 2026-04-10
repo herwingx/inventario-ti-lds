@@ -23,9 +23,9 @@ Tabla: `status`
 Tabla: `roles`
 | ID | Rol | Alcance |
 |:---|:---|:---|
-| 1 | `Administrador` | Control total del sistema y gestión de usuarios. |
-| 2 | `Soporte` | Gestión de inventario, mantenimientos y tickets. |
-| 3 | `Consultor` | Acceso de solo lectura para reportes y auditoría. |
+| 1 | `ADMIN` | Control total del sistema, gestión de usuarios y operación completa de tickets. |
+| 2 | `VIEWER` | Usuario final: crea/consulta/comenta sus tickets y no gestiona terceros. |
+| 3 | `SUPERVISOR` | Analista: atiende tickets asignados, cambia estatus y comenta sin reasignar/priorizar. |
 
 ---
 

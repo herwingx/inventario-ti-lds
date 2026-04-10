@@ -76,7 +76,7 @@ router.post('/login', authController.login);
  * @openapi
  * /api/auth/signup:
  *   post:
- *     summary: Crear usuario normal y enviar credenciales por correo
+ *     summary: Crear usuario con correo corporativo y enviar credenciales por correo
  *     tags: [Autenticación]
  *     requestBody:
  *       required: true
@@ -84,14 +84,8 @@ router.post('/login', authController.login);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [nombres, apellidos, email]
+ *             required: [email]
  *             properties:
- *               nombres:
- *                 type: string
- *                 example: Juan
- *               apellidos:
- *                 type: string
- *                 example: Pérez
  *               email:
  *                 type: string
  *                 format: email
@@ -100,7 +94,7 @@ router.post('/login', authController.login);
  *       201:
  *         description: Cuenta creada y credenciales enviadas.
  *       400:
- *         description: Datos inválidos.
+ *         description: Correo corporativo inválido/no vinculado.
  *       409:
  *         description: El correo ya tiene una cuenta vinculada.
  */

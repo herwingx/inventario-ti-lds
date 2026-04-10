@@ -3,7 +3,7 @@
  * @fileoverview Consola General de Soporte Técnico (Tickets Activos).
  * Sincronizada 100% con el estándar visual de EquiposView.
  */
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import TicketsService from '../services/TicketsService'
 import { useAuthStore } from '../stores/auth'
@@ -30,8 +30,13 @@ const { error: toastError, success: toastSuccess, confirmWarning, confirmDelete 
 // Data
 const tickets = ref([])
 const loading = ref(true)
+let ticketsListPollingInterval = null
 
-const canManageTickets = computed(() => authStore.user?.roleId !== 2)
+const roleId = computed(() => authStore.user?.roleId)
+const isAdmin = computed(() => roleId.value === 1)
+const isAnalyst = computed(() => roleId.value === 3)
+const canViewAdminColumns = computed(() => roleId.value !== 2)
+const canCreateTicket = computed(() => roleId.value !== 3)
 
 // Filtros
 const globalFilter = ref('')
@@ -62,7 +67,7 @@ const columns = computed(() => {
     { field: 'actions', header: 'Acciones', sortable: false, width: '10%', align: 'right' }
   ]
 
-  if (!canManageTickets.value) {
+  if (!canViewAdminColumns.value) {
     return baseColumns
   }
 
@@ -80,6 +85,7 @@ const columns = computed(() => {
 })
 
 const createTicket = () => {
+  if (!canCreateTicket.value) return
   router.push({ name: 'tickets-nuevo' })
 }
 
@@ -172,7 +178,21 @@ const viewDetail = (ticket) => {
   router.push({ name: 'tickets-detalle', params: { id: ticket.id } })
 }
 
-onMounted(loadTickets)
+// Auto-refresh polling para sincronización en tiempo real
+const startTicketsPolling = () => {
+  loadTickets()
+  ticketsListPollingInterval = setInterval(loadTickets, 15000) // Cada 15 segundos
+}
+
+const stopTicketsPolling = () => {
+  if (ticketsListPollingInterval) {
+    clearInterval(ticketsListPollingInterval)
+    ticketsListPollingInterval = null
+  }
+}
+
+onMounted(startTicketsPolling)
+onUnmounted(stopTicketsPolling)
 
 const getPrioritySeverity = (p) => {
   const map = { 'BAJA': 'secondary', 'MEDIA': 'info', 'ALTA': 'warn', 'CRITICA': 'danger' }
@@ -285,7 +305,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
               class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-all"
               @click="markAsResolved(data)"
               title="Marcar como resuelto"
-              v-if="canManageTickets"
+              v-if="isAdmin"
             >
               <Check :size="16" />
             </button>
@@ -300,13 +320,17 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
               class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center transition-all"
               @click="confirmDeleteTicket(data)"
               title="Eliminar"
-              v-if="canManageTickets"
+              v-if="isAdmin"
             >
               <Trash2 :size="16" />
             </button>
           </div>
         </template>
       </DataTable>
+
+      <div v-if="isAnalyst" class="mt-4 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40 rounded-xl px-4 py-3">
+        Modo Analista: puedes atender tickets asignados (actualizar estatus y comentar en detalle). No puedes crear, eliminar, cambiar prioridad ni reasignar.
+      </div>
     </div>
   </div>
 </template>

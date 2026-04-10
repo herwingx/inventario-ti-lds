@@ -17,7 +17,7 @@ const logger = require('./src/utils/logger');
 const validateEnv = require('./src/utils/validateEnv');
 const prisma = require('./src/config/prisma');
 const errorHandler = require('./src/middleware/error.middleware');
-const { protect } = require('./src/middleware/auth.middleware');
+const { protect, enforceReadOnlySupervisor } = require('./src/middleware/auth.middleware');
 const { initCronJobs } = require('./src/config/cron.config');
 
 // Route Imports
@@ -156,6 +156,7 @@ app.use('/api/q', qrLimiter, qrPublicRoutes);
 
 // Protected API Routes
 app.use('/api', protect); // Authorization middleware
+app.use('/api', enforceReadOnlySupervisor); // Analista (rol 3) en modo solo lectura
 
 app.use('/api/status', statusRoutes);
 app.use('/api/empresas', empresasRoutes);

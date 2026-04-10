@@ -83,13 +83,12 @@ export default {
    * Agrega un comentario a un ticket.
    * @param {number} id - ID del ticket
    * @param {string} contenido - Contenido del comentario
-   * @param {boolean} [esInterno=false] - Si es nota interna
    * @returns {Promise<Object>}
    */
-  addComment(id, contenido, esInterno = false) {
+  addComment(id, contenido) {
     return api.post(`/tickets/${id}/comments`, {
       contenido,
-      es_interno: esInterno
+      es_interno: false
     }).then(res => res.data);
   },
 

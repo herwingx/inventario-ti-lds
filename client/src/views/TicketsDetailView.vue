@@ -8,7 +8,6 @@ import { ArrowLeft, Monitor, User, Calendar, Clock, AlertCircle, CheckCircle, Se
 
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
-import Checkbox from 'primevue/checkbox'
 import Image from 'primevue/image'
 import Dialog from 'primevue/dialog'
 
@@ -41,7 +40,6 @@ const openPdf = (url) => {
 
 // Form
 const nuevoComentario = ref('')
-const esInterno = ref(false)
 const selectedTecnico = ref(null)
 const selectedEstatus = ref(null)
 const selectedPrioridad = ref(null)
@@ -68,19 +66,22 @@ const quickReplies = {
     "📦 Pieza solicitada a proveedor.",
     "✅ Equipo operativo nuevamente.",
     "❓ Por favor envía una foto del error."
-  ],
-  interno: [
-    "🛡 Investigando posible causa raíz.",
-    "🛡 Escalar a nivel 2.",
-    "🛡 Pendiente de autorización."
   ]
 }
 
 const ticketId = computed(() => route.params.id)
-const canManageTicket = computed(() => authStore.user?.roleId !== 2)
+const roleId = computed(() => authStore.user?.roleId)
+const canManageTicket = computed(() => roleId.value === 1 || roleId.value === 3)
+const canManageAdminFields = computed(() => roleId.value === 1)
+const canCommentTicket = computed(() => true)
 const ticketHeadline = computed(() => {
   const teamName = [ticket.value?.equipos?.marca, ticket.value?.equipos?.modelo].filter(Boolean).join(' ').trim()
   return ticket.value?.titulo || ticket.value?.categoria || teamName || 'Ticket general'
+})
+
+// La IP se toma de la asignación activa más reciente enviada por backend.
+const getEquipoIP = computed(() => {
+  return ticket.value?.equipos?.asignaciones?.[0]?.direcciones_ip?.direccion_ip || null
 })
 
 const loadTicket = async (isAutoRefresh = false) => {
@@ -117,17 +118,29 @@ const scrollToBottom = async () => {
 }
 
 const loadTecnicos = async () => {
-  try { tecnicos.value = await TicketsService.getTecnicos() } catch (e) {}
+  try {
+    const data = await TicketsService.getTecnicos()
+    tecnicos.value = data.map((tecnico) => ({
+      ...tecnico,
+      nombre_usuario: String(tecnico.nombre_usuario || '').split('@')[0] || tecnico.nombre_usuario
+    }))
+  } catch (e) {}
 }
 
 const updateTicket = async () => {
+  if (!canManageTicket.value) return
   saving.value = true
   try {
-    await TicketsService.update(ticketId.value, {
-      estatus: selectedEstatus.value,
-      prioridad: selectedPrioridad.value,
-      id_asignado_a: selectedTecnico.value
-    })
+    const payload = {
+      estatus: selectedEstatus.value
+    }
+
+    if (canManageAdminFields.value) {
+      payload.prioridad = selectedPrioridad.value
+      payload.id_asignado_a = selectedTecnico.value
+    }
+
+    await TicketsService.update(ticketId.value, payload)
     toastSuccess('Ticket actualizado')
     showMobileSettings.value = false
     await loadTicket(true)
@@ -184,14 +197,13 @@ const addComment = async () => {
       await TicketsService.uploadAttachment(ticketId.value, attachment.value.file)
     }
 
-    // 2. Si hay texto, enviarlo como comentario
+    // 2. Si hay texto, enviarlo como comentario público (sin nota interna en UI).
     if (nuevoComentario.value.trim()) {
-      await TicketsService.addComment(ticketId.value, nuevoComentario.value, esInterno.value)
+      await TicketsService.addComment(ticketId.value, nuevoComentario.value)
     }
 
     nuevoComentario.value = ''
     attachment.value = null
-    esInterno.value = false
     await loadTicket(true)
   } catch (e) {
     if (e.response?.status === 413) {
@@ -293,7 +305,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
     </header>
 
     <!-- CUERPO DUAL -->
-    <div class="flex-1 flex gap-4 min-h-0 relative overflow-hidden">
+    <div class="flex-1 flex gap-4 min-h-0 relative overflow-visible">
       
       <!-- COLUMNA CHAT -->
       <div class="flex-1 flex flex-col bg-white dark:bg-dark-card rounded-[2.5rem] shadow-card border border-light-border dark:border-dark-border overflow-hidden relative z-10">
@@ -346,7 +358,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
                   'w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 shadow-sm font-black text-[9px] tracking-tighter', 
                   c.id_usuario === authStore.user?.id 
                     ? 'bg-primary text-white border-primary-dark' 
-                    : (c.es_interno ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700' : 'bg-white dark:bg-dark-card text-light-text dark:text-dark-text border-slate-200 dark:border-zinc-700')
+                    : 'bg-white dark:bg-dark-card text-light-text dark:text-dark-text border-slate-200 dark:border-zinc-700'
                 ]"
               >
                 {{ getInitials(c.autor_nombre) }}
@@ -358,12 +370,11 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
                   'p-3 sm:p-4 rounded-2xl shadow-sm relative transition-all min-w-[120px]',
                   c.id_usuario === authStore.user?.id 
                     ? 'bg-primary text-white rounded-tr-none shadow-primary/10' 
-                    : (c.es_interno ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-tl-none' : 'bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-tl-none')
+                    : 'bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-tl-none'
                 ]"
               >
                 <div :class="['text-[9px] font-black uppercase tracking-widest mb-1 opacity-60 flex justify-between gap-4', c.id_usuario === authStore.user?.id ? 'text-white' : 'text-primary']">
                   <span>{{ c.autor_nombre }}</span>
-                  <span v-if="c.es_interno" class="flex items-center gap-1"><ShieldCheck :size="10" /> INTERNAL</span>
                 </div>
                 
                 <div v-if="parseAttachment(c.contenido)">
@@ -400,13 +411,13 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
         </div>
 
         <!-- Barra de Respuesta -->
-        <div v-if="!['RESUELTO', 'CERRADO'].includes(ticket?.estatus)" class="p-3 sm:p-6 pb-8 sm:pb-8 bg-white dark:bg-dark-card border-t border-light-border dark:border-dark-border shrink-0 z-30 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
+        <div v-if="!['RESUELTO', 'CERRADO'].includes(ticket?.estatus) && canCommentTicket" class="p-3 sm:p-6 pb-8 sm:pb-8 bg-white dark:bg-dark-card border-t border-light-border dark:border-dark-border shrink-0 z-30 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
           <div class="max-w-4xl mx-auto">
             
             <!-- Quick Replies -->
             <div class="flex gap-2 overflow-x-auto pb-3 mb-1 custom-scroll">
               <button 
-                v-for="reply in (esInterno ? quickReplies.interno : quickReplies.soporte)" 
+                v-for="reply in quickReplies.soporte" 
                 :key="reply"
                 @click="nuevoComentario = reply"
                 class="px-3 py-1 bg-slate-100 dark:bg-dark-bg hover:bg-primary hover:text-white dark:hover:bg-primary transition-colors rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap border border-light-border dark:border-dark-border"
@@ -475,11 +486,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
             </div>
 
             <!-- Shift + Enter Hint -->
-            <div class="px-1 flex justify-between items-center">
-              <label v-if="canManageTicket" class="inline-flex items-center gap-2 cursor-pointer group">
-                <Checkbox v-model="esInterno" :binary="true" />
-                <span class="text-[9px] font-black text-light-muted group-hover:text-amber-600 transition-colors uppercase tracking-[0.2em]">Marcar como Nota Interna</span>
-              </label>
+            <div class="px-1 flex justify-end">
               <span class="text-[8px] font-bold text-light-muted uppercase opacity-40">Shift + Enter para nueva línea</span>
             </div>
 
@@ -494,7 +501,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
       >
         <div @click="showMobileSettings = false" class="absolute inset-0 bg-black/50 backdrop-blur-sm lg:hidden"></div>
 
-        <div class="relative ml-auto lg:ml-0 w-4/5 lg:w-full h-full lg:h-full bg-white dark:bg-dark-card p-6 lg:p-5 shadow-2xl lg:shadow-lg border-l lg:border border-light-border dark:border-dark-border lg:rounded-[2.5rem] flex flex-col overflow-y-auto lg:overflow-visible">
+        <div class="relative ml-auto lg:ml-0 w-4/5 lg:w-full bg-white dark:bg-dark-card p-6 lg:p-5 shadow-2xl lg:shadow-lg border-l lg:border border-light-border dark:border-dark-border lg:rounded-[2.5rem] flex flex-col overflow-y-auto min-h-0">
           
           <div class="flex items-center justify-between mb-6 lg:mb-5">
             <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-light-muted flex items-center gap-2">
@@ -534,25 +541,66 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
               </div>
             </div>
 
+            <!-- Detalles del Equipo (si está disponible y es relacionado) -->
+            <div v-if="ticket?.equipos" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-200 dark:border-blue-800">
+              <p class="text-[8px] font-black uppercase text-blue-700 dark:text-blue-300 mb-3 tracking-widest opacity-90">Equipo Relacionado</p>
+              
+              <div class="grid grid-cols-2 gap-3">
+                <div class="flex flex-col">
+                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">ID Equipo:</span>
+                  <span class="text-[10px] font-bold text-primary">{{ ticket.equipos?.id || 'N/A' }}</span>
+                </div>
+
+                <div class="flex flex-col">
+                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">Marca:</span>
+                  <span class="text-[10px] font-semibold">{{ ticket.equipos?.marca || 'N/A' }}</span>
+                </div>
+
+                <div class="flex flex-col">
+                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">Modelo:</span>
+                  <span class="text-[10px] font-semibold">{{ ticket.equipos?.modelo || 'N/A' }}</span>
+                </div>
+
+                <div class="flex flex-col">
+                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">Serie:</span>
+                  <span class="text-[10px] font-mono truncate">{{ ticket.equipos?.numero_serie || 'S/N' }}</span>
+                </div>
+
+                <div v-if="ticket.equipos?.nombre_equipo" class="col-span-2 flex flex-col">
+                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">Nombre:</span>
+                  <span class="text-[10px] font-semibold">{{ ticket.equipos.nombre_equipo }}</span>
+                </div>
+
+                <div v-if="getEquipoIP" class="col-span-2 flex flex-col pt-2 border-t border-blue-200 dark:border-blue-700">
+                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">IP Asignada:</span>
+                  <span class="text-[11px] font-mono font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-800/50 px-3 py-2 rounded w-fit">{{ getEquipoIP }}</span>
+                </div>
+              </div>
+            </div>
+
             <div v-if="canManageTicket" class="space-y-1.5">
               <label class="text-[9px] font-black text-light-muted uppercase ml-1">Estatus</label>
               <Select v-model="selectedEstatus" :options="estatusOptions" optionLabel="label" optionValue="value" class="w-full !rounded-xl" />
             </div>
 
-            <div v-if="canManageTicket" class="space-y-1.5">
+            <div v-if="canManageAdminFields" class="space-y-1.5">
               <label class="text-[9px] font-black text-light-muted uppercase ml-1">Prioridad</label>
               <Select v-model="selectedPrioridad" :options="prioridadOptions" optionLabel="label" optionValue="value" class="w-full !rounded-xl" />
             </div>
 
-            <div v-if="canManageTicket" class="space-y-1.5">
-              <label class="text-[9px] font-black text-light-muted uppercase ml-1">Técnico</label>
-              <Select v-model="selectedTecnico" :options="tecnicos" optionLabel="nombre_usuario" optionValue="id" placeholder="Asignar..." showClear class="w-full !rounded-xl" />
+            <div v-if="canManageAdminFields" class="space-y-1.5">
+              <label class="text-[9px] font-black text-light-muted uppercase ml-1">Responsable</label>
+              <Select v-model="selectedTecnico" :options="tecnicos" optionLabel="nombre_usuario" optionValue="id" placeholder="Asignar analista o a ti" showClear class="w-full !rounded-xl" />
             </div>
 
             <button v-if="canManageTicket" @click="updateTicket" :disabled="saving" class="w-full py-3 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-primary-hover active:scale-95 transition-all mt-2">
-              <span v-if="!saving">Actualizar Registro</span>
+              <span v-if="!saving">Actualizar Estatus</span>
               <Loader2 v-else class="animate-spin mx-auto" />
             </button>
+
+            <p v-if="roleId === 3" class="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40 rounded-xl px-3 py-2 mt-2">
+              Modo Analista: puedes gestionar estatus y comentar. Prioridad y asignación las define administración.
+            </p>
           </div>
 
           <!-- Historial -->

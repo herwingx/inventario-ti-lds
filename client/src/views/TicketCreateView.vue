@@ -36,6 +36,24 @@ const prioridadOptions = [
   { label: 'Crítica', value: 'CRITICA' }
 ]
 
+const mapCategoriaToTipoFalla = (categoriaValue) => {
+  const value = String(categoriaValue || '').toLowerCase()
+
+  if (value.includes('equipo') || value.includes('hardware') || value.includes('mantenimiento')) {
+    return 'HARDWARE'
+  }
+
+  if (value.includes('software') || value.includes('licencia') || value.includes('acceso') || value.includes('permiso')) {
+    return 'SOFTWARE'
+  }
+
+  if (value.includes('red') || value.includes('internet')) {
+    return 'RED'
+  }
+
+  return 'OTRO'
+}
+
 const canSetCriticalPriority = computed(() => authStore.user?.roleId !== 2)
 const availablePriorityOptions = computed(() => {
   if (canSetCriticalPriority.value) return prioridadOptions
@@ -67,7 +85,8 @@ const submitTicket = async () => {
       categoria: categoria.value,
       descripcion: descripcion.value.trim(),
       prioridad: prioridad.value,
-      tipo_falla: 'OTRO'
+      // El backend espera enum tecnico, no la etiqueta amigable de categoria.
+      tipo_falla: mapCategoriaToTipoFalla(categoria.value)
     })
 
     toastSuccess('Ticket creado correctamente')

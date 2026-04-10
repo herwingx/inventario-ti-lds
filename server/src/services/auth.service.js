@@ -9,6 +9,8 @@ const crypto = require('crypto');
 const sendEmail = require('../utils/email');
 
 class AuthService {
+  static ACTIVE_STATUS_ID = 1;
+  static ACTIVE_ASIGNACION_STATUS_ID = 1;
 
   static normalizeText(value) {
     return String(value || '')
@@ -71,7 +73,28 @@ class AuthService {
       },
       include: {
         roles: true,
-        empleados: true
+        empleados: {
+          select: {
+            id_sucursal: true,
+            nombres: true,
+            apellidos: true,
+            email_personal: true,
+            asignaciones: {
+              where: {
+                fecha_fin_asignacion: null,
+                id_status_asignacion: this.ACTIVE_ASIGNACION_STATUS_ID
+              },
+              select: {
+                id_equipo: true
+              },
+              orderBy: [
+                { fecha_asignacion: 'desc' },
+                { id: 'desc' }
+              ],
+              take: 1
+            }
+          }
+        }
       }
     });
 
@@ -106,15 +129,14 @@ class AuthService {
         email: user.email || user.empleados?.email_personal || '',
         roleId: user.id_rol,
         roleName: user.roles ? user.roles.nombre_rol : 'UNKNOWN',
-        idEmpleado: user.id_empleado || null
+        idEmpleado: user.id_empleado || null,
+        idEquipoAsignado: user.empleados?.asignaciones?.[0]?.id_equipo || null
       }
     };
   }
 
-  static async signup({ nombres, apellidos, email }) {
+  static async signup({ email }) {
     const cleanEmail = String(email || '').trim().toLowerCase();
-    const cleanNombres = String(nombres || '').trim();
-    const cleanApellidos = String(apellidos || '').trim();
 
     const existingUser = await prisma.usuarios_sistema.findFirst({
       where: {
@@ -133,29 +155,60 @@ class AuthService {
       throw error;
     }
 
-    const empleado = await prisma.empleados.findFirst({
+    const cuentaCorporativa = await prisma.cuentas_email_corporativo.findFirst({
       where: {
-        OR: [
-          { email_personal: cleanEmail },
-          {
-            cuentas_email_corporativo: {
-              some: {
-                email: cleanEmail
-              }
-            }
-          }
-        ]
+        email: cleanEmail,
+        id_status: this.ACTIVE_STATUS_ID
       },
-      select: {
-        id: true,
-        nombres: true,
-        apellidos: true
+      include: {
+        empleados: {
+          select: {
+            id: true,
+            nombres: true,
+            apellidos: true,
+            id_status: true
+          }
+        }
       }
     });
+
+    if (!cuentaCorporativa || !cuentaCorporativa.empleados) {
+      const error = new Error('Solo puedes registrarte con un correo corporativo activo y vinculado a un empleado.');
+      error.statusCode = 400;
+      error.isOperational = true;
+      throw error;
+    }
+
+    if (cuentaCorporativa.empleados.id_status !== this.ACTIVE_STATUS_ID) {
+      const error = new Error('El empleado vinculado a este correo está inactivo. Contacta a soporte.');
+      error.statusCode = 403;
+      error.isOperational = true;
+      throw error;
+    }
+
+    const empleado = cuentaCorporativa.empleados;
+
+    const existingEmployeeLink = await prisma.usuarios_sistema.findFirst({
+      where: {
+        id_empleado: empleado.id
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (existingEmployeeLink) {
+      const error = new Error('Este empleado ya tiene una cuenta de acceso vinculada.');
+      error.statusCode = 409;
+      error.isOperational = true;
+      throw error;
+    }
 
     const roleId = await this.resolveDefaultRoleId();
     const tempPassword = this.generateTemporaryPassword();
     const password_hash = await bcrypt.hash(tempPassword, 10);
+    const cleanNombres = String(empleado.nombres || '').trim();
+    const cleanApellidos = String(empleado.apellidos || '').trim();
     const usernameBase = cleanEmail.split('@')[0] || `${cleanNombres}.${cleanApellidos}`;
     const username = await this.generateUniqueUsername(usernameBase);
 
@@ -168,7 +221,7 @@ class AuthService {
         password_hash,
         id_rol: roleId,
         id_status: 1,
-        id_empleado: empleado?.id || null
+        id_empleado: empleado.id
       },
       include: {
         roles: true,

@@ -4,6 +4,7 @@
  * Refactorizado con asyncHandler y validación Zod.
  */
 const QrPublicService = require('../services/qr-public.service');
+const TicketService = require('../services/tickets.service');
 // Importar servicios de notificación opcionalmente para no romper si fallan
 let TicketNotificationService;
 try {
@@ -121,13 +122,34 @@ const addPublicComment = asyncHandler(async (req, res) => {
         throw error;
     }
 
-    // Notificar admin
-    if (TicketNotificationService) {
+    // Notificaciones de comentarios solo si se habilitan explícitamente para evitar saturación.
+    const allowCommentEmails = Boolean(TicketNotificationService?.isCommentNotificationEnabled?.());
+
+    if (TicketNotificationService && allowCommentEmails) {
         // Recuperar info del ticket para notificación
         QrPublicService.getTicketStatus(ticketToken).then(status => {
             if (status) {
-                TicketNotificationService.notifyAdminComment(status.ticket, validation.data.body.contenido, validation.data.body.nombre)
-                    .catch(err => logger.warn(`[EMAIL] Error notif comentario: ${err}`));
+                TicketService.findById(status.ticket.id)
+                    .then(fullTicket => {
+                        const assignedUser = fullTicket?.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema;
+
+                        if (assignedUser?.email) {
+                            return TicketNotificationService.notifyAnalystPublicComment(
+                            { id: fullTicket.id },
+                            validation.data.body.contenido,
+                            validation.data.body.nombre,
+                            assignedUser
+                          );
+                        }
+
+                        // Sin responsable asignado: notificar canal admin para triage inicial.
+                        return TicketNotificationService.notifyAdminComment(
+                          status.ticket,
+                          validation.data.body.contenido,
+                          validation.data.body.nombre
+                        );
+                    })
+                    .catch(err => logger.warn(`[EMAIL] Error notif analista comentario: ${err}`));
             }
         });
     }
