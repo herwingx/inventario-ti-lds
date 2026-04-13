@@ -7,7 +7,7 @@ const { z } = require('zod');
 const createUsuarioSchema = z.object({
   body: z.object({
     username: z.string({ required_error: 'El usuario es obligatorio' }).trim().min(3, 'El usuario debe tener al menos 3 caracteres'),
-    password: z.string({ required_error: 'La contraseña es obligatoria' }).trim().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+    password: z.string().trim().min(6, 'La contraseña debe tener al menos 6 caracteres').optional().nullable(),
     email: z.string().email('Formato de email inválido').optional().nullable(),
     id_empleado: z.number().int().positive().optional().nullable(),
     id_rol: z.number({ required_error: 'El Rol es obligatorio' }).int().positive(),

@@ -62,10 +62,19 @@ const createUsuarioSistema = asyncHandler(async (req, res) => {
     logger.info(`Usuario creado: ${newUser.username} (ID: ${newUser.id})`);
     res.status(201).json({
         status: 'success',
-        message: 'Usuario creado exitosamente',
+        message: newUser.emailDelivered
+            ? 'Usuario creado y credenciales enviadas por correo.'
+            : 'Usuario creado. No se pudo enviar correo, usa la contraseña temporal mostrada en la respuesta.',
         data: { 
             id: newUser.id,
-            username: newUser.username 
+            username: newUser.username,
+            email: newUser.email,
+            roleName: newUser.roles?.nombre_rol || null,
+            emailDelivered: newUser.emailDelivered,
+            tempPassword: newUser.tempPassword,
+            warning: newUser.emailDelivered ? null : 'Entrega manual requerida: comparte la contraseña temporal por un canal seguro.',
+            emailErrorMessage: newUser.emailErrorMessage || null,
+            passwordWasGenerated: newUser.passwordWasGenerated
         }
     });
 });

@@ -61,10 +61,10 @@ router.get('/:id', hasRole([ROLES.ADMIN, ROLES.SUPERVISOR]), usuariosSistemaCont
  *         application/json:
  *           schema:
  *             type: object
- *             required: [username, password, id_rol]
+ *             required: [username, id_rol]
  *             properties:
  *               username: { type: string }
- *               password: { type: string, minLength: 6 }
+ *               password: { type: string, minLength: 6, description: "Opcional. Si no se envía, el sistema genera contraseña temporal y la intenta enviar por correo." }
  *               email: { type: string, format: email }
  *               id_rol: { type: integer }
  *               id_empleado: { type: integer }
