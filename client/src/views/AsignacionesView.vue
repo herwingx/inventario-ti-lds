@@ -40,11 +40,12 @@ const viewMode = ref('active') // 'active' | 'history' | 'all'
 // Columnas
 const columns = [
   { field: 'id', header: 'ID', sortable: true, width: '8%' },
-  { field: 'equipo_nombre', header: 'Equipo', sortable: true, width: '25%' },
-  { field: 'asignado_a', header: 'Asignado A', sortable: false, width: '25%' },
+  { field: 'equipo_nombre', header: 'Equipo', sortable: true, width: '21%' },
+  { field: 'ip_direccion', header: 'IP', sortable: true, width: '14%' },
+  { field: 'asignado_a', header: 'Asignado A', sortable: false, width: '23%' },
   { field: 'fecha_asignacion', header: 'Fecha Asignación', sortable: true, width: '15%' },
   { field: 'status_nombre', header: 'Estado', sortable: true, width: '15%' },
-  { field: 'actions', header: 'Acciones', sortable: false, width: '15%', align: 'right' }
+  { field: 'actions', header: 'Acciones', sortable: false, width: '19%', align: 'right' }
 ]
 
 const filteredAsignaciones = computed(() => {
@@ -53,6 +54,7 @@ const filteredAsignaciones = computed(() => {
   return asignaciones.value.filter(a =>
     a.equipo_nombre?.toLowerCase().includes(search) ||
     a.equipo_numero_serie?.toLowerCase().includes(search) ||
+    a.ip_direccion?.toLowerCase().includes(search) ||
     a.empleado_nombres?.toLowerCase().includes(search) ||
     a.empleado_apellidos?.toLowerCase().includes(search) ||
     a.sucursal_asignada_nombre?.toLowerCase().includes(search) ||
@@ -258,6 +260,14 @@ const clearFilters = () => {
             <div class="skeleton h-4 w-28"></div>
             <div class="skeleton h-3 w-20"></div>
           </div>
+        </template>
+
+        <template #ip_direccion="{ data }">
+          <span class="text-sm font-mono text-gray-700 dark:text-gray-300">{{ data.ip_direccion || '-' }}</span>
+        </template>
+
+        <template #skeleton-ip_direccion>
+          <div class="skeleton h-4 w-24"></div>
         </template>
 
         <!-- Asignado A -->
