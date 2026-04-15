@@ -31,6 +31,7 @@ export default {
         // Datos adicionales para gráficos o secciones detalle
         equipos_disponibles: backendData.stats.equipos.disponibles || 0,
         equipos_por_tipo: backendData.stats.equipos.por_tipo || [],
+        equipos_por_status: backendData.stats.equipos.por_status || [],
         actividad_reciente: backendData.activity.recent_assignments || []
       }
     } catch (e) {
