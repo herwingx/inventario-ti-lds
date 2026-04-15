@@ -54,7 +54,7 @@ const updateProfile = asyncHandler(async (req, res) => {
         const error = new Error('Datos de perfil inválidos');
         error.statusCode = 400;
         error.isOperational = true;
-        error.details = validation.error.errors.map(e => e.message);
+        error.details = (validation.error.issues || validation.error.errors || []).map(e => e.message);
         throw error;
     }
 

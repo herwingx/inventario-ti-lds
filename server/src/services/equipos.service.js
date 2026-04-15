@@ -8,6 +8,13 @@ const crypto = require('crypto');
 
 class EquipoService {
 
+  static buildOperationalError(message, statusCode = 400) {
+    const error = new Error(message);
+    error.statusCode = statusCode;
+    error.isOperational = true;
+    return error;
+  }
+
   /**
    * Genera un token QR único de 16 caracteres hex.
    */
@@ -128,7 +135,7 @@ class EquipoService {
       return newEquipo;
     } catch (error) {
       if (error.code === 'P2002') {
-        throw new Error('DUPLICATE_ENTRY: El número de serie o MAC address ya existe.');
+        throw this.buildOperationalError('El número de serie o MAC address ya existe.', 409);
       }
       throw error;
     }
@@ -150,7 +157,7 @@ class EquipoService {
 
       const STATUS_PROTECTED = [3, 4]; // Mantenimiento (3), Asignado (4)
       if (STATUS_PROTECTED.includes(current.id_status) && current.id_status !== data.id_status) {
-        throw new Error('BUSINESS_RULE: No se puede cambiar manualmente el estado de un equipo Asignado o en Mantenimiento.');
+        throw this.buildOperationalError('No se puede cambiar manualmente el estado de un equipo Asignado o en Mantenimiento.', 409);
       }
     }
 
@@ -185,7 +192,7 @@ class EquipoService {
     if (!current) return false;
 
     if (current.id_status === STATUS_ASIGNADO) {
-      throw new Error('BUSINESS_RULE: No se puede eliminar un equipo que está actualmente ASIGNADO. Libérelo primero.');
+      throw this.buildOperationalError('No se puede eliminar un equipo que está actualmente ASIGNADO. Libérelo primero.', 409);
     }
 
     try {
@@ -205,7 +212,7 @@ class EquipoService {
         });
 
         if (!statusBaja) {
-          throw new Error('CONFIG_ERROR: No existe un estado de "BAJA" o "ELIMINADO" en el sistema para realizar soft delete.');
+          throw this.buildOperationalError('No existe un estado de "BAJA" o "ELIMINADO" en el sistema para realizar soft delete.', 500);
         }
 
         const softDelete = await prisma.equipos.update({

@@ -352,7 +352,7 @@ const submitTicket = async () => {
               <textarea
                 v-model="descripcion"
                 rows="7"
-                class="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-white dark:bg-dark-bg px-4 py-3 text-sm outline-none focus:border-primary transition-colors resize-y min-h-[150px] font-mono text-xs"
+                class="w-full rounded-xl border-2 border-light-border dark:border-dark-border bg-white dark:bg-dark-bg px-4 py-3 outline-none focus:border-primary transition-colors resize-y min-h-[150px] font-mono text-xs"
                 placeholder="Incluye: síntomas específicos, cuándo comenzó, qué intentaste, equipos afectados..."
               ></textarea>
               <div class="flex items-center justify-between text-xs">
@@ -397,7 +397,7 @@ const submitTicket = async () => {
             </div>
 
             <!-- Actions -->
-            <div class="pt-2 flex flex-col sm:flex-row gap-3 justify-end border-t border-light-border dark:border-dark-border pt-6">
+            <div class="pt-2 flex flex-col sm:flex-row gap-3 justify-end border-t border-light-border dark:border-dark-border">
               <button
                 type="button"
                 @click="router.push({ name: 'tickets' })"

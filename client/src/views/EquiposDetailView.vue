@@ -86,12 +86,20 @@ const printLabel = () => {
           </div>
         </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js">${closeScript}
+        <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" onload="generateQR()">${closeScript}
         <script>
-          var qr = qrcode(0, 'M');
-          qr.addData('${publicUrl.value}');
-          qr.make();
-          document.getElementById('qr-target').innerHTML = qr.createSvgTag(4);
+          function generateQR() {
+            try {
+              var qr = qrcode(0, 'M');
+              qr.addData('${publicUrl.value}');
+              qr.make();
+              document.getElementById('qr-target').innerHTML = qr.createSvgTag(4);
+            } catch (error) {
+              console.error('Error generando QR:', error);
+              document.getElementById('qr-target').innerHTML = '<p style="color:red;">Error al generar QR</p>';
+            }
+          }
+          
           window.onload = function() { 
             setTimeout(function() {
               window.print(); 

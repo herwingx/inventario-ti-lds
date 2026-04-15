@@ -46,7 +46,7 @@ const createTipoEquipo = asyncHandler(async (req, res) => {
         const error = new Error('Datos de tipo de equipo inválidos');
         error.statusCode = 400;
         error.isOperational = true;
-        error.details = validation.error.errors.map(e => e.message);
+        error.details = (validation.error.issues || validation.error.errors || []).map(e => e.message);
         throw error;
     }
 
@@ -72,7 +72,7 @@ const updateTipoEquipo = asyncHandler(async (req, res) => {
         const error = new Error('Datos de actualización inválidos');
         error.statusCode = 400;
         error.isOperational = true;
-        error.details = validation.error.errors.map(e => e.message);
+        error.details = (validation.error.issues || validation.error.errors || []).map(e => e.message);
         throw error;
     }
 
