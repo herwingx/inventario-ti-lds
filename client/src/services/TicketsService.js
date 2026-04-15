@@ -101,6 +101,18 @@ export default {
   },
 
   /**
+   * Obtiene métricas operativas del soporte técnico.
+   * @param {Object} [params]
+   * @param {number} [params.days=30]
+   * @param {string} [params.startDate]
+   * @param {string} [params.endDate]
+   * @returns {Promise<Object>}
+   */
+  getSupportMetrics(params = {}) {
+    return api.get('/tickets/metrics', { params }).then(res => res.data)
+  },
+
+  /**
    * Sube un archivo adjunto al ticket.
    * @param {number} id - ID del ticket
    * @param {File} file - Objeto File a subir

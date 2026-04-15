@@ -179,22 +179,10 @@ const loadTecnicos = async () => {
   try {
     const data = await TicketsService.getTecnicos()
 
-    const normalizeName = (value) => {
-      const source = String(value || '').trim()
-      if (!source) return 'Sin nombre'
-
-      const base = source.includes('@') ? source.split('@')[0] : source
-      const firstChunk = base
-        .replace(/[._-]+/g, ' ')
-        .trim()
-        .split(/\s+/)[0] || 'Sin nombre'
-
-      return firstChunk.charAt(0).toUpperCase() + firstChunk.slice(1).toLowerCase()
-    }
-
     tecnicos.value = data.map((tecnico) => ({
       ...tecnico,
-      display_name: normalizeName(tecnico.nombre_usuario)
+      display_name: tecnico.nombre_usuario || tecnico.username || 'Sin nombre',
+      secondary_name: tecnico.username && tecnico.username !== tecnico.nombre_usuario ? tecnico.username : ''
     }))
   } catch (err) {
     console.error('Error loading analysts:', err)

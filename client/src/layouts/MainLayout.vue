@@ -44,6 +44,16 @@ const showSidebar = computed(() => {
   return true
 })
 
+const sidebarWidth = computed(() => {
+  if (isMobile.value) return '0px'
+  return sidebarCollapsed.value ? '5rem' : '16rem'
+})
+
+const mainStyle = computed(() => ({
+  marginLeft: sidebarWidth.value,
+  width: isMobile.value ? '100%' : `calc(100vw - ${sidebarWidth.value})`
+}))
+
 onMounted(() => {
   // authStore initialization is handled in the store definition via localStorage
   checkMobile()
@@ -96,19 +106,21 @@ watch(
 
     <!-- Main Content: footer fijo + área scrollable -->
     <main 
-      class="h-[calc(100vh-5rem)] mt-20 px-6 overflow-hidden flex flex-col transition-all duration-300"
-      :style="{ marginLeft: isMobile ? '0' : (sidebarCollapsed ? '5rem' : '16rem') }"
+      class="h-[calc(100vh-5rem)] mt-20 overflow-hidden flex flex-col transition-all duration-300 w-full min-w-0 box-border"
+      :style="mainStyle"
     >
-      <div ref="mainScrollRef" class="flex-1 overflow-y-auto py-4">
-        <RouterView v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </RouterView>
+      <div ref="mainScrollRef" class="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
+        <div class="px-6 py-4 min-w-0 box-border">
+          <RouterView v-slot="{ Component }">
+            <transition name="fade" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </RouterView>
+        </div>
       </div>
 
       <!-- Footer: vive dentro del main para no generar scroll global -->
-      <footer class="flex-none py-4 text-center text-sm text-light-muted dark:text-dark-muted border-t border-light-border dark:border-dark-border">
+      <footer class="flex-none px-6 py-4 text-center text-sm text-light-muted dark:text-dark-muted border-t border-light-border dark:border-dark-border">
         <p>
           Copyright © Desarrollado con ❤️ por
           <a

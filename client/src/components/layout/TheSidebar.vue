@@ -131,6 +131,7 @@ const menuItems = ref([
     icon: Ticket,
     children: [
       { id: 'tickets-activos', label: 'Tickets Activos', route: '/tickets' },
+      { id: 'tickets-metricas', label: 'Métricas de Soporte', route: '/tickets/metricas' },
       { id: 'tickets-historial', label: 'Historial de Soporte', route: '/tickets/historial' }
     ]
   },

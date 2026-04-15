@@ -9,6 +9,7 @@ import TicketsService from '../services/TicketsService'
 import { useAuthStore } from '../stores/auth'
 import { useSwal } from '../composables/useSwal'
 import DataTable from '../components/ui/DataTable.vue'
+import StatCard from '../components/dashboard/StatCard.vue'
 import { getStatusSeverity } from '../utils/status'
 import { 
   Search, 
@@ -230,7 +231,6 @@ const getUserDisplayName = (user, fallback = 'Usuario Externo') => {
 <template>
   <div class="animate-fade-in-up pt-2 sm:pt-3">
     <div class="bg-white dark:bg-dark-card rounded-lg shadow-xl p-6 border border-gray-200 dark:border-dark-border transition-all duration-300">
-      
       <!-- Toolbar -->
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-1">

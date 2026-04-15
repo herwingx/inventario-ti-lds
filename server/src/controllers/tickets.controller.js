@@ -348,6 +348,22 @@ const getTecnicos = asyncHandler(async (req, res) => {
 });
 
 /**
+ * Obtiene métricas de soporte técnico.
+ * @route GET /api/tickets/metrics
+ */
+const getSupportMetrics = asyncHandler(async (req, res) => {
+    const metrics = await TicketService.getSupportMetrics({
+        userId: req.user?.userId,
+        roleId: req.user?.roleId,
+        startDate: req.query.startDate,
+        endDate: req.query.endDate,
+        days: req.query.days
+    });
+
+    res.status(200).json(metrics);
+});
+
+/**
  * Obtiene comentarios de un ticket.
  * @route GET /api/tickets/:id/comments
  */
@@ -481,6 +497,7 @@ module.exports = {
     updateTicket,
     deleteTicket,
     getTecnicos,
+    getSupportMetrics,
     getComments,
     addComment,
     uploadAttachment: uploadTicketAttachment

@@ -52,6 +52,30 @@ router.get('/tecnicos', ticketsController.getTecnicos);
 
 /**
  * @openapi
+ * /api/tickets/metrics:
+ *   get:
+ *     summary: Obtener métricas de soporte técnico
+ *     tags: [Soporte (Helpdesk)]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: days
+ *         schema: { type: integer, default: 30 }
+ *       - in: query
+ *         name: startDate
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: endDate
+ *         schema: { type: string, format: date }
+ *     responses:
+ *       200:
+ *         description: Resumen operativo, tendencia y distribución de tickets.
+ */
+router.get('/metrics', ticketsController.getSupportMetrics);
+
+/**
+ * @openapi
  * /api/tickets/{id}:
  *   get:
  *     summary: Obtener ticket por ID

@@ -269,6 +269,12 @@ const routes = [
         meta: { title: 'Historial de Soporte' }
       },
       {
+        path: 'tickets/metricas',
+        name: 'tickets-metricas',
+        component: () => import('../views/TicketsMetricsView.vue'),
+        meta: { title: 'Métricas de Soporte' }
+      },
+      {
         path: 'tickets/:id',
         name: 'tickets-detalle',
         component: () => import('../views/TicketsDetailView.vue'),

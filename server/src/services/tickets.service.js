@@ -500,13 +500,249 @@ class TicketService {
         id_status: 1,
         id_rol: { in: [this.ANALYST_ROLE_ID, this.ADMIN_ROLE_ID] }
       },
-      select: { id: true, username: true, email: true, id_rol: true }
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        nombres: true,
+        apellidos: true,
+        empleados: {
+          select: {
+            nombres: true,
+            apellidos: true
+          }
+        },
+        id_rol: true
+      }
     });
+
+    const getTechnicianDisplayName = (usuario) => {
+      const firstName = String(usuario.nombres || '').trim()
+      const lastName = String(usuario.apellidos || '').trim()
+      if (firstName && lastName) return `${firstName} ${lastName}`
+
+      const employeeFirstName = String(usuario.empleados?.nombres || '').trim()
+      const employeeLastName = String(usuario.empleados?.apellidos || '').trim()
+      if (employeeFirstName && employeeLastName) return `${employeeFirstName} ${employeeLastName}`
+
+      return String(usuario.username || '').trim() || 'Usuario'
+    }
 
     return users.map(u => ({
       id: u.id,
-      nombre_usuario: u.email ? u.email.split('@')[0] : u.username
+      nombre_usuario: getTechnicianDisplayName(u),
+      username: u.username
     }));
+  }
+
+  static async getSupportMetrics({ userId = null, roleId = null, startDate = null, endDate = null, days = 30 } = {}) {
+    const safeDays = Number.isFinite(Number(days)) ? Math.min(Math.max(parseInt(days, 10), 1), 365) : 30;
+    const rangeEnd = endDate ? new Date(endDate) : new Date();
+    const rangeStart = startDate ? new Date(startDate) : new Date(rangeEnd.getTime() - ((safeDays - 1) * 24 * 60 * 60 * 1000));
+
+    if (Number.isNaN(rangeStart.getTime()) || Number.isNaN(rangeEnd.getTime())) {
+      const error = new Error('Rango de fechas inválido.');
+      error.statusCode = 400;
+      error.isOperational = true;
+      throw error;
+    }
+
+    rangeStart.setHours(0, 0, 0, 0);
+    rangeEnd.setHours(23, 59, 59, 999);
+
+    const scopeWhere = {};
+    if (roleId === this.USER_ROLE_ID && userId) {
+      scopeWhere.id_usuario_reporta = Number(userId);
+    }
+    if (roleId === this.ANALYST_ROLE_ID && userId) {
+      scopeWhere.id_asignado_a = Number(userId);
+    }
+
+    const tickets = await prisma.tickets.findMany({
+      where: scopeWhere,
+      select: {
+        id: true,
+        estatus: true,
+        prioridad: true,
+        tipo_falla: true,
+        fecha_creacion: true,
+        fecha_cierre: true,
+        fecha_actualizacion: true,
+        id_asignado_a: true,
+        usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: {
+          select: {
+            username: true,
+            nombres: true,
+            apellidos: true,
+            empleados: {
+              select: {
+                nombres: true,
+                apellidos: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { fecha_creacion: 'asc' }
+    });
+
+    const openStatuses = new Set(['ABIERTO', 'EN_PROGRESO', 'PENDIENTE']);
+    const statusLabels = {
+      ABIERTO: 'Abierto',
+      EN_PROGRESO: 'En progreso',
+      PENDIENTE: 'Pendiente',
+      RESUELTO: 'Resuelto',
+      CERRADO: 'Cerrado'
+    };
+    const priorityLabels = {
+      BAJA: 'Baja',
+      MEDIA: 'Media',
+      ALTA: 'Alta',
+      CRITICA: 'Critica'
+    };
+
+    const formatDateKey = (date) => {
+      const normalized = new Date(date);
+      const year = normalized.getFullYear();
+      const month = String(normalized.getMonth() + 1).padStart(2, '0');
+      const day = String(normalized.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const isWithinRange = (date) => date instanceof Date && date >= rangeStart && date <= rangeEnd;
+
+    const timeline = [];
+    const timelineMap = new Map();
+    for (const cursor = new Date(rangeStart); cursor <= rangeEnd; cursor.setDate(cursor.getDate() + 1)) {
+      const key = formatDateKey(cursor);
+      const item = {
+        date: key,
+        label: cursor.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }),
+        created: 0,
+        resolved: 0
+      };
+      timeline.push(item);
+      timelineMap.set(key, item);
+    }
+
+    const countMap = (values, labels) => {
+      const counts = new Map(labels.map((label) => [label, 0]));
+      values.forEach((value) => {
+        if (!value) return;
+        counts.set(value, (counts.get(value) || 0) + 1);
+      });
+      return labels.map((label) => ({ label: statusLabels[label] || priorityLabels[label] || label, value: counts.get(label) || 0 }));
+    };
+
+    let totalResolutionMs = 0;
+    let resolvedCount = 0;
+    let totalOpenAgeMs = 0;
+    let openAgeCount = 0;
+
+    const analystCounts = new Map();
+
+    tickets.forEach((ticket) => {
+      const createdDate = ticket.fecha_creacion ? new Date(ticket.fecha_creacion) : null;
+      const resolvedDate = ticket.fecha_cierre ? new Date(ticket.fecha_cierre) : null;
+
+      if (createdDate && isWithinRange(createdDate)) {
+        const dayKey = formatDateKey(createdDate);
+        const row = timelineMap.get(dayKey);
+        if (row) row.created += 1;
+      }
+
+      if (resolvedDate && isWithinRange(resolvedDate)) {
+        const dayKey = formatDateKey(resolvedDate);
+        const row = timelineMap.get(dayKey);
+        if (row) row.resolved += 1;
+      }
+
+      if (createdDate && resolvedDate) {
+        totalResolutionMs += resolvedDate.getTime() - createdDate.getTime();
+        resolvedCount += 1;
+      }
+
+      if (openStatuses.has(ticket.estatus) && createdDate) {
+        totalOpenAgeMs += rangeEnd.getTime() - createdDate.getTime();
+        openAgeCount += 1;
+      }
+
+      const analystName = this.resolveUserDisplayName(ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema);
+      if (ticket.id_asignado_a) {
+        analystCounts.set(analystName, (analystCounts.get(analystName) || 0) + 1);
+      }
+    });
+
+    const countBy = (values, labels, mapLabels = {}) => {
+      const counts = new Map(labels.map((label) => [label, 0]));
+      values.forEach((value) => {
+        const key = String(value || '').toUpperCase();
+        if (!counts.has(key)) return;
+        counts.set(key, counts.get(key) + 1);
+      });
+
+      return labels.map((label) => ({
+        label: mapLabels[label] || label,
+        value: counts.get(label) || 0
+      }));
+    };
+
+    const currentStatusCounts = countBy(tickets.map(t => t.estatus), ['ABIERTO', 'EN_PROGRESO', 'PENDIENTE', 'RESUELTO', 'CERRADO'], statusLabels);
+    const priorityCounts = countBy(tickets.map(t => t.prioridad), ['BAJA', 'MEDIA', 'ALTA', 'CRITICA'], priorityLabels);
+
+    const categoryCountsMap = new Map();
+    tickets.forEach((ticket) => {
+      const label = ticket.tipo_falla || 'OTRO';
+      categoryCountsMap.set(label, (categoryCountsMap.get(label) || 0) + 1);
+    });
+    const categoryCounts = Array.from(categoryCountsMap.entries())
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6);
+
+    const analystTop = Array.from(analystCounts.entries())
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+
+    const totalOpen = tickets.filter(ticket => openStatuses.has(ticket.estatus)).length;
+    const totalCreated = tickets.filter(ticket => ticket.fecha_creacion && isWithinRange(new Date(ticket.fecha_creacion))).length;
+    const totalResolved = tickets.filter(ticket => ticket.fecha_cierre && isWithinRange(new Date(ticket.fecha_cierre))).length;
+    const averageResolutionHours = resolvedCount > 0 ? Number((totalResolutionMs / resolvedCount / 36e5).toFixed(1)) : 0;
+    const averageOpenAgeHours = openAgeCount > 0 ? Number((totalOpenAgeMs / openAgeCount / 36e5).toFixed(1)) : 0;
+    const overdueOpenTickets = tickets.filter(ticket => {
+      if (!openStatuses.has(ticket.estatus) || !ticket.fecha_creacion) return false;
+      const ageHours = (rangeEnd.getTime() - new Date(ticket.fecha_creacion).getTime()) / 36e5;
+      return ageHours >= 72;
+    }).length;
+
+    return {
+      range: {
+        start: rangeStart,
+        end: rangeEnd,
+        days: safeDays
+      },
+      summary: {
+        total_tickets: tickets.length,
+        created_in_range: totalCreated,
+        resolved_in_range: totalResolved,
+        open_tickets: totalOpen,
+        in_progress_tickets: tickets.filter(ticket => ticket.estatus === 'EN_PROGRESO').length,
+        pending_tickets: tickets.filter(ticket => ticket.estatus === 'PENDIENTE').length,
+        closed_tickets: tickets.filter(ticket => ticket.estatus === 'CERRADO').length,
+        resolution_rate: totalCreated > 0 ? Number(((totalResolved / totalCreated) * 100).toFixed(1)) : 0,
+        average_resolution_hours: averageResolutionHours,
+        average_open_age_hours: averageOpenAgeHours,
+        overdue_open_tickets: overdueOpenTickets
+      },
+      charts: {
+        timeline,
+        by_status: currentStatusCounts,
+        by_priority: priorityCounts,
+        by_category: categoryCounts,
+        by_analyst: analystTop
+      }
+    };
   }
 
   static async getComments(ticketId, includeInternals = false) {
