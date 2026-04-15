@@ -11,7 +11,6 @@ import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
-import { Layers } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const { error: toastError, warning: toastWarning } = useSwal()
@@ -54,9 +53,13 @@ const handleLogin = async () => {
       
       <!-- Logo/Header -->
       <div class="flex flex-col items-center mb-8">
-          <!-- Logo Placeholder from image -->
           <div class="mb-4">
-             <Layers class="text-gray-400" :size="60" stroke-width="1.5" />
+             <img
+               src="/icono2.png"
+               alt="Linea Digital"
+               class="w-16 h-16 object-contain"
+               loading="eager"
+             />
           </div>
           <h1 class="text-xl font-medium text-white">Inicio de sesión</h1>
       </div>

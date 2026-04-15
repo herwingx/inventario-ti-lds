@@ -9,6 +9,25 @@ const crypto = require('crypto');
 class EquipoService {
 
   /**
+   * Genera un token QR único de 16 caracteres hex.
+   */
+  static async generateUniqueQrToken() {
+    let token;
+    let exists = true;
+
+    while (exists) {
+      token = crypto.randomBytes(8).toString('hex');
+      const existing = await prisma.equipos.findFirst({
+        where: { qr_token: token },
+        select: { id: true }
+      });
+      exists = !!existing;
+    }
+
+    return token;
+  }
+
+  /**
    * Obtiene todos los equipos con información detallada.
    */
   static async findAll() {
@@ -47,7 +66,7 @@ class EquipoService {
    * @param {number} id
    */
   static async findById(id) {
-    const e = await prisma.equipos.findUnique({
+    let e = await prisma.equipos.findUnique({
       where: { id: parseInt(id) },
       include: {
         tipos_equipo: true,
@@ -65,6 +84,16 @@ class EquipoService {
     });
 
     if (!e) return null;
+
+    // Backfill automático para equipos legacy sin token QR.
+    if (!e.qr_token) {
+      const qrToken = await this.generateUniqueQrToken();
+      await prisma.equipos.update({
+        where: { id: e.id },
+        data: { qr_token: qrToken }
+      });
+      e = { ...e, qr_token: qrToken };
+    }
 
     return {
       ...e,
@@ -90,7 +119,7 @@ class EquipoService {
     try {
       // Generar token QR único si no viene en los datos
       if (!data.qr_token) {
-        data.qr_token = crypto.randomBytes(8).toString('hex'); // 16 caracteres alfanuméricos
+        data.qr_token = await this.generateUniqueQrToken();
       }
 
       const newEquipo = await prisma.equipos.create({

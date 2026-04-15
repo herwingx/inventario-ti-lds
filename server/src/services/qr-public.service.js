@@ -108,12 +108,36 @@ class QrPublicService {
       include: {
         equipos: true,
         usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: {
-          select: { username: true }
+          select: {
+            username: true,
+            nombres: true,
+            apellidos: true,
+            empleados: {
+              select: {
+                nombres: true,
+                apellidos: true
+              }
+            }
+          }
         },
         ticket_comentarios: {
           where: { es_interno: false },
           orderBy: { fecha_creacion: 'asc' },
-          include: { usuarios_sistema: { select: { username: true } } }
+          include: {
+            usuarios_sistema: {
+              select: {
+                username: true,
+                nombres: true,
+                apellidos: true,
+                empleados: {
+                  select: {
+                    nombres: true,
+                    apellidos: true
+                  }
+                }
+              }
+            }
+          }
         }
       }
     });
@@ -123,6 +147,24 @@ class QrPublicService {
       return null;
     }
 
+    const getFullName = (usuario) => {
+      if (usuario?.nombres && usuario?.apellidos) {
+        return `${usuario.nombres} ${usuario.apellidos}`;
+      }
+      if (usuario?.empleados?.nombres && usuario?.empleados?.apellidos) {
+        return `${usuario.empleados.nombres} ${usuario.empleados.apellidos}`;
+      }
+      const username = String(usuario?.username || '').trim();
+      if (!username) return 'N/A';
+
+      return username
+        .replace(/[._-]+/g, ' ')
+        .split(/\s+/)
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(' ');
+    };
+
     const result = {
       ticket: {
         id: ticket.id,
@@ -130,7 +172,7 @@ class QrPublicService {
         descripcion: ticket.descripcion,
         prioridad: ticket.prioridad,
         estatus: ticket.estatus,
-        tecnico: ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema?.username,
+        tecnico: getFullName(ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema),
         equipo: `${ticket.equipos?.marca} ${ticket.equipos?.modelo}`,
         qr_token: ticket.equipos?.qr_token,
         fecha_creacion: ticket.fecha_creacion,
@@ -138,7 +180,7 @@ class QrPublicService {
         fecha_cierre: ticket.fecha_cierre
       },
       comentarios: ticket.ticket_comentarios.map(c => {
-        let autor = c.usuarios_sistema?.username || 'Usuario';
+        let autor = getFullName(c.usuarios_sistema) || 'Usuario';
         let contenido = c.contenido;
 
         // Si es comentario público, intentar extraer el nombre del prefijo [Nombre]:
@@ -170,12 +212,36 @@ class QrPublicService {
       include: {
         equipos: true,
         usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: {
-          select: { username: true }
+          select: {
+            username: true,
+            nombres: true,
+            apellidos: true,
+            empleados: {
+              select: {
+                nombres: true,
+                apellidos: true
+              }
+            }
+          }
         },
         ticket_comentarios: {
           where: { es_interno: false },
           orderBy: { fecha_creacion: 'asc' },
-          include: { usuarios_sistema: { select: { username: true } } }
+          include: {
+            usuarios_sistema: {
+              select: {
+                username: true,
+                nombres: true,
+                apellidos: true,
+                empleados: {
+                  select: {
+                    nombres: true,
+                    apellidos: true
+                  }
+                }
+              }
+            }
+          }
         }
       }
     });

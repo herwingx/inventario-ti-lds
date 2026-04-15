@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSwal } from '../composables/useSwal'
 import QrPublicService from '../services/QrPublicService'
-import { History, Clock, ChevronRight, AlertCircle, Info } from 'lucide-vue-next'
+import { History, Clock, ChevronRight, AlertCircle, Info, ShieldCheck, Wrench, MessageSquareText, ArrowRight, Sparkles } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -33,6 +33,8 @@ const commonIssues = [
 ]
 
 const ticketInfo = ref(null)
+const activosCount = computed(() => ticketsActivos.value.length)
+const historialCount = computed(() => ticketsHistorial.value.length)
 
 onMounted(async () => {
   if (!token) {
@@ -77,38 +79,73 @@ const submitTicket = async () => {
 const goToTicket = (tokenAcceso) => {
   router.push(`/q/ticket/${tokenAcceso}`)
 }
+
+const formatShortDate = (date) => {
+  if (!date) return ''
+  return new Date(date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
+}
 </script>
 
 <template>
-  <div class="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center font-sans transition-all duration-500 sm:p-6 overflow-x-hidden">
+  <div class="relative min-h-screen bg-light-bg dark:bg-dark-bg font-sans transition-all duration-500 overflow-x-hidden">
+    <div class="pointer-events-none absolute inset-0 overflow-hidden">
+      <div class="absolute -top-28 -left-20 h-72 w-72 rounded-full bg-primary/12 blur-3xl"></div>
+      <div class="absolute top-32 -right-28 h-96 w-96 rounded-full bg-emerald-400/10 blur-3xl"></div>
+      <div class="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-slate-400/10 blur-3xl"></div>
+    </div>
     
     <!-- Loader -->
-    <div v-if="loading && !equipo" class="text-center animate-pulse">
-      <i class="pi pi-spin pi-spinner text-6xl text-primary mb-4"></i>
-      <p class="text-xl font-title font-bold text-primary tracking-widest uppercase">Iniciando</p>
+    <div v-if="loading && !equipo" class="relative z-10 min-h-screen flex items-center justify-center text-center px-6 animate-pulse">
+      <div>
+        <div class="mx-auto mb-4 h-16 w-16 rounded-2xl bg-white dark:bg-dark-card shadow-xl flex items-center justify-center border border-light-border dark:border-dark-border">
+          <i class="pi pi-spin pi-spinner text-2xl text-primary"></i>
+        </div>
+        <p class="text-lg sm:text-xl font-black text-primary tracking-[0.3em] uppercase">Iniciando</p>
+      </div>
     </div>
 
     <!-- Contenedor Principal -->
-    <div v-else-if="equipo" class="w-full flex flex-col sm:flex-row sm:max-w-6xl sm:shadow-2xl sm:rounded-[2.5rem] bg-light-card dark:bg-dark-card border-light-border dark:border-dark-border sm:border transition-all min-h-screen sm:min-h-0 overflow-visible sm:overflow-hidden">
+    <div v-else-if="equipo" class="relative z-10 w-full max-w-7xl mx-auto min-h-screen flex items-stretch sm:items-center p-0 sm:p-6 lg:p-8">
+      <div class="w-full flex flex-col lg:flex-row bg-light-card/95 dark:bg-dark-card/95 backdrop-blur-xl lg:shadow-2xl lg:rounded-[2.5rem] border-light-border dark:border-dark-border lg:border overflow-hidden min-h-screen lg:min-h-[780px]">
       
       <!-- SIDEBAR IZQUIERDO -->
-      <div class="bg-primary w-full sm:w-[35%] lg:w-[30%] p-6 sm:p-10 text-white flex flex-col justify-center relative overflow-hidden shrink-0 shadow-lg sm:shadow-none z-20">
-        <div class="absolute -top-10 -right-10 opacity-10 pointer-events-none hidden sm:block">
+      <div class="relative bg-primary w-full lg:w-[34%] p-6 sm:p-10 lg:p-12 text-white flex flex-col justify-between overflow-hidden shrink-0 shadow-lg z-20">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_45%)]"></div>
+        <div class="absolute -top-10 -right-10 opacity-10 pointer-events-none hidden lg:block">
            <i class="pi pi-qrcode text-[20rem] rotate-12"></i>
         </div>
 
-        <div class="flex flex-row sm:flex-col items-center sm:items-start justify-between sm:justify-center gap-4 sm:gap-10">
-          <div class="shrink-0">
+        <div class="relative z-10 flex flex-row lg:flex-col items-center lg:items-start justify-between lg:justify-center gap-5 lg:gap-10">
+          <div class="shrink-0 flex items-center gap-3">
             <img src="/logo-white.svg" alt="LDS" class="h-10 sm:h-12 lg:h-16 w-auto drop-shadow-md" />
           </div>
           
-          <div class="flex-1 bg-white/10 backdrop-blur-md p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/20 shadow-xl">
-            <div class="hidden sm:flex items-center gap-2 mb-2 opacity-60">
-              <i class="pi pi-desktop text-[10px]"></i>
-              <span class="text-[9px] uppercase font-bold tracking-widest">Activo Identificado</span>
+          <div class="flex-1 w-full bg-white/12 backdrop-blur-md p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/20 shadow-xl">
+            <div class="hidden lg:flex items-center gap-2 mb-3 opacity-70">
+              <ShieldCheck :size="12" />
+              <span class="text-[10px] uppercase font-black tracking-[0.3em]">Activo Identificado</span>
             </div>
-            <h2 class="text-lg sm:text-xl lg:text-2xl font-black font-title leading-tight mb-1 uppercase tracking-tight">{{ equipo.tipo }}</h2>
-            <p class="text-white/80 text-xs sm:text-base font-medium opacity-90 truncate">{{ equipo.marca }} {{ equipo.modelo }}</p>
+            <h2 class="text-lg sm:text-xl lg:text-3xl font-black font-title leading-tight mb-2 uppercase tracking-tight">{{ equipo.tipo }}</h2>
+            <p class="text-white/85 text-xs sm:text-base font-medium opacity-90 truncate">{{ equipo.marca }} {{ equipo.modelo }}</p>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <span class="px-3 py-1 rounded-full bg-white/15 border border-white/15 text-[10px] font-black uppercase tracking-widest">{{ equipo.empresa || 'Empresa' }}</span>
+              <span class="px-3 py-1 rounded-full bg-white/15 border border-white/15 text-[10px] font-black uppercase tracking-widest">{{ equipo.sucursal || 'Sucursal' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative z-10 mt-6 lg:mt-10 grid grid-cols-3 gap-3 text-center">
+          <div class="rounded-2xl bg-white/10 border border-white/15 p-3">
+            <p class="text-[9px] uppercase tracking-[0.25em] font-black opacity-70">Activos</p>
+            <p class="text-xl font-black mt-1">{{ activosCount }}</p>
+          </div>
+          <div class="rounded-2xl bg-white/10 border border-white/15 p-3">
+            <p class="text-[9px] uppercase tracking-[0.25em] font-black opacity-70">Historial</p>
+            <p class="text-xl font-black mt-1">{{ historialCount }}</p>
+          </div>
+          <div class="rounded-2xl bg-white/10 border border-white/15 p-3">
+            <p class="text-[9px] uppercase tracking-[0.25em] font-black opacity-70">Atención</p>
+            <p class="text-xl font-black mt-1">24/7</p>
           </div>
         </div>
       </div>
@@ -123,21 +160,29 @@ const goToTicket = (tokenAcceso) => {
             
             <!-- Sección de Reporte Nuevo -->
             <section>
-              <div class="mb-8 text-center sm:text-left">
-                <h2 class="text-2xl sm:text-3xl font-black font-title text-light-text dark:text-dark-text mb-2 tracking-tight">¿Qué sucede hoy?</h2>
-                <p class="text-light-muted dark:text-dark-muted text-base sm:text-lg">Selecciona una categoría para recibir ayuda.</p>
+              <div class="mb-8">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.3em] mb-4">
+                  <Sparkles :size="12" />
+                  Centro de ayuda
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-black font-title text-light-text dark:text-dark-text mb-3 tracking-tight">¿Qué sucede hoy?</h2>
+                <p class="text-light-muted dark:text-dark-muted text-base sm:text-lg max-w-2xl leading-relaxed">Selecciona una categoría y sigue el flujo guiado para registrar tu incidencia de forma clara y rápida.</p>
               </div>
 
-              <div class="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div class="grid grid-cols-1 xs:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                 <button 
                   v-for="issue in commonIssues" :key="issue.id"
                   @click="selectIssue(issue.label)"
-                  class="flex flex-row sm:flex-col items-center gap-4 sm:gap-0 p-4 sm:p-6 rounded-2xl border-2 border-slate-50 dark:border-dark-border bg-slate-50 dark:bg-dark-bg/40 hover:bg-white dark:hover:bg-dark-card hover:border-primary/40 transition-all text-left sm:text-center active:scale-[0.97] shadow-sm sm:hover:shadow-lg group"
+                  class="group relative flex flex-row sm:flex-col items-center gap-4 sm:gap-0 p-4 sm:p-6 rounded-3xl border border-light-border dark:border-dark-border bg-white dark:bg-dark-bg/40 hover:bg-white dark:hover:bg-dark-card hover:border-primary/40 transition-all text-left sm:text-center active:scale-[0.98] shadow-sm hover:shadow-xl overflow-hidden"
                 >
+                  <div class="absolute inset-0 bg-gradient-to-br from-primary/0 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <div class="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-xl bg-white dark:bg-dark-card shadow-inner sm:mb-4 shrink-0 transition-transform group-hover:scale-110">
                     <i :class="`pi ${issue.icon} text-xl sm:text-2xl ${issue.color}`"></i>
                   </div>
-                  <span class="font-bold text-sm lg:text-base font-title text-light-text dark:text-dark-text uppercase">{{ issue.label }}</span>
+                  <div class="relative z-10">
+                    <span class="font-black text-sm lg:text-base font-title text-light-text dark:text-dark-text uppercase block">{{ issue.label }}</span>
+                    <span class="hidden sm:block text-[10px] text-light-muted dark:text-dark-muted mt-1 uppercase tracking-[0.2em]">Reportar ahora</span>
+                  </div>
                 </button>
               </div>
             </section>
@@ -152,11 +197,14 @@ const goToTicket = (tokenAcceso) => {
                 <div 
                   v-for="ticket in ticketsActivos" :key="ticket.id"
                   @click="goToTicket(ticket.token_acceso)"
-                  class="flex items-center justify-between p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/30 rounded-2xl cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all"
+                  class="flex items-center justify-between p-4 bg-amber-50/60 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/30 rounded-2xl cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all shadow-sm hover:shadow-md"
                 >
                   <div class="flex items-center gap-3">
                     <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                    <span class="font-bold text-sm text-amber-800 dark:text-amber-200 uppercase">{{ ticket.tipo_falla }}</span>
+                    <div>
+                      <span class="block font-black text-sm text-amber-800 dark:text-amber-200 uppercase">{{ ticket.tipo_falla }}</span>
+                      <span class="block text-[10px] text-amber-700/70 dark:text-amber-300/70 font-bold">Ticket #{{ ticket.id }}</span>
+                    </div>
                   </div>
                   <ChevronRight class="text-amber-400" :size="16" />
                 </div>
@@ -173,38 +221,56 @@ const goToTicket = (tokenAcceso) => {
                 <div 
                   v-for="ticket in ticketsHistorial" :key="ticket.id"
                   @click="goToTicket(ticket.token_acceso)"
-                  class="flex items-center justify-between p-3 bg-slate-50 dark:bg-dark-bg/20 border border-light-border dark:border-dark-border rounded-xl cursor-pointer hover:border-primary/30 opacity-70 hover:opacity-100 transition-all"
+                  class="flex items-center justify-between p-3 bg-slate-50/80 dark:bg-dark-bg/20 border border-light-border dark:border-dark-border rounded-xl cursor-pointer hover:border-primary/30 opacity-80 hover:opacity-100 transition-all shadow-sm"
                 >
-                  <span class="text-xs font-bold text-light-muted dark:text-dark-muted truncate">{{ ticket.tipo_falla }}</span>
-                  <span class="text-[9px] font-black text-primary uppercase">{{ new Date(ticket.fecha_creacion).toLocaleDateString() }}</span>
+                  <div class="min-w-0">
+                    <span class="block text-xs font-black text-light-text dark:text-dark-text truncate">{{ ticket.tipo_falla }}</span>
+                    <span class="block text-[9px] font-bold text-light-muted dark:text-dark-muted uppercase tracking-[0.2em]">{{ formatShortDate(ticket.fecha_creacion) }}</span>
+                  </div>
+                  <ArrowRight class="text-primary/70" :size="14" />
                 </div>
               </div>
             </section>
 
           </div>
 
-          <!-- RESTO DE LOS STEPS (2, 3, 4) permanecen igual pero con paddings ajustados -->
+          <!-- RESTO DE LOS STEPS -->
           <div v-if="step === 2" class="animate-fade-in max-w-2xl w-full mx-auto justify-center flex flex-col h-full">
-            <div class="flex items-center gap-4 mb-8">
-              <button @click="step = 1" class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+            <div class="mb-8 flex items-center justify-between gap-3">
+              <button @click="step = 1" class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shrink-0">
                 <i class="pi pi-arrow-left text-lg"></i>
               </button>
-              <h2 class="text-2xl sm:text-3xl font-black font-title text-light-text dark:text-dark-text tracking-tight">Cuéntanos más</h2>
+              <div class="flex-1">
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-1">Paso 2 de 3</p>
+                <h2 class="text-2xl sm:text-3xl font-black font-title text-light-text dark:text-dark-text tracking-tight">Cuéntanos más</h2>
+              </div>
             </div>
-            <textarea v-model="form.descripcion" rows="5" class="w-full text-base p-5 border-2 border-light-border dark:border-dark-border rounded-2xl bg-slate-50 dark:bg-dark-bg/50 text-light-text dark:text-dark-text focus:border-primary outline-none focus:bg-white transition-all resize-none mb-8 shadow-inner" placeholder="Escribe aquí..."></textarea>
-            <button @click="step = 3" :disabled="!form.descripcion" class="w-full py-4 rounded-xl font-black bg-primary text-white shadow-xl hover:bg-primary-hover active:scale-95 disabled:opacity-50 transition-all uppercase tracking-widest text-sm">Continuar</button>
+            <div class="bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-4 sm:p-6 shadow-lg mb-8">
+              <textarea v-model="form.descripcion" rows="5" class="w-full text-base p-4 sm:p-5 border-0 rounded-2xl bg-slate-50 dark:bg-dark-bg/50 text-light-text dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none shadow-inner" placeholder="Describe qué está pasando, qué mensaje ves, desde cuándo ocurre o cualquier detalle útil..."></textarea>
+            </div>
+            <button @click="step = 3" :disabled="!form.descripcion" class="w-full py-4 rounded-xl font-black bg-primary text-white shadow-xl hover:bg-primary-hover active:scale-95 disabled:opacity-50 transition-all uppercase tracking-widest text-sm inline-flex items-center justify-center gap-2">
+              <span>Continuar</span>
+              <ArrowRight :size="16" />
+            </button>
           </div>
 
           <div v-if="step === 3" class="animate-fade-in max-w-xl w-full mx-auto justify-center flex flex-col h-full">
-            <div class="flex items-center gap-4 mb-8">
-              <button @click="step = 2" class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+            <div class="mb-8 flex items-center justify-between gap-3">
+              <button @click="step = 2" class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shrink-0">
                 <i class="pi pi-arrow-left text-lg"></i>
               </button>
-              <h2 class="text-2xl sm:text-3xl font-black font-title text-light-text dark:text-dark-text tracking-tight">¿Quién reporta?</h2>
+              <div class="flex-1">
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-1">Paso 3 de 3</p>
+                <h2 class="text-2xl sm:text-3xl font-black font-title text-light-text dark:text-dark-text tracking-tight">¿Quién reporta?</h2>
+              </div>
             </div>
-            <div class="space-y-4 mb-8">
+            <div class="space-y-4 mb-8 bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-3xl p-4 sm:p-6 shadow-lg">
               <input v-model="form.nombre_reporta" type="text" class="w-full text-base p-4 rounded-xl border-2 border-light-border dark:border-dark-border bg-slate-50 dark:bg-dark-bg/50 text-light-text dark:text-dark-text focus:border-primary outline-none shadow-inner" placeholder="Tu nombre" />
               <input v-model="form.email_reporta" type="email" class="w-full text-base p-4 rounded-xl border-2 border-light-border dark:border-dark-border bg-slate-50 dark:bg-dark-bg/50 text-light-text dark:text-dark-text focus:border-primary outline-none shadow-inner" placeholder="correo@ejemplo.com" />
+              <div class="flex items-start gap-3 rounded-2xl bg-primary/5 border border-primary/10 p-4 text-sm text-light-muted dark:text-dark-muted">
+                <Info :size="16" class="text-primary shrink-0 mt-0.5" />
+                <p>Usamos estos datos para enviarte el seguimiento y notificarte el avance de tu reporte.</p>
+              </div>
             </div>
             <button @click="submitTicket" :disabled="loading" class="w-full py-4 rounded-xl font-black bg-primary text-white shadow-xl hover:bg-primary-hover active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-sm">
               <i v-if="loading" class="pi pi-spin pi-spinner"></i>
@@ -213,18 +279,19 @@ const goToTicket = (tokenAcceso) => {
           </div>
 
           <div v-if="step === 4" class="text-center animate-fade-in max-w-2xl w-full mx-auto py-10">
-            <div class="w-24 h-24 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <div class="w-24 h-24 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-success/20">
               <i class="pi pi-check text-5xl text-success"></i>
             </div>
             <h2 class="text-3xl font-black font-title text-success mb-2 tracking-tight">¡Enviado!</h2>
             <p class="text-lg text-light-muted mb-8 px-4 leading-tight">Folio registrado:<br><span class="font-mono font-black text-primary text-3xl">#{{ ticketInfo.id }}</span></p>
-            <div class="bg-primary/5 p-6 rounded-3xl border-2 border-primary/20 mb-8 mx-4">
+            <div class="bg-primary/5 p-6 rounded-3xl border-2 border-primary/20 mb-8 mx-4 shadow-sm">
               <a :href="ticketInfo.url" class="text-base font-bold text-primary underline break-all font-mono">Ver Seguimiento</a>
             </div>
             <button @click="step = 1" class="text-light-muted text-xs font-black uppercase tracking-widest">Terminar</button>
           </div>
 
         </div>
+      </div>
       </div>
     </div>
 

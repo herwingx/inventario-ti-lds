@@ -363,7 +363,7 @@ router.beforeEach((to, from, next) => {
   })()
 
   if (token && userData?.roleId === 2 && !isPublic) {
-    const allowedNames = ['tickets', 'tickets-detalle', 'tickets-nuevo']
+    const allowedNames = ['tickets', 'tickets-detalle', 'tickets-nuevo', 'perfil']
     if (!allowedNames.includes(to.name)) {
       return next('/tickets')
     }

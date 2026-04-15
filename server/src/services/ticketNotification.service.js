@@ -178,6 +178,24 @@ const actionButton = (text, url) => `
   </table>
 `;
 
+const getFullName = (usuario = {}) => {
+  if (usuario?.nombres && usuario?.apellidos) {
+    return `${usuario.nombres} ${usuario.apellidos}`;
+  }
+  if (usuario?.empleados?.nombres && usuario?.empleados?.apellidos) {
+    return `${usuario.empleados.nombres} ${usuario.empleados.apellidos}`;
+  }
+  const username = String(usuario?.username || '').trim();
+  if (!username) return 'Usuario';
+
+  return username
+    .replace(/[._-]+/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+};
+
 const resolveTicketSummary = (ticket = {}, equipo = null) => {
   const equipoData = equipo || {};
 
@@ -465,6 +483,7 @@ const notifyAnalystAssignment = async (ticket, analyst, assignedBy = 'Administra
   if (!analystEmail) return;
 
   const summary = resolveTicketSummary(ticket);
+  const analystFullName = getFullName(analyst);
 
   try {
     const transporter = createTransporter();
@@ -487,7 +506,7 @@ const notifyAnalystAssignment = async (ticket, analyst, assignedBy = 'Administra
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 4px 0; color: ${COLORS.textLight}; font-size: 12px;">Asignado a</p>
-                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${analyst.username || 'Analista'}</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${getFullName(analyst)}</p>
               </td>
             </tr>
             <tr>
@@ -527,7 +546,7 @@ const notifyAnalystAssignment = async (ticket, analyst, assignedBy = 'Administra
       html: emailWrapper(content)
     });
 
-    console.log(`[EMAIL] Notificación de asignación de ticket #${ticket.id} enviada a ${analystEmail}`);
+    console.log(`[EMAIL] Notificación de asignación de ticket #${ticket.id} enviada a ${analystEmail} (${analystFullName})`);
   } catch (error) {
     console.error('[EMAIL] Error notif analista asignación:', error.message);
   }

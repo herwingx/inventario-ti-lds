@@ -8,6 +8,48 @@ const logger = require('../utils/logger'); // Importar logger
 class TicketService {
   static USER_ROLE_ID = 2;
   static ANALYST_ROLE_ID = 3;
+  static resolveUserDisplayName(usuario) {
+    if (!usuario) return 'Usuario';
+
+    const userFirstName = String(usuario.nombres || '').trim();
+    const userLastName = String(usuario.apellidos || '').trim();
+    if (userFirstName && userLastName) return `${userFirstName} ${userLastName}`;
+
+    const employeeFirstName = String(usuario.empleados?.nombres || '').trim();
+    const employeeLastName = String(usuario.empleados?.apellidos || '').trim();
+    if (employeeFirstName && employeeLastName) return `${employeeFirstName} ${employeeLastName}`;
+
+    const username = String(usuario.username || '').trim();
+    if (!username) return 'Usuario';
+
+    return username
+      .replace(/[._-]+/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  static async getUserDisplayNameById(userId) {
+    if (!userId) return 'Usuario';
+
+    const user = await prisma.usuarios_sistema.findUnique({
+      where: { id: Number(userId) },
+      select: {
+        username: true,
+        nombres: true,
+        apellidos: true,
+        empleados: {
+          select: {
+            nombres: true,
+            apellidos: true
+          }
+        }
+      }
+    });
+
+    return this.resolveUserDisplayName(user);
+  }
   static ADMIN_ROLE_ID = 1;
   static ACTIVE_ASIGNACION_STATUS_ID = 1;
   static FINAL_STATUSES = new Set(['RESUELTO', 'CERRADO']);
@@ -166,10 +208,32 @@ class TicketService {
       include: {
         equipos: true,
         usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema: {
-          select: { id: true, username: true }
+          select: {
+            id: true,
+            username: true,
+            nombres: true,
+            apellidos: true,
+            empleados: {
+              select: {
+                nombres: true,
+                apellidos: true
+              }
+            }
+          }
         },
         usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: {
-          select: { id: true, username: true }
+          select: {
+            id: true,
+            username: true,
+            nombres: true,
+            apellidos: true,
+            empleados: {
+              select: {
+                nombres: true,
+                apellidos: true
+              }
+            }
+          }
         }
       },
       orderBy: { fecha_creacion: 'desc' }
@@ -183,10 +247,53 @@ class TicketService {
       where: { id: parseInt(id) },
       include: {
         equipos: true,
-        usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema: true,
-        usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: true,
+        usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            nombres: true,
+            apellidos: true,
+            empleados: {
+              select: {
+                nombres: true,
+                apellidos: true
+              }
+            }
+          }
+        },
+        usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            nombres: true,
+            apellidos: true,
+            empleados: {
+              select: {
+                nombres: true,
+                apellidos: true
+              }
+            }
+          }
+        },
         ticket_comentarios: {
-          include: { usuarios_sistema: { select: { id: true, username: true } } },
+          include: {
+            usuarios_sistema: {
+              select: {
+                id: true,
+                username: true,
+                nombres: true,
+                apellidos: true,
+                empleados: {
+                  select: {
+                    nombres: true,
+                    apellidos: true
+                  }
+                }
+              }
+            }
+          },
           orderBy: { fecha_creacion: 'asc' }
         }
       }
@@ -230,7 +337,7 @@ class TicketService {
 
     // Procesar comentarios para que el frontend reciba un autor coherente
     ticket.ticket_comentarios = ticket.ticket_comentarios.map(c => {
-      let autorNombre = c.usuarios_sistema?.username || 'Usuario Externo';
+      let autorNombre = this.resolveUserDisplayName(c.usuarios_sistema);
       let contenidoLimpio = c.contenido;
 
       // Si es comentario público (id_usuario null), intentar extraer el nombre del prefijo [...]
@@ -286,7 +393,21 @@ class TicketService {
     try {
       const oldTicket = await prisma.tickets.findUnique({
         where: { id: ticketId },
-        include: { usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: true }
+        include: {
+          usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: {
+            select: {
+              username: true,
+              nombres: true,
+              apellidos: true,
+              empleados: {
+                select: {
+                  nombres: true,
+                  apellidos: true
+                }
+              }
+            }
+          }
+        }
       });
       if (!oldTicket) return null;
 
@@ -313,7 +434,21 @@ class TicketService {
       const updated = await prisma.tickets.update({
         where: { id: ticketId },
         data: updateData,
-        include: { usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: true }
+        include: {
+          usuarios_sistema_tickets_id_asignado_aTousuarios_sistema: {
+            select: {
+              username: true,
+              nombres: true,
+              apellidos: true,
+              empleados: {
+                select: {
+                  nombres: true,
+                  apellidos: true
+                }
+              }
+            }
+          }
+        }
       });
 
       // --- GENERAR MENSAJES DE SISTEMA ---
@@ -325,7 +460,7 @@ class TicketService {
         systemChanges.push(`prioridad a ${data.prioridad}`);
       }
       if (data.id_asignado_a !== undefined && data.id_asignado_a !== oldTicket.id_asignado_a) {
-        const tecnicoNombre = updated.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema?.username || 'Sin asignar';
+        const tecnicoNombre = this.resolveUserDisplayName(updated.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema);
         systemChanges.push(`técnico asignado a: ${tecnicoNombre}`);
       }
 

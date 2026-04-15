@@ -1,10 +1,24 @@
 <script setup>
-import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useSwal } from '../composables/useSwal'
 import TicketsService from '../services/TicketsService'
-import { ArrowLeft, Monitor, User, Calendar, Clock, AlertCircle, CheckCircle, Send, MessageSquare, Loader2, ShieldCheck, Info, Settings2, History, Paperclip, X, Eye } from 'lucide-vue-next'
+import {
+  ArrowLeft,
+  AlertTriangle,
+  Clock,
+  Eye,
+  MessageSquare,
+  Send,
+  Loader2,
+  Paperclip,
+  X,
+  History,
+  ShieldCheck,
+  ArrowRight,
+  FileText
+} from 'lucide-vue-next'
 
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
@@ -16,7 +30,6 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { success: toastSuccess, error: toastError } = useSwal()
 
-// Data
 const ticket = ref(null)
 const comentarios = ref([])
 const tecnicos = ref([])
@@ -24,30 +37,26 @@ const loading = ref(true)
 const saving = ref(false)
 const sendingComment = ref(false)
 const chatContainer = ref(null)
-const showMobileSettings = ref(false)
+const commentInput = ref(null)
+const fileInput = ref(null)
 let pollInterval = null
+
 const CHAT_POLL_MS = 8000
 
 const isDragging = ref(false)
 const attachment = ref(null)
+const nuevoComentario = ref('')
 
 const showPdfViewer = ref(false)
 const pdfUrl = ref('')
 
-const openPdf = (url) => {
-  pdfUrl.value = url
-  showPdfViewer.value = true
-}
-
-// Form
-const nuevoComentario = ref('')
 const selectedTecnico = ref(null)
 const selectedEstatus = ref(null)
 const selectedPrioridad = ref(null)
 
 const estatusOptions = [
   { label: 'Abierto', value: 'ABIERTO' },
-  { label: 'En Progreso', value: 'EN_PROGRESO' },
+  { label: 'En progreso', value: 'EN_PROGRESO' },
   { label: 'Pendiente', value: 'PENDIENTE' },
   { label: 'Resuelto', value: 'RESUELTO' },
   { label: 'Cerrado', value: 'CERRADO' }
@@ -57,49 +66,104 @@ const prioridadOptions = [
   { label: 'Baja', value: 'BAJA' },
   { label: 'Media', value: 'MEDIA' },
   { label: 'Alta', value: 'ALTA' },
-  { label: 'Crítica', value: 'CRITICA' }
+  { label: 'Critica', value: 'CRITICA' }
 ]
-
-const quickReplies = {
-  soporte: [
-    "⏳ Se está revisando el caso.",
-    "🔧 Requiere visita técnica física.",
-    "📦 Pieza solicitada a proveedor.",
-    "✅ Equipo operativo nuevamente.",
-    "❓ Por favor envía una foto del error."
-  ]
-}
 
 const ticketId = computed(() => route.params.id)
 const roleId = computed(() => authStore.user?.roleId)
 const canManageTicket = computed(() => roleId.value === 1 || roleId.value === 3)
 const canManageAdminFields = computed(() => roleId.value === 1)
 const canCommentTicket = computed(() => true)
+
 const ticketHeadline = computed(() => {
-  const teamName = [ticket.value?.equipos?.marca, ticket.value?.equipos?.modelo].filter(Boolean).join(' ').trim()
-  return ticket.value?.titulo || ticket.value?.categoria || teamName || 'Ticket general'
+  const equipoNombre = [ticket.value?.equipos?.marca, ticket.value?.equipos?.modelo]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+
+  return ticket.value?.titulo || ticket.value?.categoria || equipoNombre || 'Ticket general'
 })
 
-// La IP se toma de la asignación activa más reciente enviada por backend.
+const getUserDisplayName = (user, fallback = 'Usuario') => {
+  const firstName = user?.nombres?.trim()
+  const lastName = user?.apellidos?.trim()
+  if (firstName && lastName) return `${firstName} ${lastName}`
+
+  const employeeFirstName = user?.empleados?.nombres?.trim()
+  const employeeLastName = user?.empleados?.apellidos?.trim()
+  if (employeeFirstName && employeeLastName) return `${employeeFirstName} ${employeeLastName}`
+
+  const username = user?.username?.trim()
+  if (!username) return fallback
+
+  return username
+    .replace(/[._-]+/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ')
+}
+
+const getUserInitials = (user, fallback = '?') => {
+  const displayName = getUserDisplayName(user, '').trim()
+  if (!displayName) return fallback
+
+  const parts = displayName.split(/\s+/).filter(Boolean)
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+  return displayName.substring(0, 2).toUpperCase()
+}
+
+const getCommentAuthor = (comment) => {
+  return comment?.autor_nombre || comment?.autor || getUserDisplayName(comment?.usuarios_sistema, 'Usuario')
+}
+
+const isSystemComment = (comment) => {
+  return getCommentAuthor(comment) === 'SISTEMA'
+}
+
+const isMine = (comment) => {
+  return Boolean(comment?.id_usuario && authStore.user?.id && comment.id_usuario === authStore.user.id)
+}
+
 const getEquipoIP = computed(() => {
   return ticket.value?.equipos?.asignaciones?.[0]?.direcciones_ip?.direccion_ip || null
 })
 
+const formatStatus = (status) => (status ? String(status).replace(/_/g, ' ') : '')
+
+const formatDate = (date) => {
+  if (!date) return ''
+  return new Date(date).toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+}
+
+const formatTime = (date) => {
+  if (!date) return ''
+  return new Date(date).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+}
+
 const loadTicket = async (isAutoRefresh = false) => {
   if (!isAutoRefresh) loading.value = true
+
   try {
     const data = await TicketsService.getById(ticketId.value)
     const hadNewMessages = data.ticket_comentarios?.length !== comentarios.value.length
+
     ticket.value = data
     comentarios.value = data.ticket_comentarios || []
-    
+
     if (!isAutoRefresh) {
       selectedEstatus.value = data.estatus
       selectedPrioridad.value = data.prioridad
       selectedTecnico.value = data.id_asignado_a
     }
 
-    if (hadNewMessages) scrollToBottom()
+    if (hadNewMessages || !isAutoRefresh) {
+      scrollToBottom()
+    }
   } catch (error) {
     console.error('Error loading ticket:', error)
     if (!isAutoRefresh) {
@@ -111,17 +175,11 @@ const loadTicket = async (isAutoRefresh = false) => {
   }
 }
 
-const scrollToBottom = async () => {
-  await nextTick()
-  if (chatContainer.value) {
-    chatContainer.value.scrollTop = chatContainer.value.scrollHeight
-  }
-}
-
 const loadTecnicos = async () => {
   try {
     const data = await TicketsService.getTecnicos()
-    const toFirstName = (value) => {
+
+    const normalizeName = (value) => {
       const source = String(value || '').trim()
       if (!source) return 'Sin nombre'
 
@@ -136,13 +194,23 @@ const loadTecnicos = async () => {
 
     tecnicos.value = data.map((tecnico) => ({
       ...tecnico,
-      display_name: toFirstName(tecnico.nombre_usuario)
+      display_name: normalizeName(tecnico.nombre_usuario)
     }))
-  } catch (e) {}
+  } catch (err) {
+    console.error('Error loading analysts:', err)
+  }
+}
+
+const scrollToBottom = async () => {
+  await nextTick()
+  if (chatContainer.value) {
+    chatContainer.value.scrollTop = chatContainer.value.scrollHeight
+  }
 }
 
 const updateTicket = async () => {
   if (!canManageTicket.value) return
+
   saving.value = true
   try {
     const payload = {
@@ -156,24 +224,12 @@ const updateTicket = async () => {
 
     await TicketsService.update(ticketId.value, payload)
     toastSuccess('Ticket actualizado')
-    showMobileSettings.value = false
     await loadTicket(true)
-  } catch (e) {
-    toastError('Error al actualizar')
+  } catch (err) {
+    toastError('Error al actualizar ticket')
   } finally {
     saving.value = false
   }
-}
-
-const handleDrop = async (e) => {
-  isDragging.value = false
-  const file = e.dataTransfer.files[0]
-  if (file && file.type.startsWith('image/')) processFile(file)
-}
-
-const handleFileSelect = (e) => {
-  const file = e.target.files[0]
-  if (file) processFile(file)
 }
 
 const processFile = (file) => {
@@ -185,6 +241,17 @@ const processFile = (file) => {
     }
   }
   reader.readAsDataURL(file)
+}
+
+const handleDrop = (e) => {
+  isDragging.value = false
+  const file = e.dataTransfer.files[0]
+  if (file && file.type.startsWith('image/')) processFile(file)
+}
+
+const handleFileSelect = (e) => {
+  const file = e.target.files[0]
+  if (file) processFile(file)
 }
 
 const handlePaste = (e) => {
@@ -199,40 +266,110 @@ const handlePaste = (e) => {
 
 const clearAttachment = () => {
   attachment.value = null
-  // Reset input if exists via ref
+}
+
+const triggerFilePicker = () => {
+  fileInput.value?.click()
+}
+
+const handleTextareaInput = (e) => {
+  const el = e.target
+  if (!el) return
+
+  el.style.height = 'auto'
+  const nextHeight = Math.min(el.scrollHeight, 176)
+  el.style.height = `${nextHeight}px`
+  el.style.overflowY = el.scrollHeight > 176 ? 'auto' : 'hidden'
+}
+
+const resetTextarea = () => {
+  if (!commentInput.value) return
+  commentInput.value.style.height = '56px'
+  commentInput.value.style.overflowY = 'hidden'
 }
 
 const addComment = async () => {
   if (!nuevoComentario.value.trim() && !attachment.value) return
+
   sendingComment.value = true
   try {
-    // 1. Si hay archivo, subirlo primero
-    if (attachment.value && attachment.value.file) {
+    if (attachment.value?.file) {
       await TicketsService.uploadAttachment(ticketId.value, attachment.value.file)
     }
 
-    // 2. Si hay texto, enviarlo como comentario público (sin nota interna en UI).
     if (nuevoComentario.value.trim()) {
       await TicketsService.addComment(ticketId.value, nuevoComentario.value)
     }
 
     nuevoComentario.value = ''
     attachment.value = null
+    resetTextarea()
+
     await loadTicket(true)
-  } catch (e) {
-    if (e.response?.status === 413) {
-       toastError('Archivo demasiado grande (Max 10MB)')
+    scrollToBottom()
+  } catch (err) {
+    if (err.response?.status === 413) {
+      toastError('Archivo demasiado grande (maximo 10MB)')
     } else {
-       toastError('Error al enviar mensaje')
+      toastError('Error al enviar comentario')
     }
   } finally {
     sendingComment.value = false
   }
 }
 
+const getFullUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+
+  let cleanPath = path.startsWith('/') ? path : `/${path}`
+  if (!cleanPath.startsWith('/storage/')) {
+    cleanPath = `/storage${cleanPath}`
+  }
+
+  const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')
+  return `${baseUrl}${cleanPath}`
+}
+
+const parseAttachment = (content) => {
+  if (!content) return null
+
+  const match = content.match(/\[ADJUNTO:(.*?)\|(.*?)\|(.*?)\]/)
+  if (!match) return null
+
+  const relativeUrl = match[3]
+  const fileName = match[2]
+  const isPdf = fileName.toLowerCase().endsWith('.pdf')
+
+  return {
+    type: isPdf ? 'PDF' : match[1],
+    name: fileName,
+    url: getFullUrl(relativeUrl)
+  }
+}
+
+const cleanContent = (content) => {
+  if (!content) return ''
+  return content.replace(/\[ADJUNTO:.*?\]/, '').trim()
+}
+
+const openPdf = (url) => {
+  pdfUrl.value = url
+  showPdfViewer.value = true
+}
+
+const handleVisibilityChange = () => {
+  if (!document.hidden) loadTicket(true)
+}
+
+const handleWindowFocus = () => {
+  loadTicket(true)
+}
+
 onMounted(() => {
   loadTicket()
   loadTecnicos()
+
   pollInterval = setInterval(() => loadTicket(true), CHAT_POLL_MS)
   document.addEventListener('visibilitychange', handleVisibilityChange)
   window.addEventListener('focus', handleWindowFocus)
@@ -243,424 +380,347 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange)
   window.removeEventListener('focus', handleWindowFocus)
 })
-
-const handleVisibilityChange = () => {
-  if (!document.hidden) {
-    loadTicket(true)
-  }
-}
-
-const handleWindowFocus = () => {
-  loadTicket(true)
-}
-
-const parseAttachment = (content) => {
-  if (!content) return null
-  const match = content.match(/\[ADJUNTO:(.*?)\|(.*?)\|(.*?)\]/)
-  if (match) {
-    const relativeUrl = match[3]
-    const fileName = match[2]
-    const isPdf = fileName.toLowerCase().endsWith('.pdf')
-    
-    return {
-      type: isPdf ? 'PDF' : match[1],
-      name: fileName,
-      url: getFullUrl(relativeUrl)
-    }
-  }
-  return null
-}
-
-const getFullUrl = (path) => {
-  if (!path) return ''
-  if (path.startsWith('http')) return path
-  
-  let cleanPath = path.startsWith('/') ? path : `/${path}`
-  
-  // Asegurar que la ruta comience con /storage si no lo tiene
-  if (!cleanPath.startsWith('/storage/')) {
-    cleanPath = `/storage${cleanPath}`
-  }
-  
-  const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')
-  return `${baseUrl}${cleanPath}`
-}
-
-const getInitials = (name) => {
-  if (!name) return '??'
-  return name.split(' ')
-    .map(n => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
-
-const cleanContent = (content) => {
-  if (!content) return ''
-  return content.replace(/\[ADJUNTO:.*?\]/, '').trim()
-}
-
-const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
 </script>
 
 <template>
-  <div class="h-full flex flex-col min-h-0 font-sans animate-fade-in overflow-hidden relative px-2 sm:px-4 pt-2 sm:pt-3">
-    
-    <!-- HEADER FIJO PREMIUM -->
-    <header class="flex items-center justify-between mb-4 shrink-0 bg-white dark:bg-dark-card shadow-sm border border-light-border dark:border-dark-border p-3 sm:p-4 rounded-2xl z-20">
-      <div class="flex items-center gap-3">
-        <button @click="router.push({ name: 'tickets' })" class="w-9 h-9 rounded-xl bg-slate-50 dark:bg-dark-bg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all">
+  <div class="h-full min-h-0 flex flex-col overflow-hidden font-sans animate-fade-in">
+    <header class="shrink-0 flex items-center justify-between gap-3 mb-4 bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-2xl p-3 sm:p-4 shadow-sm">
+      <div class="flex items-center gap-3 min-w-0">
+        <button @click="router.push({ name: 'tickets' })" class="w-9 h-9 rounded-xl bg-slate-50 dark:bg-dark-bg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all shrink-0">
           <ArrowLeft :size="18" />
         </button>
-        
-        <div>
-          <h1 class="text-lg sm:text-xl font-black font-title leading-tight uppercase italic">Ticket #{{ ticketId }}</h1>
-          <div class="flex items-center gap-2 mt-0.5">
-            <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-            <p class="text-[9px] font-bold text-light-muted dark:text-dark-muted uppercase tracking-widest opacity-70 truncate max-w-[150px] sm:max-w-none">
-              {{ ticketHeadline }}
-            </p>
-          </div>
+
+        <div class="min-w-0">
+          <h1 class="text-lg sm:text-xl font-black leading-tight uppercase">Ticket #{{ ticketId }}</h1>
+          <p class="text-[10px] font-black uppercase tracking-[0.2em] text-light-muted dark:text-dark-muted truncate">
+            {{ ticketHeadline }}
+          </p>
         </div>
       </div>
-      
-      <div class="flex items-center gap-2">
-        <Tag :value="formatStatus(ticket?.estatus)" severity="secondary" class="!px-3 !py-1 !rounded-full !font-black !text-[9px] uppercase hidden md:inline-flex" />
-        <button @click="showMobileSettings = !showMobileSettings" class="lg:hidden w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg active:scale-90 transition-all">
-          <Settings2 :size="20" />
-        </button>
-      </div>
+
+      <Tag :value="formatStatus(ticket?.estatus)" severity="secondary" class="!px-3 !py-1 !rounded-full !font-black !text-[10px] uppercase shrink-0" />
     </header>
 
-    <!-- CUERPO DUAL -->
-    <div class="flex-1 flex gap-4 min-h-0 relative overflow-visible">
-      
-      <!-- COLUMNA CHAT -->
-      <div class="flex-1 flex flex-col bg-white dark:bg-dark-card rounded-[2.5rem] shadow-card border border-light-border dark:border-dark-border overflow-hidden relative z-10">
-        
-        <!-- Área de Conversación Independiente -->
-        <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 custom-scroll bg-slate-50/20 dark:bg-dark-bg/10">
-          
-          <!-- Reporte Original -->
-          <div class="flex justify-start mb-8">
-            <div class="max-w-[95%] sm:max-w-[80%] bg-white dark:bg-dark-card p-6 rounded-3xl rounded-tl-none shadow-md border-l-4 border-l-amber-500 border-y border-r border-light-border dark:border-dark-border">
-              <div class="flex items-center gap-2 mb-2 text-amber-600 font-black text-[10px] uppercase tracking-[0.2em]">
-                <AlertCircle :size="14" /> REPORTE ORIGINAL
-              </div>
-              <p class="text-sm sm:text-base font-semibold leading-relaxed">{{ ticket?.descripcion }}</p>
-              <div v-if="ticket?.evidencia_url" class="mt-4 pt-4 border-t border-dashed border-light-border dark:border-dark-border">
-                <div class="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-2 flex items-center gap-2">
-                  <Monitor :size="14" /> EVIDENCIA DEL EQUIPO
-                </div>
-                <!-- Usar Image para el reporte original también -->
-                <div class="rounded-xl overflow-hidden border border-light-border dark:border-dark-border shadow-sm max-w-xs bg-slate-50 dark:bg-dark-bg">
-                  <Image 
-                    :src="getFullUrl(ticket.evidencia_url)" 
-                    preview 
-                    alt="Evidencia Original" 
-                    imageClass="w-full h-auto object-cover max-h-48 block"
-                  />
-                </div>
-              </div>
+    <div v-if="loading" class="flex-1 min-h-0 rounded-3xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border flex items-center justify-center">
+      <div class="text-center">
+        <Loader2 class="animate-spin text-primary mx-auto" :size="40" />
+        <p class="mt-3 text-xs font-black uppercase tracking-[0.3em] text-primary">Cargando ticket</p>
+      </div>
+    </div>
+
+    <section v-else-if="ticket" class="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-[1.3fr_0.7fr] gap-4 overflow-hidden">
+      <article class="min-h-0 flex flex-col gap-4 overflow-hidden">
+        <div class="shrink-0 rounded-3xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-light-border dark:border-dark-border bg-gradient-to-r from-white to-slate-50 dark:from-dark-card dark:to-dark-bg/50">
+            <div class="flex items-center gap-2 text-amber-600 font-black text-[10px] uppercase tracking-[0.2em] mb-3">
+              <AlertTriangle :size="14" />
+              Problema reportado
+            </div>
+            <p class="text-sm sm:text-base font-semibold leading-relaxed">{{ ticket.descripcion }}</p>
+
+            <div v-if="ticket.evidencia_url" class="mt-4 rounded-2xl overflow-hidden border border-light-border dark:border-dark-border shadow-sm max-w-md bg-slate-50 dark:bg-dark-bg">
+              <Image
+                :src="getFullUrl(ticket.evidencia_url)"
+                preview
+                alt="Evidencia original"
+                imageClass="w-full h-auto object-cover max-h-64 block"
+              />
             </div>
           </div>
 
-          <!-- Burbujas Dinámicas -->
-          <div 
-            v-for="c in comentarios" :key="c.id"
-            :class="['flex flex-col mb-4 animate-fade-in', c.autor_nombre === 'SISTEMA' ? 'items-center' : (c.id_usuario === authStore.user?.id ? 'items-end' : 'items-start')]"
-          >
-            <!-- Caso: Mensaje de Sistema -->
-            <div v-if="c.autor_nombre === 'SISTEMA'" class="bg-slate-100 dark:bg-dark-bg/50 px-4 py-2 rounded-xl border border-light-border dark:border-dark-border shadow-sm mx-4">
-               <p class="text-[9px] font-black text-light-muted dark:text-dark-muted uppercase tracking-widest text-center">{{ c.contenido }}</p>
-            </div>
+          <div class="px-5 py-3 flex items-center justify-between gap-3 text-xs font-bold text-light-muted dark:text-dark-muted">
+            <span class="inline-flex items-center gap-2">
+              <Clock :size="14" class="text-primary" />
+              {{ formatDate(ticket.fecha_creacion) }}
+            </span>
+            <span class="inline-flex items-center gap-2">
+              <Eye :size="14" class="text-primary" />
+              {{ comentarios.length }} mensajes
+            </span>
+          </div>
+        </div>
 
-            <!-- Caso: Burbuja Normal con Avatar -->
-            <div 
-              v-else-if="c.autor_nombre !== 'SISTEMA'"
-              :class="['flex gap-3 max-w-[90%]', c.id_usuario === authStore.user?.id ? 'flex-row-reverse self-end' : 'flex-row self-start']"
+        <section class="min-h-0 flex-1 rounded-3xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm overflow-hidden flex flex-col">
+          <div class="px-5 py-4 border-b border-light-border dark:border-dark-border flex items-center gap-2 shrink-0">
+            <MessageSquare class="text-primary" :size="16" />
+            <h2 class="text-sm font-black uppercase tracking-widest">Conversacion</h2>
+          </div>
+
+          <div ref="chatContainer" class="flex-1 min-h-0 overflow-y-auto custom-scroll p-4 sm:p-5 space-y-4 bg-slate-50/40 dark:bg-dark-bg/20">
+            <div
+              v-for="c in comentarios"
+              :key="c.id"
+              :class="['flex w-full animate-fade-in', isSystemComment(c) ? 'justify-center' : (isMine(c) ? 'justify-end' : 'justify-start')]"
             >
-              <!-- Avatar -->
-              <div 
-                :class="[
-                  'w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 shadow-sm font-black text-[9px] tracking-tighter', 
-                  c.id_usuario === authStore.user?.id 
-                    ? 'bg-primary text-white border-primary-dark' 
-                    : 'bg-white dark:bg-dark-card text-light-text dark:text-dark-text border-slate-200 dark:border-zinc-700'
-                ]"
-              >
-                {{ getInitials(c.autor_nombre) }}
+              <div v-if="isSystemComment(c)" class="max-w-[90%] px-4 py-2 rounded-full bg-slate-100 dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm">
+                <p class="text-[9px] font-black text-light-muted dark:text-dark-muted uppercase tracking-widest text-center">{{ c.contenido }}</p>
               </div>
 
-              <!-- Burbuja -->
-              <div 
+              <div
+                v-else
                 :class="[
-                  'p-3 sm:p-4 rounded-2xl shadow-sm relative transition-all min-w-[120px]',
-                  c.id_usuario === authStore.user?.id 
-                    ? 'bg-primary text-white rounded-tr-none shadow-primary/10' 
-                    : 'bg-white dark:bg-dark-card border border-light-border dark:border-dark-border rounded-tl-none'
+                  'max-w-[90%] sm:max-w-[75%] p-4 rounded-2xl border shadow-sm',
+                  isMine(c)
+                    ? 'bg-primary text-white border-primary/30 rounded-tr-md'
+                    : 'bg-white dark:bg-dark-card border-light-border dark:border-dark-border rounded-tl-md'
                 ]"
               >
-                <div :class="['text-[9px] font-black uppercase tracking-widest mb-1 opacity-60 flex justify-between gap-4', c.id_usuario === authStore.user?.id ? 'text-white' : 'text-primary']">
-                  <span>{{ c.autor_nombre }}</span>
+                <div :class="['text-[9px] font-black uppercase tracking-[0.25em] mb-2 opacity-70', isMine(c) ? 'text-white' : 'text-primary']">
+                  {{ getCommentAuthor(c) }}
                 </div>
-                
-                <div v-if="parseAttachment(c.contenido)">
-                  <div v-if="parseAttachment(c.contenido).type === 'IMAGEN'" class="bg-slate-50 dark:bg-dark-bg rounded-lg border border-light-border dark:border-dark-border overflow-hidden">
-                    <Image 
-                      :src="parseAttachment(c.contenido).url" 
-                      alt="Evidencia adjunta" 
-                      preview 
-                      imageClass="max-w-full h-auto max-h-64 object-contain block"
+
+                <div v-if="parseAttachment(c.contenido)" class="space-y-2">
+                  <div v-if="parseAttachment(c.contenido).type === 'IMAGEN'" class="bg-slate-50 dark:bg-dark-bg rounded-xl border border-light-border dark:border-dark-border overflow-hidden">
+                    <Image
+                      :src="parseAttachment(c.contenido).url"
+                      alt="Adjunto"
+                      preview
+                      imageClass="max-w-full h-auto max-h-72 object-contain block"
                     />
                   </div>
-                  <div v-else-if="parseAttachment(c.contenido).type === 'PDF'" class="bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200 dark:border-red-800 overflow-hidden cursor-pointer p-3 flex items-center gap-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors" @click="openPdf(parseAttachment(c.contenido).url)">
-                    <i class="pi pi-file-pdf text-xl"></i>
-                    <div class="flex flex-col">
-                      <span class="text-xs font-bold truncate max-w-[150px]">{{ parseAttachment(c.contenido).name }}</span>
-                      <span class="text-[9px] uppercase font-black opacity-60">Visualizar PDF</span>
-                    </div>
-                  </div>
-                  <div v-else class="bg-slate-50 dark:bg-dark-bg rounded-lg border border-light-border dark:border-dark-border overflow-hidden cursor-pointer p-3 flex items-center gap-2 text-primary hover:underline" @click="window.open(parseAttachment(c.contenido).url, '_blank')">
-                    <Paperclip :size="16" />
-                    <span class="text-xs decoration-dashed truncate max-w-[150px]">{{ parseAttachment(c.contenido).name }}</span>
-                  </div>
-                </div>
-                <!-- Mostrar texto si lo hubiera junto al adjunto -->
-                <p v-if="parseAttachment(c.contenido) && cleanContent(c.contenido)" class="text-sm font-medium leading-relaxed whitespace-pre-wrap mt-2">{{ cleanContent(c.contenido) }}</p>
-                <p v-else-if="!parseAttachment(c.contenido)" class="text-sm font-medium leading-relaxed whitespace-pre-wrap">{{ c.contenido }}</p>
 
-                <div :class="['mt-1 text-[8px] font-bold text-right opacity-50', c.id_usuario === authStore.user?.id ? 'text-white' : 'text-light-muted dark:text-dark-muted']">
-                  {{ new Date(c.fecha_creacion).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}
+                  <button
+                    v-else-if="parseAttachment(c.contenido).type === 'PDF'"
+                    class="w-full bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-200 dark:border-red-800 p-3 flex items-center gap-3 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors text-left"
+                    @click="openPdf(parseAttachment(c.contenido).url)"
+                  >
+                    <FileText class="shrink-0" :size="18" />
+                    <div class="min-w-0">
+                      <p class="text-xs font-black truncate">{{ parseAttachment(c.contenido).name }}</p>
+                      <p class="text-[9px] uppercase font-black opacity-60">Visualizar PDF</p>
+                    </div>
+                  </button>
+
+                  <button
+                    v-else
+                    class="w-full bg-slate-50 dark:bg-dark-bg rounded-xl border border-light-border dark:border-dark-border p-3 flex items-center gap-3 text-primary hover:underline text-left"
+                    @click="window.open(parseAttachment(c.contenido).url, '_blank')"
+                  >
+                    <Paperclip :size="16" class="shrink-0" />
+                    <span class="text-xs font-bold truncate">{{ parseAttachment(c.contenido).name }}</span>
+                  </button>
+                </div>
+
+                <p v-if="parseAttachment(c.contenido) && cleanContent(c.contenido)" class="text-sm leading-relaxed whitespace-pre-wrap mt-3">
+                  {{ cleanContent(c.contenido) }}
+                </p>
+                <p v-else-if="!parseAttachment(c.contenido)" class="text-sm leading-relaxed whitespace-pre-wrap">
+                  {{ c.contenido }}
+                </p>
+
+                <div :class="['mt-2 text-[9px] text-right font-bold', isMine(c) ? 'text-white/75' : 'text-light-muted dark:text-dark-muted']">
+                  {{ formatTime(c.fecha_creacion) }}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Barra de Respuesta -->
-        <div v-if="!['RESUELTO', 'CERRADO'].includes(ticket?.estatus) && canCommentTicket" class="p-3 sm:p-6 pb-8 sm:pb-8 bg-white dark:bg-dark-card border-t border-light-border dark:border-dark-border shrink-0 z-30 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
-          <div class="max-w-4xl mx-auto">
-            
-            <!-- Quick Replies -->
-            <div class="flex gap-2 overflow-x-auto pb-3 mb-1 custom-scroll">
-              <button 
-                v-for="reply in quickReplies.soporte" 
-                :key="reply"
-                @click="nuevoComentario = reply"
-                class="px-3 py-1 bg-slate-100 dark:bg-dark-bg hover:bg-primary hover:text-white dark:hover:bg-primary transition-colors rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap border border-light-border dark:border-dark-border"
-              >
-                {{ reply }}
-              </button>
+            <div v-if="comentarios.length === 0" class="h-full min-h-[220px] flex items-center justify-center text-center">
+              <div>
+                <p class="text-xs font-black uppercase tracking-[0.25em] text-light-muted dark:text-dark-muted">Sin mensajes aun</p>
+                <p class="text-sm text-light-muted dark:text-dark-muted mt-2">Inicia la conversacion para dar seguimiento al ticket.</p>
+              </div>
             </div>
+          </div>
+        </section>
 
-            <div class="flex items-center gap-3 mb-3">
-                <div 
-                  class="flex-1 relative"
-                  @dragover.prevent="isDragging = true"
-                  @dragleave.prevent="isDragging = false"
-                  @drop.prevent="handleDrop"
-                >
-                  <!-- Overlay de Drag & Drop -->
-                  <div v-if="isDragging" class="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-2xl z-20 flex items-center justify-center backdrop-blur-sm">
-                    <div class="text-primary font-bold text-xs uppercase tracking-widest flex items-col gap-2">
-                      <span>Soltar para adjuntar</span>
-                    </div>
-                  </div>
+        <div
+          v-if="!['RESUELTO', 'CERRADO'].includes(ticket.estatus) && canCommentTicket"
+          class="shrink-0 border border-light-border dark:border-dark-border bg-white dark:bg-dark-card rounded-2xl p-3 sm:p-4 shadow-sm"
+        >
+          <div class="flex items-end gap-3">
+            <div
+              class="flex-1 relative"
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop.prevent="handleDrop"
+            >
+              <div v-if="isDragging" class="absolute inset-0 z-20 flex items-center justify-center rounded-xl border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm pointer-events-none">
+                <span class="text-xs font-black text-primary uppercase tracking-[0.3em]">Suelta la imagen</span>
+              </div>
 
-                  <!-- Preview de Imagen (Ahora relativo, encima del input) -->
-                  <div v-if="attachment" class="absolute bottom-full left-0 mb-3 w-full p-2 bg-white dark:bg-dark-card rounded-xl shadow-lg border border-light-border dark:border-dark-border flex items-center gap-3 animate-fade-in-up z-30">
-                    <div class="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 relative shrink-0 border border-slate-200">
-                       <img :src="attachment.preview" class="w-full h-full object-cover" />
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p class="text-[10px] font-bold text-light-text dark:text-dark-text truncate">{{ attachment.file.name }}</p>
-                      <p class="text-[8px] text-light-muted dark:text-dark-muted font-mono uppercase">Imagen adjunta • {{ (attachment.file.size / 1024).toFixed(1) }} KB</p>
-                    </div>
-                    <button @click="clearAttachment" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-dark-bg hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-colors shrink-0">
-                      <X :size="14" />
-                    </button>
-                  </div>
-
-                  <textarea 
-                    v-model="nuevoComentario"
-                    rows="1"
-                    placeholder="Escribe una respuesta técnica..."
-                    @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
-                    @keydown.enter.exact.prevent="addComment"
-                    @paste="handlePaste"
-                    class="w-full min-h-[48px] sm:min-h-[56px] p-3 sm:p-4 pr-12 rounded-2xl bg-slate-50 dark:bg-dark-bg/50 border-2 border-transparent focus:border-primary focus:bg-white dark:focus:bg-dark-card transition-all outline-none text-sm font-medium resize-none shadow-inner flex items-center"
-                  ></textarea>
-
-                  <!-- Botón Adjuntar (Clip) -->
-                  <button 
-                    @click="$refs.fileInput.click()"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-light-muted dark:text-dark-muted hover:text-primary transition-colors p-2"
-                    title="Adjuntar imagen"
-                  >
-                    <Paperclip :size="18" />
-                  </button>
-                  <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleFileSelect" />
+              <div v-if="attachment" class="absolute bottom-full left-0 mb-2 w-full p-3 bg-white dark:bg-dark-card rounded-xl shadow-lg border border-light-border dark:border-dark-border flex items-center gap-3 z-30">
+                <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 relative shrink-0 border border-slate-200">
+                  <img :src="attachment.preview" class="w-full h-full object-cover" />
                 </div>
-              
-              <button 
-                @click="addComment"
-                :disabled="sendingComment || (!nuevoComentario.trim() && !attachment)"
-                class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary text-white shadow-xl hover:bg-primary-hover active:scale-90 disabled:opacity-50 transition-all shrink-0 flex items-center justify-center"
+                <div class="flex-1 min-w-0">
+                  <p class="text-[10px] font-black truncate">{{ attachment.file.name }}</p>
+                  <p class="text-[8px] text-light-muted dark:text-dark-muted uppercase">{{ (attachment.file.size / 1024).toFixed(1) }} KB</p>
+                </div>
+                <button @click="clearAttachment" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-colors">
+                  <X :size="14" />
+                </button>
+              </div>
+
+              <textarea
+                ref="commentInput"
+                v-model="nuevoComentario"
+                rows="1"
+                placeholder="Escribe una respuesta tecnica..."
+                @input="handleTextareaInput"
+                @keydown.enter.exact.prevent="addComment"
+                @paste="handlePaste"
+                class="w-full min-h-[56px] h-[56px] max-h-44 p-4 pr-14 rounded-xl bg-slate-50 dark:bg-dark-bg/50 border-2 border-light-border dark:border-dark-border focus:border-primary focus:bg-white dark:focus:bg-dark-card transition-all outline-none resize-none overflow-y-hidden text-sm font-medium shadow-inner"
+              ></textarea>
+
+              <button
+                @click="triggerFilePicker"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-light-muted dark:text-dark-muted hover:text-primary transition-colors p-2"
+                title="Adjuntar imagen"
               >
-                <Loader2 v-if="sendingComment" class="animate-spin" />
-                <Send v-else :size="20" class="sm:scale-110" />
+                <Paperclip :size="18" />
               </button>
+              <input ref="fileInput" type="file" class="hidden" accept="image/*" @change="handleFileSelect" />
             </div>
 
-            <!-- Shift + Enter Hint -->
-            <div class="px-1 flex justify-end">
-              <span class="text-[8px] font-bold text-light-muted dark:text-dark-muted uppercase opacity-40">Shift + Enter para nueva línea</span>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- SIDEBAR GESTIÓN (Lateral / Flotante) -->
-      <aside 
-        class="fixed inset-0 lg:relative lg:inset-auto z-40 lg:z-0 lg:w-72 flex flex-col gap-4 transition-transform duration-300 lg:translate-x-0"
-        :class="showMobileSettings ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'"
-      >
-        <div @click="showMobileSettings = false" class="absolute inset-0 bg-black/50 backdrop-blur-sm lg:hidden"></div>
-
-        <div class="relative ml-auto lg:ml-0 w-4/5 lg:w-full bg-white dark:bg-dark-card p-6 lg:p-5 shadow-2xl lg:shadow-lg border-l lg:border border-light-border dark:border-dark-border lg:rounded-[2.5rem] flex flex-col overflow-y-auto min-h-0">
-          
-          <div class="flex items-center justify-between mb-6 lg:mb-5">
-            <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-light-muted dark:text-dark-muted flex items-center gap-2">
-              <ShieldCheck :size="14" class="text-primary" /> Panel de Control
-            </h3>
-            <button @click="showMobileSettings = false" class="lg:hidden w-8 h-8 rounded-full bg-slate-100 dark:bg-dark-bg flex items-center justify-center">
-              <i class="pi pi-times"></i>
+            <button
+              @click="addComment"
+              :disabled="sendingComment || (!nuevoComentario.trim() && !attachment)"
+              class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary text-white shadow-lg hover:bg-primary-hover active:scale-95 disabled:opacity-50 transition-all shrink-0 flex items-center justify-center"
+            >
+              <Loader2 v-if="sendingComment" class="animate-spin" />
+              <Send v-else :size="20" />
             </button>
           </div>
-          
-          <div class="space-y-4">
-            <!-- Información del Usuario Reportante -->
+
+          <div class="mt-2 flex justify-end">
+            <span class="text-[9px] font-bold text-light-muted dark:text-dark-muted uppercase opacity-50">Enter para enviar, Shift+Enter para salto</span>
+          </div>
+        </div>
+
+        <div v-else class="shrink-0 border border-light-border dark:border-dark-border bg-slate-100 dark:bg-dark-bg text-center text-light-muted font-black uppercase tracking-widest text-[10px] py-4 rounded-xl">
+          Ticket finalizado{{ ticket?.estatus === 'RESUELTO' ? ' y resuelto' : '' }}
+        </div>
+      </article>
+
+      <aside class="min-h-0 xl:h-full xl:overflow-y-auto custom-scroll pr-1 space-y-4">
+        <div class="rounded-3xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm overflow-hidden">
+          <div class="px-5 py-4 border-b border-light-border dark:border-dark-border flex items-center gap-2">
+            <ShieldCheck class="text-primary" :size="16" />
+            <h3 class="text-sm font-black uppercase tracking-widest">Gestion</h3>
+          </div>
+
+          <div class="p-5 space-y-4">
             <div class="bg-slate-50 dark:bg-dark-bg/50 p-3 rounded-2xl border border-light-border dark:border-dark-border">
-              <p class="text-[8px] font-black uppercase text-light-muted dark:text-dark-muted mb-2 tracking-widest opacity-70">Reportado Por</p>
+              <p class="text-[9px] font-black uppercase tracking-[0.2em] text-light-muted dark:text-dark-muted mb-2">Reportado por</p>
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-700 dark:text-amber-400 font-bold text-xs border border-amber-200 dark:border-amber-700">
-                  {{ ticket?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.username ? ticket.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema.username.substring(0, 2).toUpperCase() : '?' }}
+                  {{ getUserInitials(ticket?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema) }}
                 </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-[9px] font-bold truncate">{{ ticket?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.username || ticket?.nombre_reporta || 'Usuario Externo' }}</p>
-                  <p class="text-[8px] opacity-50 truncate">{{ ticket?.email_reporta }}</p>
+                <div class="min-w-0">
+                  <p class="text-xs font-bold truncate">{{ getUserDisplayName(ticket?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema, ticket?.nombre_reporta || 'Usuario externo') }}</p>
+                  <p class="text-[10px] opacity-60 truncate">{{ ticket?.email_reporta || 'Sin correo' }}</p>
                 </div>
               </div>
             </div>
 
-            <!-- Información del Técnico Asignado -->
             <div v-if="ticket?.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema" class="bg-slate-50 dark:bg-dark-bg/50 p-3 rounded-2xl border border-light-border dark:border-dark-border">
-              <p class="text-[8px] font-black uppercase text-light-muted dark:text-dark-muted mb-2 tracking-widest opacity-70">Asignado a</p>
+              <p class="text-[9px] font-black uppercase tracking-[0.2em] text-light-muted dark:text-dark-muted mb-2">Asignado a</p>
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs border border-primary/30">
-                  {{ ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema.username.substring(0, 2).toUpperCase() }}
+                  {{ getUserInitials(ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema) }}
                 </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-[9px] font-bold truncate">{{ ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema.username }}</p>
-                  <p class="text-[8px] opacity-50">Técnico Asignado</p>
+                <div class="min-w-0">
+                  <p class="text-xs font-bold truncate">{{ getUserDisplayName(ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema, 'Sin asignar') }}</p>
+                  <p class="text-[10px] opacity-60">Tecnico asignado</p>
                 </div>
               </div>
             </div>
 
-            <!-- Detalles del Equipo (si está disponible y es relacionado) -->
             <div v-if="ticket?.equipos" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-200 dark:border-blue-800">
-              <p class="text-[8px] font-black uppercase text-blue-700 dark:text-blue-300 mb-3 tracking-widest opacity-90">Equipo Relacionado</p>
-              
+              <p class="text-[9px] font-black uppercase tracking-[0.2em] text-blue-700 dark:text-blue-300 mb-3">Equipo relacionado</p>
+
               <div class="grid grid-cols-2 gap-3">
                 <div class="flex flex-col">
-                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">ID Equipo:</span>
-                  <span class="text-[10px] font-bold text-primary">{{ ticket.equipos?.id || 'N/A' }}</span>
+                  <span class="text-[8px] uppercase font-bold opacity-70">ID</span>
+                  <span class="text-xs font-bold text-primary">{{ ticket.equipos?.id || 'N/A' }}</span>
                 </div>
-
                 <div class="flex flex-col">
-                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">Marca:</span>
-                  <span class="text-[10px] font-semibold">{{ ticket.equipos?.marca || 'N/A' }}</span>
+                  <span class="text-[8px] uppercase font-bold opacity-70">Marca</span>
+                  <span class="text-xs font-semibold">{{ ticket.equipos?.marca || 'N/A' }}</span>
                 </div>
-
                 <div class="flex flex-col">
-                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">Modelo:</span>
-                  <span class="text-[10px] font-semibold">{{ ticket.equipos?.modelo || 'N/A' }}</span>
+                  <span class="text-[8px] uppercase font-bold opacity-70">Modelo</span>
+                  <span class="text-xs font-semibold">{{ ticket.equipos?.modelo || 'N/A' }}</span>
                 </div>
-
                 <div class="flex flex-col">
-                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">Serie:</span>
-                  <span class="text-[10px] font-mono truncate">{{ ticket.equipos?.numero_serie || 'S/N' }}</span>
+                  <span class="text-[8px] uppercase font-bold opacity-70">Serie</span>
+                  <span class="text-xs font-mono truncate">{{ ticket.equipos?.numero_serie || 'S/N' }}</span>
                 </div>
-
-                <div v-if="ticket.equipos?.nombre_equipo" class="col-span-2 flex flex-col">
-                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">Nombre:</span>
-                  <span class="text-[10px] font-semibold">{{ ticket.equipos.nombre_equipo }}</span>
-                </div>
-
-                <div v-if="getEquipoIP" class="col-span-2 flex flex-col pt-2 border-t border-blue-200 dark:border-blue-700">
-                  <span class="text-[7px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">IP Asignada:</span>
-                  <span class="text-[11px] font-mono font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-800/50 px-3 py-2 rounded w-fit">{{ getEquipoIP }}</span>
+                <div v-if="getEquipoIP" class="col-span-2 pt-2 border-t border-blue-200 dark:border-blue-700">
+                  <span class="text-[8px] uppercase font-bold opacity-70">IP asignada</span>
+                  <p class="text-xs font-mono font-bold mt-1">{{ getEquipoIP }}</p>
                 </div>
               </div>
             </div>
 
-            <div v-if="canManageTicket" class="space-y-1.5">
-              <label class="text-[9px] font-black text-light-muted dark:text-dark-muted uppercase ml-1">Estatus</label>
-              <Select v-model="selectedEstatus" :options="estatusOptions" optionLabel="label" optionValue="value" class="w-full !rounded-xl" />
+            <div v-if="canManageTicket" class="space-y-1">
+              <label class="text-[10px] font-black uppercase tracking-[0.2em] text-light-muted dark:text-dark-muted">Estatus</label>
+              <Select v-model="selectedEstatus" :options="estatusOptions" optionLabel="label" optionValue="value" class="w-full" />
             </div>
 
-            <div v-if="canManageAdminFields" class="space-y-1.5">
-              <label class="text-[9px] font-black text-light-muted dark:text-dark-muted uppercase ml-1">Prioridad</label>
-              <Select v-model="selectedPrioridad" :options="prioridadOptions" optionLabel="label" optionValue="value" class="w-full !rounded-xl" />
+            <div v-if="canManageAdminFields" class="space-y-1">
+              <label class="text-[10px] font-black uppercase tracking-[0.2em] text-light-muted dark:text-dark-muted">Prioridad</label>
+              <Select v-model="selectedPrioridad" :options="prioridadOptions" optionLabel="label" optionValue="value" class="w-full" />
             </div>
 
-            <div v-if="canManageAdminFields" class="space-y-1.5">
-              <label class="text-[9px] font-black text-light-muted dark:text-dark-muted uppercase ml-1">Responsable</label>
-              <Select v-model="selectedTecnico" :options="tecnicos" optionLabel="display_name" optionValue="id" placeholder="Asignar analista o a ti" showClear class="w-full !rounded-xl" />
+            <div v-if="canManageAdminFields" class="space-y-1">
+              <label class="text-[10px] font-black uppercase tracking-[0.2em] text-light-muted dark:text-dark-muted">Responsable</label>
+              <Select
+                v-model="selectedTecnico"
+                :options="tecnicos"
+                optionLabel="display_name"
+                optionValue="id"
+                placeholder="Asignar analista"
+                showClear
+                class="w-full"
+              />
             </div>
 
-            <button v-if="canManageTicket" @click="updateTicket" :disabled="saving" class="w-full py-3 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-primary-hover active:scale-95 transition-all mt-2">
-              <span v-if="!saving">Actualizar Estatus</span>
-              <Loader2 v-else class="animate-spin mx-auto" />
+            <button
+              v-if="canManageTicket"
+              @click="updateTicket"
+              :disabled="saving"
+              class="w-full py-3 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-lg hover:bg-primary-hover active:scale-95 transition-all"
+            >
+              <span v-if="!saving">Actualizar ticket</span>
+              <Loader2 v-else class="animate-spin mx-auto" :size="16" />
             </button>
 
-            <p v-if="roleId === 3" class="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40 rounded-xl px-3 py-2 mt-2">
-              Modo Analista: puedes gestionar estatus y comentar. Prioridad y asignación las define administración.
+            <p v-if="roleId === 3" class="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40 rounded-xl px-3 py-2">
+              Modo analista: puedes gestionar estatus y comentar. Prioridad y asignacion se administran por el equipo de control.
             </p>
           </div>
+        </div>
 
-          <!-- Historial -->
-          <div v-if="ticket?.historial_equipo?.length > 0" class="mt-6 pt-4 border-t border-light-border dark:border-dark-border">
-            <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-light-muted dark:text-dark-muted mb-4 flex items-center gap-2">
-              <History :size="14" class="text-primary" /> Reportes Previos
-            </h3>
-            <div class="space-y-3">
-              <div 
-                v-for="h in ticket.historial_equipo" :key="h.id"
-                @click="router.push({ name: 'tickets-detalle', params: { id: h.id } })"
-                class="p-3 bg-slate-50 dark:bg-dark-bg/40 rounded-xl border border-transparent hover:border-primary/30 cursor-pointer transition-all group"
-              >
-                <div class="flex justify-between items-center mb-1">
-                  <span class="text-[9px] font-black text-primary">#{{ h.id }}</span>
-                  <Tag :value="formatStatus(h.estatus)" severity="secondary" class="!text-[7px] !px-1.5 !py-0" />
-                </div>
-                <p class="text-[10px] font-bold truncate group-hover:text-primary transition-colors uppercase italic">{{ h.tipo_falla }}</p>
-                <p class="text-[8px] opacity-50 font-medium">{{ new Date(h.fecha_creacion).toLocaleDateString() }}</p>
+        <div v-if="ticket?.historial_equipo?.length > 0" class="rounded-3xl bg-white dark:bg-dark-card border border-light-border dark:border-dark-border shadow-sm overflow-hidden">
+          <div class="px-5 py-4 border-b border-light-border dark:border-dark-border flex items-center gap-2">
+            <History class="text-primary" :size="16" />
+            <h3 class="text-sm font-black uppercase tracking-widest">Reportes previos</h3>
+          </div>
+
+          <div class="p-4 space-y-2">
+            <button
+              v-for="h in ticket.historial_equipo"
+              :key="h.id"
+              @click="router.push({ name: 'tickets-detalle', params: { id: h.id } })"
+              class="w-full flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-primary/30 transition-all text-left"
+            >
+              <div class="min-w-0">
+                <p class="text-xs font-black text-primary">#{{ h.id }}</p>
+                <p class="text-xs font-semibold truncate uppercase">{{ h.tipo_falla }}</p>
+                <p class="text-[10px] opacity-60">{{ formatDate(h.fecha_creacion) }}</p>
               </div>
-            </div>
+              <ArrowRight :size="14" class="text-primary shrink-0" />
+            </button>
           </div>
         </div>
       </aside>
+    </section>
 
-    </div>
-
-    <!-- Visor de PDF Integrado -->
-    <Dialog 
-      v-model:visible="showPdfViewer" 
-      modal 
-      header="Visualizador de PDF" 
+    <Dialog
+      v-model:visible="showPdfViewer"
+      modal
+      header="Visualizador de PDF"
       class="!max-w-5xl !w-[95vw] !h-[90vh] !rounded-3xl overflow-hidden"
       contentClass="!p-0 !h-full"
     >
@@ -670,22 +730,46 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
 </template>
 
 <style scoped>
-.custom-scroll::-webkit-scrollbar { display: none; }
-.custom-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(19, 180, 151, 0.25);
+  border-radius: 20px;
+}
 
 :deep(.p-select) {
   border: 2px solid transparent !important;
   background: #f8fafa !important;
+  border-radius: 0.85rem !important;
 }
+
 .dark :deep(.p-select) {
   background: #24292d !important;
 }
-:deep(.p-select:hover) {
-  border-color: #13B497 !important;
+
+:deep(.p-select:hover),
+:deep(.p-select.p-focus) {
+  border-color: #13b497 !important;
 }
 
-.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in {
+  animation: fadeIn 0.35s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>

@@ -118,14 +118,14 @@ const loadTickets = async () => {
       equipo_marca: t.equipos?.marca || 'N/A',
       equipo_modelo: t.equipos?.modelo || 'S/N',
       equipo_display: `${t.equipos?.marca || 'N/A'} ${t.equipos?.modelo || ''}`,
-      reporta_nombre:
-        t.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.username ||
-        t.nombre_reporta ||
-        t.email_reporta ||
-        'Usuario Externo',
-      tecnico_asignado:
-        t.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema?.username ||
+      reporta_nombre: getUserDisplayName(
+        t.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema,
+        t.nombre_reporta || t.email_reporta || 'Usuario Externo'
+      ),
+      tecnico_asignado: getUserDisplayName(
+        t.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema,
         'Sin asignar'
+      )
     })).filter(t => {
       const s = (t.estatus || '').toUpperCase()
       return s !== 'RESUELTO' && s !== 'CERRADO'
@@ -200,6 +200,31 @@ const getPrioritySeverity = (p) => {
 }
 const getSeverity = getStatusSeverity
 const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
+
+const prettifyUsername = (username) => {
+  const source = String(username || '').trim()
+  if (!source) return ''
+
+  return source
+    .replace(/[._-]+/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ')
+}
+
+const getUserDisplayName = (user, fallback = 'Usuario Externo') => {
+  const firstName = String(user?.nombres || '').trim()
+  const lastName = String(user?.apellidos || '').trim()
+  if (firstName && lastName) return `${firstName} ${lastName}`
+
+  const employeeFirstName = String(user?.empleados?.nombres || '').trim()
+  const employeeLastName = String(user?.empleados?.apellidos || '').trim()
+  if (employeeFirstName && employeeLastName) return `${employeeFirstName} ${employeeLastName}`
+
+  const prettyUsername = prettifyUsername(user?.username)
+  return prettyUsername || fallback
+}
 </script>
 
 <template>

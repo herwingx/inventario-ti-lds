@@ -51,6 +51,17 @@ const ensureChatParticipantsOnly = (req, ticket) => {
     }
 };
 
+const resolveActorName = async (req) => {
+    if (!req.user?.userId) return req.user?.username || 'Soporte';
+
+    try {
+        return await TicketService.getUserDisplayNameById(req.user.userId);
+    } catch (error) {
+        logger.warn(`[TicketsController] No se pudo resolver nombre del actor: ${error.message}`);
+        return req.user?.username || 'Soporte';
+    }
+};
+
 
 /**
  * Obtiene todos los tickets con filtros.
@@ -232,6 +243,9 @@ const updateTicket = asyncHandler(async (req, res) => {
         payload.id_asignado_a !== previousTicket.id_asignado_a
     ) {
         const analyst = updated.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema;
+        const actorName = await resolveActorName(req);
+        const analystName = TicketService.resolveUserDisplayName(analyst);
+
         if (analyst?.email) {
             TicketNotificationService.notifyAnalystAssignment(
                 {
@@ -242,7 +256,7 @@ const updateTicket = asyncHandler(async (req, res) => {
                     descripcion: updated.descripcion
                 },
                 analyst,
-                req.user?.username || 'Administrador'
+                actorName
             ).catch(err => logger.warn(`[EMAIL] Fallo notif asignación analista: ${err}`));
         }
 
@@ -258,8 +272,8 @@ const updateTicket = asyncHandler(async (req, res) => {
                     token_acceso: updated.token_acceso
                 },
                 requesterEmail,
-                analyst?.username || 'Soporte',
-                req.user?.username || 'Administrador'
+                analystName,
+                actorName
             ).catch(err => logger.warn(`[EMAIL] Fallo notif asignación solicitante: ${err}`));
         }
     }

@@ -5,7 +5,6 @@ import AuthService from '../services/AuthService'
 import { useSwal } from '../composables/useSwal'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
-import { Layers } from 'lucide-vue-next'
 
 const router = useRouter()
 const { error: toastError, success: toastSuccess, warning: toastWarning, Swal } = useSwal()
@@ -61,7 +60,12 @@ const handleRegister = async () => {
     <div class="relative w-full max-w-[460px] bg-[#2f363e] rounded-lg shadow-2xl overflow-hidden p-8">
       <div class="flex flex-col items-center mb-8">
         <div class="mb-4">
-          <Layers class="text-gray-400" :size="60" stroke-width="1.5" />
+          <img
+            src="/icono2.png"
+            alt="Linea Digital"
+            class="w-16 h-16 object-contain"
+            loading="eager"
+          />
         </div>
         <h1 class="text-xl font-medium text-white">Crear cuenta</h1>
         <p class="text-sm text-gray-400 mt-2 text-center">Regístrate con tu correo corporativo para recibir tus credenciales.</p>
