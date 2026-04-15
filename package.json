@@ -10,6 +10,9 @@
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
     "build": "cd client && npm run build",
+    "build:prod": "cd client && npm run build",
+    "start:3000": "cd server && npm run start",
+    "serve:3000": "npm run build:prod && npm run start:3000",
     "test": "echo 'Error: no test specified' && exit 1"
   },
   "keywords": [

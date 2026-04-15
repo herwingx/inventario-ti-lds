@@ -3,6 +3,7 @@
  * Professional implementation with security best practices and centralized error handling.
  */
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -48,13 +49,46 @@ validateEnv();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
+const ENABLE_HTTPS_UPGRADE = process.env.ENABLE_HTTPS_UPGRADE === 'true';
+const ENABLE_ISOLATION_HEADERS = process.env.ENABLE_ISOLATION_HEADERS === 'true';
 
 // --- SECURITY MIDDLEWARE ---
 
 // Helmet for security headers
 app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: ENABLE_ISOLATION_HEADERS ? { policy: 'same-origin' } : false,
+    originAgentCluster: ENABLE_ISOLATION_HEADERS,
+    contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+            'upgrade-insecure-requests': (IS_PROD && ENABLE_HTTPS_UPGRADE) ? [] : null,
+        },
+    },
 }));
+
+// En entornos HTTP (LAN/IP), evita forzar HTTPS y headers de aislamiento
+// que generan advertencias o bloqueos en navegadores sin TLS.
+app.use((req, res, next) => {
+    if (!ENABLE_HTTPS_UPGRADE) {
+        const cspHeader = res.getHeader('Content-Security-Policy');
+        if (typeof cspHeader === 'string') {
+            const sanitizedCsp = cspHeader
+                .replace(/;\s*upgrade-insecure-requests\s*;?/i, '; ')
+                .replace(/\s{2,}/g, ' ')
+                .replace(/;\s*$/, '')
+                .trim();
+            res.setHeader('Content-Security-Policy', sanitizedCsp);
+        }
+    }
+
+    if (!ENABLE_ISOLATION_HEADERS) {
+        res.removeHeader('Cross-Origin-Opener-Policy');
+        res.removeHeader('Origin-Agent-Cluster');
+    }
+
+    next();
+});
 
 // CORS Configuration
 const corsOptions = {
@@ -87,6 +121,10 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 // --- STATIC FILES & SPA LOGIC ---
 
+const clientDistPath = path.resolve(__dirname, '..', 'client', 'dist');
+const legacyPublicPath = path.join(__dirname, 'public');
+const staticPath = fs.existsSync(clientDistPath) ? clientDistPath : legacyPublicPath;
+
 // Special handling for /soporte prefix (Legacy support or sub-path routing)
 app.use((req, res, next) => {
     if (req.url.startsWith('/api')) return next();
@@ -101,7 +139,7 @@ app.use((req, res, next) => {
 });
 
 // Serve public static files
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(staticPath));
 
 // Securely serve storage (Fase 2)
 // NOTE: In production, consider protecting these with authentication middleware
@@ -180,7 +218,7 @@ app.use('/api/tickets', ticketsRoutes);
 // --- SPA FALLBACK ---
 
 app.get(/^\/(?!api\/|.*\..*$).*/, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(staticPath, 'index.html'));
 });
 
 // --- ERROR HANDLING ---

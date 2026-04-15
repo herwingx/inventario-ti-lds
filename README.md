@@ -93,6 +93,32 @@ npm run dev
 
 ---
 
+## 🌐 Ejecución en un solo puerto (3000)
+
+Para servir frontend y backend desde el mismo puerto (3000):
+
+```bash
+cd /ruta/inventario-ti-lds
+npm run build:prod
+npm run start:3000
+```
+
+Notas de operación:
+* El build de Vite se genera en `client/dist`.
+* El backend publica `client/dist` automáticamente cuando existe.
+* URL principal en LAN: `http://IP:3000/soporte/`.
+
+Con PM2:
+
+```bash
+pm2 start npm --name "inventario-3000" -- run start:3000
+pm2 logs inventario-3000
+```
+
+Si colocas Nginx/Apache por delante, puedes ocultar `:3000` y exponer la app en 80/443.
+
+---
+
 ## 🧩 Módulos del Sistema
 
 | Módulo | Descripción Técnica |
