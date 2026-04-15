@@ -110,12 +110,12 @@ const getFrontendUrl = () => {
  * Header HTML común para todos los emails.
  */
 const emailHeader = (title, subtitle) => `
-  <table width="100%" cellpadding="0" cellspacing="0" style="background: ${COLORS.primary}; border-radius: 12px 12px 0 0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%); border-radius: 18px 18px 0 0;">
     <tr>
-      <td style="padding: 30px 40px; text-align: center;">
-        <div style="font-size: 32px; margin-bottom: 10px;">🖥️</div>
-        <h1 style="color: white; margin: 0; font-size: 22px; font-weight: 600;">${title}</h1>
-        ${subtitle ? `<p style="color: rgba(255,255,255,0.85); margin: 8px 0 0 0; font-size: 14px;">${subtitle}</p>` : ''}
+      <td style="padding: 34px 40px 30px 40px; text-align: center;">
+        <div style="width: 54px; height: 54px; border-radius: 999px; background: rgba(255,255,255,0.18); margin: 0 auto 14px auto; text-align: center; line-height: 54px; font-size: 28px;">🖥️</div>
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.2px;">${title}</h1>
+        ${subtitle ? `<p style="color: rgba(255,255,255,0.92); margin: 10px 0 0 0; font-size: 14px; line-height: 1.5;">${subtitle}</p>` : ''}
       </td>
     </tr>
   </table>
@@ -127,11 +127,11 @@ const emailHeader = (title, subtitle) => `
 const emailFooter = () => `
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">
     <tr>
-      <td style="padding: 25px 40px; text-align: center; background: ${COLORS.background}; border-radius: 0 0 12px 12px; border-top: 1px solid ${COLORS.border};">
-        <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">
+      <td style="padding: 24px 40px 26px 40px; text-align: center; background: ${COLORS.background}; border-radius: 0 0 18px 18px; border-top: 1px solid ${COLORS.border};">
+        <p style="margin: 0 0 6px 0; color: ${COLORS.textLight}; font-size: 12px; line-height: 1.5;">
           Este correo fue enviado automáticamente por el sistema de soporte.
         </p>
-        <p style="margin: 0; color: ${COLORS.textLight}; font-size: 12px;">
+        <p style="margin: 0; color: ${COLORS.textLight}; font-size: 12px; line-height: 1.5;">
           <strong>Inventario TI</strong> • Sistema de Gestión de Soporte Técnico
         </p>
       </td>
@@ -149,11 +149,11 @@ const emailWrapper = (content) => `
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: ${COLORS.background};">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${COLORS.background}; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: radial-gradient(circle at top, #eef8f6 0%, ${COLORS.background} 45%);">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 16px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background: ${COLORS.cardBg}; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <table width="640" cellpadding="0" cellspacing="0" style="max-width: 640px; background: ${COLORS.cardBg}; border-radius: 18px; border: 1px solid ${COLORS.border}; box-shadow: 0 10px 28px rgba(16,31,55,0.12); overflow: hidden;">
           ${content}
         </table>
       </td>
@@ -170,13 +170,26 @@ const actionButton = (text, url) => `
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center" style="padding: 25px 0;">
-        <a href="${url}" style="display: inline-block; background: ${COLORS.primary}; color: white; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+        <a href="${url}" style="display: inline-block; background: ${COLORS.primary}; color: #ffffff; text-decoration: none; padding: 14px 34px; border-radius: 999px; font-weight: 700; font-size: 14px; letter-spacing: 0.2px; box-shadow: 0 6px 16px rgba(19,180,151,0.35);">
           ${text}
         </a>
       </td>
     </tr>
   </table>
 `;
+
+const resolveTicketSummary = (ticket = {}, equipo = null) => {
+  const equipoData = equipo || {};
+
+  return {
+    tipoFalla: ticket?.tipo_falla || ticket?.categoria || 'OTRO',
+    prioridad: ticket?.prioridad || 'MEDIA',
+    descripcion: ticket?.descripcion || 'Sin descripcion proporcionada.',
+    marca: equipoData?.marca || 'N/A',
+    modelo: equipoData?.modelo || 'N/A',
+    numeroSerie: equipoData?.numero_serie || 'N/A'
+  };
+};
 
 /**
  * Envía notificación de nuevo ticket al equipo de soporte.
@@ -188,11 +201,7 @@ const notifyNewTicket = async (ticket, equipo) => {
     return;
   }
 
-  const equipoData = equipo || {
-    marca: 'N/A',
-    modelo: 'N/A',
-    numero_serie: 'N/A'
-  };
+  const summary = resolveTicketSummary(ticket, equipo);
 
   try {
     const transporter = createTransporter();
@@ -215,21 +224,21 @@ const notifyNewTicket = async (ticket, equipo) => {
             <tr>
               <td width="50%" style="padding: 15px 20px 15px 0; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Equipo</p>
-                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${equipoData.marca} ${equipoData.modelo}</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${summary.marca} ${summary.modelo}</p>
               </td>
               <td width="50%" style="padding: 15px 0 15px 20px; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Número de Serie</p>
-                <p style="margin: 0; color: ${COLORS.text}; font-family: monospace;">${equipoData.numero_serie}</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-family: monospace;">${summary.numeroSerie}</p>
               </td>
             </tr>
             <tr>
               <td width="50%" style="padding: 15px 20px 15px 0; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Tipo de Falla</p>
-                <p style="margin: 0;"><span style="background: #fee2e2; color: #dc2626; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">${ticket.tipo_falla}</span></p>
+                <p style="margin: 0;"><span style="background: #fee2e2; color: #dc2626; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">${summary.tipoFalla}</span></p>
               </td>
               <td width="50%" style="padding: 15px 0 15px 20px; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Prioridad</p>
-                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${ticket.prioridad || 'MEDIA'}</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${summary.prioridad}</p>
               </td>
             </tr>
           </table>
@@ -237,7 +246,7 @@ const notifyNewTicket = async (ticket, equipo) => {
           <div style="margin-top: 25px;">
             <p style="margin: 0 0 10px 0; color: ${COLORS.textLight}; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Descripción del problema</p>
             <div style="background: ${COLORS.background}; padding: 20px; border-radius: 8px;">
-              <p style="margin: 0; color: ${COLORS.text}; line-height: 1.6; white-space: pre-wrap;">${ticket.descripcion}</p>
+              <p style="margin: 0; color: ${COLORS.text}; line-height: 1.6; white-space: pre-wrap;">${summary.descripcion}</p>
             </div>
           </div>
           
@@ -250,7 +259,7 @@ const notifyNewTicket = async (ticket, equipo) => {
     await transporter.sendMail({
       from: getFromAddress(),
       to: recipients,
-      subject: `🎫 Nuevo Ticket #${ticket.id}: ${ticket.tipo_falla} - ${equipoData.marca} ${equipoData.modelo}`,
+      subject: `🎫 Nuevo Ticket #${ticket.id}: ${summary.tipoFalla} - ${summary.marca} ${summary.modelo}`,
       html: emailWrapper(content)
     });
 
@@ -377,10 +386,7 @@ const notifyTicketCreated = async (ticket, equipo, emailUsuario, nombreUsuario) 
     return;
   }
 
-  const equipoData = equipo || {
-    marca: 'N/A',
-    modelo: 'N/A'
-  };
+  const summary = resolveTicketSummary(ticket, equipo);
 
   try {
     const transporter = createTransporter();
@@ -410,11 +416,11 @@ const notifyTicketCreated = async (ticket, equipo, emailUsuario, nombreUsuario) 
             <tr>
               <td width="50%" style="padding: 15px 20px 15px 0; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Equipo Reportado</p>
-                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${equipoData.marca} ${equipoData.modelo}</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${summary.marca} ${summary.modelo}</p>
               </td>
               <td width="50%" style="padding: 15px 0 15px 20px; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Tipo de Problema</p>
-                <p style="margin: 0;"><span style="background: #fee2e2; color: #dc2626; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">${ticket.tipo_falla}</span></p>
+                <p style="margin: 0;"><span style="background: #fee2e2; color: #dc2626; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">${summary.tipoFalla}</span></p>
               </td>
             </tr>
           </table>
@@ -441,7 +447,7 @@ const notifyTicketCreated = async (ticket, equipo, emailUsuario, nombreUsuario) 
     await transporter.sendMail({
       from: getFromAddress(),
       to: emailUsuario,
-      subject: `✅ Ticket #${ticket.id} Registrado - ${equipoData.marca} ${equipoData.modelo}`,
+      subject: `✅ Ticket #${ticket.id} Registrado - ${summary.marca} ${summary.modelo}`,
       html: emailWrapper(content)
     });
 
@@ -457,6 +463,8 @@ const notifyTicketCreated = async (ticket, equipo, emailUsuario, nombreUsuario) 
 const notifyAnalystAssignment = async (ticket, analyst, assignedBy = 'Administrador') => {
   const analystEmail = analyst?.email;
   if (!analystEmail) return;
+
+  const summary = resolveTicketSummary(ticket);
 
   try {
     const transporter = createTransporter();
@@ -491,19 +499,19 @@ const notifyAnalystAssignment = async (ticket, analyst, assignedBy = 'Administra
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid ${COLORS.border};">
                 <p style="margin: 0 0 4px 0; color: ${COLORS.textLight}; font-size: 12px;">Prioridad</p>
-                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${ticket.prioridad || 'MEDIA'}</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${summary.prioridad}</p>
               </td>
             </tr>
             <tr>
               <td style="padding: 12px 0;">
                 <p style="margin: 0 0 4px 0; color: ${COLORS.textLight}; font-size: 12px;">Tipo de falla</p>
-                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${ticket.tipo_falla || 'OTRO'}</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${summary.tipoFalla}</p>
               </td>
             </tr>
           </table>
 
           <div style="margin-top: 20px; background: ${COLORS.background}; padding: 16px; border-radius: 8px;">
-            <p style="margin: 0; color: ${COLORS.text}; line-height: 1.6; white-space: pre-wrap;">${ticket.descripcion || ''}</p>
+            <p style="margin: 0; color: ${COLORS.text}; line-height: 1.6; white-space: pre-wrap;">${summary.descripcion}</p>
           </div>
 
           ${actionButton('Abrir Ticket Asignado', analystUrl)}
@@ -518,8 +526,69 @@ const notifyAnalystAssignment = async (ticket, analyst, assignedBy = 'Administra
       subject: `🆕 Ticket #${ticket.id} asignado para atención`,
       html: emailWrapper(content)
     });
+
+    console.log(`[EMAIL] Notificación de asignación de ticket #${ticket.id} enviada a ${analystEmail}`);
   } catch (error) {
     console.error('[EMAIL] Error notif analista asignación:', error.message);
+  }
+};
+
+/**
+ * Notifica al solicitante cuando su ticket fue asignado a un responsable.
+ */
+const notifyUserTicketAssigned = async (ticket, emailUsuario, assignedToName = 'Soporte', changedBy = 'Soporte') => {
+  if (!emailUsuario) return;
+
+  try {
+    const transporter = createTransporter();
+    const trackingUrl = ticket?.token_acceso
+      ? `${getFrontendUrl()}/soporte/q/ticket/${ticket.token_acceso}`
+      : `${getFrontendUrl()}/tickets/${ticket.id}`;
+
+    const content = `
+      ${emailHeader('Ticket Asignado', 'Tu solicitud ya fue asignada a un responsable')}
+      <tr>
+        <td style="padding: 35px 40px;">
+          <table width="100%" style="background: ${COLORS.background}; border-radius: 8px; border-left: 4px solid ${COLORS.primary};">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0 0 5px 0; color: ${COLORS.textLight}; font-size: 12px;">Ticket</p>
+                <p style="margin: 0; color: ${COLORS.primary}; font-size: 24px; font-weight: bold;">#${ticket.id}</p>
+              </td>
+            </tr>
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid ${COLORS.border};">
+                <p style="margin: 0 0 4px 0; color: ${COLORS.textLight}; font-size: 12px;">Asignado a</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 700;">${assignedToName}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0;">
+                <p style="margin: 0 0 4px 0; color: ${COLORS.textLight}; font-size: 12px;">Asignado por</p>
+                <p style="margin: 0; color: ${COLORS.text}; font-weight: 600;">${changedBy}</p>
+              </td>
+            </tr>
+          </table>
+
+          ${actionButton('Ver seguimiento del ticket', trackingUrl)}
+        </td>
+      </tr>
+      <tr><td>${emailFooter()}</td></tr>
+    `;
+
+    await transporter.sendMail({
+      from: getFromAddress(),
+      to: emailUsuario,
+      subject: `📌 Ticket #${ticket.id} asignado a ${assignedToName}`,
+      html: emailWrapper(content)
+    });
+
+    console.log(`[EMAIL] Notificación de asignación al solicitante enviada a ${emailUsuario} para ticket #${ticket.id}`);
+  } catch (error) {
+    console.error('[EMAIL] Error notif asignación solicitante:', error.message);
   }
 };
 
@@ -638,5 +707,6 @@ module.exports = {
   notifyAnalystAssignment,
   notifyAnalystPublicComment,
   notifyUserStatusChange,
+  notifyUserTicketAssigned,
   isCommentNotificationEnabled
 };

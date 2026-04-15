@@ -191,8 +191,12 @@ const signAssignment = asyncHandler(async (req, res) => {
     const base64Data = firma.replace(/^data:image\/png;base64,/, "");
     await fs.promises.writeFile(signaturePath, base64Data, 'base64');
 
-    // 3. Generar PDF
-    const pdfData = { ...data, signaturePath };
+    // 3. Generar PDF (usar data URL para evitar fallos de resolución de rutas en pdfmake)
+    const signatureDataUrl = /^data:image\//.test(firma)
+        ? firma
+        : `data:image/png;base64,${base64Data}`;
+
+    const pdfData = { ...data, signaturePath, signatureDataUrl };
     const pdfDoc = await generateResponsiva(pdfData);
 
     // 4. Guardar PDF

@@ -26,6 +26,7 @@ const sendingComment = ref(false)
 const chatContainer = ref(null)
 const showMobileSettings = ref(false)
 let pollInterval = null
+const CHAT_POLL_MS = 8000
 
 const isDragging = ref(false)
 const attachment = ref(null)
@@ -120,9 +121,22 @@ const scrollToBottom = async () => {
 const loadTecnicos = async () => {
   try {
     const data = await TicketsService.getTecnicos()
+    const toFirstName = (value) => {
+      const source = String(value || '').trim()
+      if (!source) return 'Sin nombre'
+
+      const base = source.includes('@') ? source.split('@')[0] : source
+      const firstChunk = base
+        .replace(/[._-]+/g, ' ')
+        .trim()
+        .split(/\s+/)[0] || 'Sin nombre'
+
+      return firstChunk.charAt(0).toUpperCase() + firstChunk.slice(1).toLowerCase()
+    }
+
     tecnicos.value = data.map((tecnico) => ({
       ...tecnico,
-      nombre_usuario: String(tecnico.nombre_usuario || '').split('@')[0] || tecnico.nombre_usuario
+      display_name: toFirstName(tecnico.nombre_usuario)
     }))
   } catch (e) {}
 }
@@ -219,12 +233,26 @@ const addComment = async () => {
 onMounted(() => {
   loadTicket()
   loadTecnicos()
-  pollInterval = setInterval(() => loadTicket(true), 30000)
+  pollInterval = setInterval(() => loadTicket(true), CHAT_POLL_MS)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('focus', handleWindowFocus)
 })
 
 onUnmounted(() => {
   if (pollInterval) clearInterval(pollInterval)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('focus', handleWindowFocus)
 })
+
+const handleVisibilityChange = () => {
+  if (!document.hidden) {
+    loadTicket(true)
+  }
+}
+
+const handleWindowFocus = () => {
+  loadTicket(true)
+}
 
 const parseAttachment = (content) => {
   if (!content) return null
@@ -289,7 +317,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
           <h1 class="text-lg sm:text-xl font-black font-title leading-tight uppercase italic">Ticket #{{ ticketId }}</h1>
           <div class="flex items-center gap-2 mt-0.5">
             <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-            <p class="text-[9px] font-bold text-light-muted uppercase tracking-widest opacity-70 truncate max-w-[150px] sm:max-w-none">
+            <p class="text-[9px] font-bold text-light-muted dark:text-dark-muted uppercase tracking-widest opacity-70 truncate max-w-[150px] sm:max-w-none">
               {{ ticketHeadline }}
             </p>
           </div>
@@ -344,7 +372,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
           >
             <!-- Caso: Mensaje de Sistema -->
             <div v-if="c.autor_nombre === 'SISTEMA'" class="bg-slate-100 dark:bg-dark-bg/50 px-4 py-2 rounded-xl border border-light-border dark:border-dark-border shadow-sm mx-4">
-               <p class="text-[9px] font-black text-light-muted uppercase tracking-widest text-center">{{ c.contenido }}</p>
+               <p class="text-[9px] font-black text-light-muted dark:text-dark-muted uppercase tracking-widest text-center">{{ c.contenido }}</p>
             </div>
 
             <!-- Caso: Burbuja Normal con Avatar -->
@@ -402,7 +430,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
                 <p v-if="parseAttachment(c.contenido) && cleanContent(c.contenido)" class="text-sm font-medium leading-relaxed whitespace-pre-wrap mt-2">{{ cleanContent(c.contenido) }}</p>
                 <p v-else-if="!parseAttachment(c.contenido)" class="text-sm font-medium leading-relaxed whitespace-pre-wrap">{{ c.contenido }}</p>
 
-                <div :class="['mt-1 text-[8px] font-bold text-right opacity-50', c.id_usuario === authStore.user?.id ? 'text-white' : 'text-light-muted']">
+                <div :class="['mt-1 text-[8px] font-bold text-right opacity-50', c.id_usuario === authStore.user?.id ? 'text-white' : 'text-light-muted dark:text-dark-muted']">
                   {{ new Date(c.fecha_creacion).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}
                 </div>
               </div>
@@ -447,7 +475,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
                     </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-[10px] font-bold text-light-text dark:text-dark-text truncate">{{ attachment.file.name }}</p>
-                      <p class="text-[8px] text-light-muted font-mono uppercase">Imagen adjunta • {{ (attachment.file.size / 1024).toFixed(1) }} KB</p>
+                      <p class="text-[8px] text-light-muted dark:text-dark-muted font-mono uppercase">Imagen adjunta • {{ (attachment.file.size / 1024).toFixed(1) }} KB</p>
                     </div>
                     <button @click="clearAttachment" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-dark-bg hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-colors shrink-0">
                       <X :size="14" />
@@ -467,7 +495,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
                   <!-- Botón Adjuntar (Clip) -->
                   <button 
                     @click="$refs.fileInput.click()"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-light-muted hover:text-primary transition-colors p-2"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-light-muted dark:text-dark-muted hover:text-primary transition-colors p-2"
                     title="Adjuntar imagen"
                   >
                     <Paperclip :size="18" />
@@ -487,7 +515,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
 
             <!-- Shift + Enter Hint -->
             <div class="px-1 flex justify-end">
-              <span class="text-[8px] font-bold text-light-muted uppercase opacity-40">Shift + Enter para nueva línea</span>
+              <span class="text-[8px] font-bold text-light-muted dark:text-dark-muted uppercase opacity-40">Shift + Enter para nueva línea</span>
             </div>
 
           </div>
@@ -504,7 +532,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
         <div class="relative ml-auto lg:ml-0 w-4/5 lg:w-full bg-white dark:bg-dark-card p-6 lg:p-5 shadow-2xl lg:shadow-lg border-l lg:border border-light-border dark:border-dark-border lg:rounded-[2.5rem] flex flex-col overflow-y-auto min-h-0">
           
           <div class="flex items-center justify-between mb-6 lg:mb-5">
-            <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-light-muted flex items-center gap-2">
+            <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-light-muted dark:text-dark-muted flex items-center gap-2">
               <ShieldCheck :size="14" class="text-primary" /> Panel de Control
             </h3>
             <button @click="showMobileSettings = false" class="lg:hidden w-8 h-8 rounded-full bg-slate-100 dark:bg-dark-bg flex items-center justify-center">
@@ -515,7 +543,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
           <div class="space-y-4">
             <!-- Información del Usuario Reportante -->
             <div class="bg-slate-50 dark:bg-dark-bg/50 p-3 rounded-2xl border border-light-border dark:border-dark-border">
-              <p class="text-[8px] font-black uppercase text-light-muted mb-2 tracking-widest opacity-70">Reportado Por</p>
+              <p class="text-[8px] font-black uppercase text-light-muted dark:text-dark-muted mb-2 tracking-widest opacity-70">Reportado Por</p>
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-700 dark:text-amber-400 font-bold text-xs border border-amber-200 dark:border-amber-700">
                   {{ ticket?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.username ? ticket.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema.username.substring(0, 2).toUpperCase() : '?' }}
@@ -529,7 +557,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
 
             <!-- Información del Técnico Asignado -->
             <div v-if="ticket?.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema" class="bg-slate-50 dark:bg-dark-bg/50 p-3 rounded-2xl border border-light-border dark:border-dark-border">
-              <p class="text-[8px] font-black uppercase text-light-muted mb-2 tracking-widest opacity-70">Asignado a</p>
+              <p class="text-[8px] font-black uppercase text-light-muted dark:text-dark-muted mb-2 tracking-widest opacity-70">Asignado a</p>
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs border border-primary/30">
                   {{ ticket.usuarios_sistema_tickets_id_asignado_aTousuarios_sistema.username.substring(0, 2).toUpperCase() }}
@@ -579,18 +607,18 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
             </div>
 
             <div v-if="canManageTicket" class="space-y-1.5">
-              <label class="text-[9px] font-black text-light-muted uppercase ml-1">Estatus</label>
+              <label class="text-[9px] font-black text-light-muted dark:text-dark-muted uppercase ml-1">Estatus</label>
               <Select v-model="selectedEstatus" :options="estatusOptions" optionLabel="label" optionValue="value" class="w-full !rounded-xl" />
             </div>
 
             <div v-if="canManageAdminFields" class="space-y-1.5">
-              <label class="text-[9px] font-black text-light-muted uppercase ml-1">Prioridad</label>
+              <label class="text-[9px] font-black text-light-muted dark:text-dark-muted uppercase ml-1">Prioridad</label>
               <Select v-model="selectedPrioridad" :options="prioridadOptions" optionLabel="label" optionValue="value" class="w-full !rounded-xl" />
             </div>
 
             <div v-if="canManageAdminFields" class="space-y-1.5">
-              <label class="text-[9px] font-black text-light-muted uppercase ml-1">Responsable</label>
-              <Select v-model="selectedTecnico" :options="tecnicos" optionLabel="nombre_usuario" optionValue="id" placeholder="Asignar analista o a ti" showClear class="w-full !rounded-xl" />
+              <label class="text-[9px] font-black text-light-muted dark:text-dark-muted uppercase ml-1">Responsable</label>
+              <Select v-model="selectedTecnico" :options="tecnicos" optionLabel="display_name" optionValue="id" placeholder="Asignar analista o a ti" showClear class="w-full !rounded-xl" />
             </div>
 
             <button v-if="canManageTicket" @click="updateTicket" :disabled="saving" class="w-full py-3 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-primary-hover active:scale-95 transition-all mt-2">
@@ -605,7 +633,7 @@ const formatStatus = (s) => s ? String(s).replace(/_/g, ' ') : ''
 
           <!-- Historial -->
           <div v-if="ticket?.historial_equipo?.length > 0" class="mt-6 pt-4 border-t border-light-border dark:border-dark-border">
-            <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-light-muted mb-4 flex items-center gap-2">
+            <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-light-muted dark:text-dark-muted mb-4 flex items-center gap-2">
               <History :size="14" class="text-primary" /> Reportes Previos
             </h3>
             <div class="space-y-3">

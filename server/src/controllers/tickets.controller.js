@@ -26,6 +26,31 @@ const ensureOwnTicket = (req, ticket) => {
         }
 };
 
+const ensureAnalystAssignedTicket = (req, ticket) => {
+    if (isAnalystUser(req) && ticket?.id_asignado_a !== req.user?.userId) {
+        const error = new Error('Solo puedes acceder a tickets asignados a tu usuario.');
+        error.statusCode = 403;
+        error.isOperational = true;
+        throw error;
+    }
+};
+
+const ensureChatParticipantsOnly = (req, ticket) => {
+    // Si el ticket ya tiene asignación, el chat queda solo entre creador y asignado.
+    if (!ticket?.id_asignado_a) return;
+
+    const userId = req.user?.userId;
+    const isReporter = ticket.id_usuario_reporta === userId;
+    const isAssignee = ticket.id_asignado_a === userId;
+
+    if (!isReporter && !isAssignee) {
+        const error = new Error('Este chat solo permite participación del creador y la persona asignada.');
+        error.statusCode = 403;
+        error.isOperational = true;
+        throw error;
+    }
+};
+
 
 /**
  * Obtiene todos los tickets con filtros.
@@ -52,6 +77,7 @@ const getTicketById = asyncHandler(async (req, res) => {
     }
 
     ensureOwnTicket(req, ticket);
+    ensureAnalystAssignedTicket(req, ticket);
 
     res.status(200).json(ticket);
 });
@@ -210,6 +236,7 @@ const updateTicket = asyncHandler(async (req, res) => {
             TicketNotificationService.notifyAnalystAssignment(
                 {
                     id: updated.id,
+                    token_acceso: updated.token_acceso,
                     prioridad: updated.prioridad,
                     tipo_falla: updated.tipo_falla,
                     descripcion: updated.descripcion
@@ -217,6 +244,23 @@ const updateTicket = asyncHandler(async (req, res) => {
                 analyst,
                 req.user?.username || 'Administrador'
             ).catch(err => logger.warn(`[EMAIL] Fallo notif asignación analista: ${err}`));
+        }
+
+        const requesterEmail =
+            previousTicket?.email_reporta ||
+            previousTicket?.usuarios_sistema_tickets_id_usuario_reportaTousuarios_sistema?.email ||
+            null;
+
+        if (requesterEmail) {
+            TicketNotificationService.notifyUserTicketAssigned(
+                {
+                    id: updated.id,
+                    token_acceso: updated.token_acceso
+                },
+                requesterEmail,
+                analyst?.username || 'Soporte',
+                req.user?.username || 'Administrador'
+            ).catch(err => logger.warn(`[EMAIL] Fallo notif asignación solicitante: ${err}`));
         }
     }
 
@@ -306,6 +350,8 @@ const getComments = asyncHandler(async (req, res) => {
     }
 
     ensureOwnTicket(req, ticket);
+    ensureAnalystAssignedTicket(req, ticket);
+    ensureChatParticipantsOnly(req, ticket);
 
     const comments = await TicketService.getComments(id, incluir_internos === 'true');
     res.status(200).json(comments);
@@ -329,28 +375,14 @@ const addComment = asyncHandler(async (req, res) => {
     }
 
     ensureOwnTicket(req, ticket);
+    ensureAnalystAssignedTicket(req, ticket);
+    ensureChatParticipantsOnly(req, ticket);
     
     if (['RESUELTO', 'CERRADO'].includes(ticket.estatus)) {
          const error = new Error('No se pueden agregar mensajes a un ticket finalizado.');
          error.statusCode = 400;
          error.isOperational = true;
          throw error;
-    }
-
-    // ADMIN PERMISSION CHECK: Admin can read all conversations but cannot write in viewer-analyst threads
-    // A viewer-analyst conversation exists if:
-    // - There's a viewer (id_usuario_reporta) who is NOT the one commenting
-    // - AND there's an assigned analyst (id_asignado_a)
-    if (roleId === 1) { // Admin role
-        const hasViewerReporter = ticket.id_usuario_reporta && ticket.id_usuario_reporta !== userId;
-        const hasAssignedAnalyst = ticket.id_asignado_a;
-        
-        if (hasViewerReporter && hasAssignedAnalyst) {
-            const error = new Error('Admin no puede participar en conversaciones entre solicitante y analista. Solo lectura permitida.');
-            error.statusCode = 403;
-            error.isOperational = true;
-            throw error;
-        }
     }
 
     const comment = await TicketService.addComment(id, userId, req.body);
@@ -415,6 +447,7 @@ const uploadTicketAttachment = [
         }
 
         ensureOwnTicket(req, ticket);
+        ensureAnalystAssignedTicket(req, ticket);
 
         const fileUrl = `/storage/tickets/${id}/${file.filename}`;
         await TicketService.addAttachment(id, userId, fileUrl, file.originalname);

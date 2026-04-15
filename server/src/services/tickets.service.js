@@ -150,8 +150,11 @@ class TicketService {
     const { estatus, prioridad, tecnicoId, id_equipo } = filters;
 
     let where = {};
-    if (roleId === 2 && userId) {
+    if (roleId === this.USER_ROLE_ID && userId) {
       where.id_usuario_reporta = userId;
+    }
+    if (roleId === this.ANALYST_ROLE_ID && userId) {
+      where.id_asignado_a = userId;
     }
     if (estatus) where.estatus = estatus;
     if (prioridad) where.prioridad = prioridad;

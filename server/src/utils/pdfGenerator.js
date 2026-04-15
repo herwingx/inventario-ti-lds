@@ -17,8 +17,13 @@ const fonts = {
  * @param {Object} data - Datos de asignación, empleado, equipo y firma.
  */
 const generateResponsiva = async (data) => {
-  const printer = new Printer(fonts);
-  const { asignacion, empleado, equipo, empresa, sucursal, area, signaturePath } = data;
+  const noopUrlResolver = {
+    resolve: () => {},
+    resolved: async () => {}
+  };
+
+  const printer = new Printer(fonts, null, noopUrlResolver);
+  const { asignacion, empleado, equipo, empresa, sucursal, area, signatureDataUrl } = data;
 
   // Intentar leer el logo SVG
   let logoSvg = null;
@@ -133,7 +138,7 @@ const generateResponsiva = async (data) => {
           {
             width: 300,
             stack: [
-              signaturePath ? { image: signaturePath, width: 120, alignment: 'center', margin: [0, 0, 0, -15] } : { text: '', margin: [0, 40, 0, 0] },
+              signatureDataUrl ? { image: signatureDataUrl, width: 120, alignment: 'center', margin: [0, 0, 0, -15] } : { text: '', margin: [0, 40, 0, 0] },
               { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 250, y2: 0, lineWidth: 0.5 }] },
               { text: nombreReceptor, bold: true, alignment: 'center', margin: [0, 5, 0, 0] }
             ],

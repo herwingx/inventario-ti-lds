@@ -227,7 +227,7 @@ const formatDate = (date) => {
                     :class="[
                         asignacion.url_responsiva_pdf 
                         ? 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700' 
-                        : 'bg-white dark:bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 border-dashed border-gray-300 dark:border-white/20'
+                        : 'bg-white dark:bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 dark:text-gray-300 border-dashed border-gray-300 dark:border-white/20'
                     ]"
                     :disabled="downloadingPDF"
                     @click="downloadPDF"
@@ -256,7 +256,7 @@ const formatDate = (date) => {
             </div>
             <template #footer>
                 <div class="flex justify-between w-full">
-                    <button class="text-gray-500 font-bold px-4" @click="showSignatureDialog = false">Cancelar</button>
+                    <button class="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white font-bold px-4" @click="showSignatureDialog = false">Cancelar</button>
                     <button 
                         class="btn-primary" 
                         :disabled="signing"
@@ -380,7 +380,7 @@ const formatDate = (date) => {
                  <div class="p-4 overflow-x-auto">
                     <div v-if="componentes.length === 0" class="text-center py-10">
                         <div class="w-16 h-16 bg-gray-100 dark:bg-dark-bg rounded-full flex items-center justify-center mx-auto mb-3">
-                            <i class="pi pi-box text-2xl text-gray-300"></i>
+                            <i class="pi pi-box text-2xl text-gray-300 dark:text-gray-500"></i>
                         </div>
                         <p class="text-light-muted dark:text-dark-muted font-medium">No hay componentes adicionales asignados.</p>
                     </div>
