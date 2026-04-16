@@ -122,15 +122,7 @@ watch(
       <!-- Footer: vive dentro del main para no generar scroll global -->
       <footer class="flex-none px-6 py-4 text-center text-sm text-light-muted dark:text-dark-muted border-t border-light-border dark:border-dark-border">
         <p>
-          Copyright © Desarrollado con ❤️ por
-          <a
-            href="https://github.com/herwingx"
-            target="_blank"
-            class="text-primary hover:text-primary-hover transition-colors"
-          >
-            herwingx
-          </a>
-          {{ new Date().getFullYear() }}
+          © 2026 Linea Digital. Todos los derechos reservados.
         </p>
       </footer>
     </main>
