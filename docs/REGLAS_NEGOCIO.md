@@ -38,7 +38,18 @@ Las asignaciones son el vínculo legal entre la empresa y el recurso.
 
 ---
 
-## 3. 🎫 Soporte y Helpdesk (SLA)
+## 3. 🛠️ Reglas de Mantenimiento
+
+1. **Programación Manual:** Un mantenimiento se registra con `fecha_programada`, `tipo` y `id_equipo`; su estatus inicial es `PENDIENTE`.
+2. **Intervalo Preventivo por Equipo:** La periodicidad se define en `equipos.frecuencia_mantenimiento_meses`.
+3. **Cálculo de Próxima Fecha:** Solo se recalcula al cerrar un mantenimiento `PREVENTIVO` como `COMPLETADO`.
+4. **Fecha Base de Cálculo:** Se usa `fecha_realizada` (si se proporciona) o la fecha/hora actual del cierre.
+5. **Regla de Proyección:** `proxima_fecha_mantenimiento = fecha_base + frecuencia_mantenimiento_meses`.
+6. **Sin Frecuencia Definida:** Si el equipo no tiene frecuencia, solo se actualiza `ultima_fecha_mantenimiento`.
+
+---
+
+## 4. 🎫 Soporte y Helpdesk (SLA)
 
 El sistema gestiona prioridades basadas en el impacto operativo.
 

@@ -39,10 +39,22 @@ Se implementó una capa de interceptación de datos para garantizar la transpare
 
 ## 🔧 Tareas Programadas (Cron Jobs)
 
-El sistema automatiza tareas de mantenimiento preventivo:
-1.  **Cálculo de Próximo Mantenimiento:** Cada 24h, el sistema revisa la fecha del último mantenimiento y proyecta la siguiente según la frecuencia del equipo.
-2.  **Alertas de Vencimiento:** Notifica al dashboard sobre equipos que superaron su fecha de mantenimiento programada.
-3.  **Limpieza de Tokens:** Invalida tokens de restablecimiento de contraseña expirados.
+El sistema automatiza alertas de mantenimiento:
+1.  **Alertas de Próximos 7 Días (Cron Diario):** Cada día a las 08:00 (America/Mexico_City), se consultan:
+    - Equipos con `proxima_fecha_mantenimiento` dentro de los próximos 7 días.
+    - Mantenimientos manuales en estatus `PENDIENTE` con `fecha_programada` dentro de los próximos 7 días.
+2.  **Canal de Notificación Actual:** Las alertas se envían por correo al `ALERT_EMAIL` (o `EMAIL_FROM` como fallback).
+
+### 📅 Cálculo de Fechas de Mantenimiento (Regla Operativa)
+
+El cálculo de la próxima fecha preventiva **no** se ejecuta por cron cada 24h. Se calcula en el flujo de negocio cuando:
+
+1. Un mantenimiento de tipo `PREVENTIVO` cambia a estatus `COMPLETADO`.
+2. Se registra `ultima_fecha_mantenimiento` con la fecha de cierre (`fecha_realizada` o fecha actual).
+3. Si el equipo tiene `frecuencia_mantenimiento_meses`, se calcula:
+   `proxima_fecha_mantenimiento = fecha_cierre + frecuencia_mantenimiento_meses`.
+
+Si el equipo no tiene frecuencia definida, solo se actualiza `ultima_fecha_mantenimiento`.
 
 ---
 
